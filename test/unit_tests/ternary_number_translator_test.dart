@@ -3,9 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('holy numbers', () {
-    for (int i = -5; i < 30; i++) {
+    print("| Decimal | Ternary expression |");
+    print("| ----------- | ----------- |");
+    for (int i = -5; i < 100; i++) {
       String ternaryString = intToTernaryString(i);
-      print("$i = $ternaryString");
+      print("| $i | $ternaryString |");
     }
   });
 }
