@@ -5,7 +5,7 @@ void main() {
   test('holy numbers', () {
     print("| Decimal | Ternary expression |");
     print("| ----------- | ----------- |");
-    for (int i = -5; i < 100; i++) {
+    for (int i = 177140; i < 177149; i++) {
       String ternaryString = intToTernaryString(i);
       print("| $i | $ternaryString |");
     }

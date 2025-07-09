@@ -119,3 +119,42 @@ If the numbers are more than 2 away from a power of three but the remainder is n
 | 97 | Power 4 and Power 2 and 2 Threes and a Single |
 | 98 | Power 4 and Power 2 and 2 Threes and a Couple |
 | 99 | Power 4 and Power 2 and 3 Threes |
+| 726 | Power 5 and Power 5 and 80 Threes |
+| 727 | Power 5 and Power 5 and 80 Threes and a Single |
+| 728 | Power 5 and Power 5 and 80 Threes and a Couple |
+| 729 | Holy 6 |
+| 730 | Unholy 6 |
+| 731 | Sickly 6 |
+| 732 | Power 6 and Three |
+| 733 | Power 6 and Three and a Single |
+| 734 | Power 6 and Three and a Couple |
+| 735 | Power 6 and Three and Three |
+| 1453 | Power 6 and Power 5 and 160 Threes and a Single |
+| 1454 | Power 6 and Power 5 and 160 Threes and a Couple |
+| 1455 | Power 6 and Power 5 and 161 Threes |
+| 1456 | Power 6 and Power 5 and 161 Threes and a Single |
+| 1457 | Power 6 and Power 5 and 161 Threes and a Couple |
+| 1458 | Power 6 and Power 6 |
+| 1459 | Power 6 and Power 6 and a Single |
+| 1460 | Power 6 and Power 6 and a Couple |
+| 1461 | Power 6 and Power 6 and Three |
+| 1462 | Power 6 and Power 6 and Three and a Single |
+| 19679 | Power 8 and Power 8 and 2185 Threes and a Couple |
+| 19680 | Power 8 and Power 8 and 2186 Threes |
+| 19681 | Power 8 and Power 8 and 2186 Threes and a Single |
+| 19682 | Power 8 and Power 8 and 2186 Threes and a Couple |
+| 19683 | Holy 9 |
+| 19684 | Unholy 9 |
+| 19685 | Sickly 9 |
+| 19686 | Power 9 and Three |
+| 19687 | Power 9 and Three and a Single |
+| 19688 | Power 9 and Three and a Couple |
+| 177140 | Power 10 and Power 10 and 19680 Threes and a Couple |
+| 177141 | Power 10 and Power 10 and 19681 Threes |
+| 177142 | Power 10 and Power 10 and 19681 Threes and a Single |
+| 177143 | Power 10 and Power 10 and 19681 Threes and a Couple |
+| 177144 | Power 10 and Power 10 and 19682 Threes |
+| 177145 | Power 10 and Power 10 and 19682 Threes and a Single |
+| 177146 | Power 10 and Power 10 and 19682 Threes and a Couple |
+| 177147 | Holy 11 |
+| 177148 | Unholy 11 |
