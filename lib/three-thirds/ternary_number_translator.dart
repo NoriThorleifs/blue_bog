@@ -1,83 +1,48 @@
 import 'dart:math';
 
-int findHighestPowerOfThree(int input) {
-  if (input < 3) {
-    return 0;
-  }
-  for (int i = 1; i < 19683; i++) {
-    int remainder = input - pow(3, i).toInt();
-    if (remainder < 0) {
-      return i - 1;
-    }
-  }
-  return 0;
-}
+int highestPowerOf3(int n) => n < 3 ? 0 : (log(n) / log(3)).floor();
 
-String intToTernaryString(int input) {
-  if (input == 0) {
+String intToTernaryString(int n) {
+  if (n == 0) {
     return "Zero";
   }
-  String output = "";
-  if (!input.isFinite) {
+  if (!n.isFinite) {
     return "Does not compute!";
   }
-  if (input.isNegative) {
-    input = input.abs();
-    output += "Negative ";
-  }
-  if (input == 1) {
-    return "${output}Single";
-  }
-  if (input == 2) {
-    return "${output}Couple";
-  }
-  int nearestPow = findHighestPowerOfThree(input);
-  int remainder = input - pow(3, nearestPow).toInt();
-  if (remainder == 0) {
-    if (nearestPow == 1) {
-      return "Three";
-    }
-    output += "Holy $nearestPow";
-    return output;
-  } else if (remainder == 1) {
-    output += "Unholy $nearestPow";
-    return output;
-  } else if (remainder == 2) {
-    output += "Sickly $nearestPow";
-    return output;
+  String out;
+  if (n.isNegative) {
+    out = "Negative ";
   } else {
-    if (nearestPow == 1) {
-      output += "Three";
-    } else {
-      output += "Power $nearestPow";
-    }
-    int remainderPow = findHighestPowerOfThree(remainder);
-    if (remainderPow > 0) {
-      remainder -= pow(3, remainderPow).toInt();
-      if (remainderPow == 1) {
-        output += " and Three";
-      } else {
-        output += " and Power $remainderPow";
-      }
-    }
+    out = "";
+  }
+  n = n.abs();
+  if (n <= 2) {
+    return "$out${["Single", "Couple"][n - 1]}";
   }
 
+  int firstPower = highestPowerOf3(n);
+  int firstStep = pow(3, firstPower).toInt();
+  int remainder = n - firstStep;
+  if (remainder == 0) {
+    return "$out${firstPower == 1 ? "Three" : "Holy $firstPower"}";
+  }
+  if (remainder == 1 || remainder == 2) {
+    return "$out${["Unholy", "Sickly"][remainder - 1]} $firstPower";
+  }
+  if (firstPower == 1) {
+    out += "Three";
+  } else {
+    out += "Power $firstPower";
+  }
+  int secondPower = highestPowerOf3(remainder);
+  int secondStep = pow(3, secondPower).toInt();
+  if (secondPower > 0 && remainder >= secondStep) {
+    out += " and ${secondPower == 1 ? "Three" : "Power $secondPower"}";
+    remainder -= secondStep;
+  }
   int threes = remainder ~/ 3;
-  if (threes != 0) {
-    if (threes == 1) {
-      output += " and Three";
-    } else {
-      output += " and $threes Threes";
-    }
-  }
-  switch (remainder % 3) {
-    case 1:
-      output += " and a Single";
-      break;
-    case 2:
-      output += " and a Couple";
-      break;
-    default:
-  }
-  return output;
+  if (threes > 0) out += " and ${threes == 1 ? "Three" : "$threes Threes"}";
+  if (remainder % 3 == 1) out += " and a Single";
+  if (remainder % 3 == 2) out += " and a Couple";
+  return out;
 }

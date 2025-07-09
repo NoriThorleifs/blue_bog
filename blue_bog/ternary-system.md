@@ -16,7 +16,7 @@ If the numbers are more than 2 away from a power of three but the remainder is n
 | ----------- | ----------- |
 | -5 | Negative Sickly 1 |
 | -4 | Negative Unholy 1 |
-| -3 | Three |
+| -3 | Negative Three |
 | -2 | Negative Couple |
 | -1 | Negative Single |
 | 0 | Zero |
