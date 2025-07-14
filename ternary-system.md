@@ -8,8 +8,10 @@ If you have three items, they must each contribute to the whole. It's okay if th
 If you have thirds, they must form a whole. The only way to form their whole must be with only these three thirds.
 
 If you have a lot of the same thing, it is expressed as the lowest power of three equal to or less than the number plus the amount of threes needed to reach it. Numbers that are one or two from being a power of three cannot be formed and are called unholy numbers. 
-If the remainder is able to be expressed 
+If the remainder is able to be expressed as a power of three, the power is added to it and the remainder.
 If the numbers are more than 2 away from a power of three but the remainder is not divisible by 3 are expressed by adding a single or a couple.
+
+
 
 
 | Decimal | Ternary expression |

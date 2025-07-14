@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "e86ec5592bc574d8",
+        "id": "f310b9e6b36d78a0",
         "type": "tabs",
         "children": [
           {
-            "id": "d9270f653a7a047f",
+            "id": "5496166ef6040f7c",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -94,7 +94,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "ternary-system.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +103,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for ternary-system"
+              "title": "Backlinks"
             }
           },
           {
@@ -113,12 +112,11 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "ternary-system.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from ternary-system"
+              "title": "Outgoing links"
             }
           },
           {
@@ -142,13 +140,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "ternary-system.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of ternary-system"
+              "title": "Outline"
             }
           }
         ]
@@ -168,11 +165,14 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "d9270f653a7a047f",
+  "active": "5496166ef6040f7c",
   "lastOpenFiles": [
-    "Welcome.md",
+    "lib/three-thirds/ternary.md",
     "ternary-system.md",
     "explaining-ternary.md",
+    "blue_bog/ternary-system.md",
+    "blue_bog",
+    "Welcome.md",
     "create a link.md",
     "introduciton.md"
   ]
