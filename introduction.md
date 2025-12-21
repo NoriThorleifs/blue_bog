@@ -23,7 +23,7 @@ The fuck do you mean 'translation started'?
 
 The devourers only attack once every generation, and we never know where they're going to strike. Every time, we've made new protections and counter-measures. Every time, they've some new technology that they've developed over those years to blindside us. It looks like this time, the monsters have managed to hack our computer. That would explain the slow pace.
 
-"Congratulations, personnell. You have made first contact with a new species. Please follow the first contact protocol. Message has been sent to galactic command."
+"Congratulations, personnel. You have made first contact with a new species. Please follow the first contact protocol. Message has been sent to galactic command."
 
 I finally managed to get a good focus and tracking on the ship. The probe was now thrusting in the other direction to match the ship's speed and heading. The ship didn't look like it had weapons, and there were lights flashing on the side of it towards the probe in a strange pattern. The thrusters on the ship looked like ion engines, but that would mean that this lazy pace is its top speed. 
 

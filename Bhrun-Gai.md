@@ -1,0 +1,2 @@
+A luscious planet covered in jungle and forest. This world contains some of the galaxy's strangest bugs and the biggest megafauna. This megafauna includes the Bhrun people.
+The massive towers dominate the world by pure size alone.

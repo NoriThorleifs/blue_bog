@@ -1,0 +1,1 @@
+The Center of interstellar tourism was, as the name suggests, the center of interstellar tourism. Nowadays, the space station serves as the main space station for all interstellar discourse regarding intergalactic politics for all species of the galaxy. This space station happens to host the last remaining Havi, known as the Overseer. 
