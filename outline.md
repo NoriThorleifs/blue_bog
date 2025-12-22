@@ -15,11 +15,11 @@ The Havi create a gateway to Kepler-452b due to the possibility of a new minor r
 
 The Havi civil war starts. *Insert reason for civil war here*
 
-The unfortunates, led by the eldest one, decide that they want to create their own gateway without the supervision of the Havi. This creates a gateway between Kyntari and Sol. 
+The unfortunates, led by the eldest one, decide that they want to create their own gateway without the supervision of the Havi. This creates a gateway between Kyndari and Sol. 
 
 During the time when this pipe is open, the unfortunates visit earth and collect biological samples, but they fail to follow all their first visit protocols, leaving behind some technology.
 
-The gateway's pipe collapses. The eldest one decides that the best course of action is to sweep it under the rug and seal the gateway portal in <Unfortunate's home world name>. This leaves Sol with a one way gateway to Hell. This gateway begins to suck matter from Hell before it is naturally sealed by a large demon. The matter ejected from Hell becomes the centaur 10199 Chariklo and Pluto. The gateway is located outside the Kupier belt but is invisible, but the gravitational forces of the other side of the gate are still expressed on the other side. The gateway is known as "planet X" when humans first gain instruments powerful enough to measure the effects it has on celestial bodies around it.
+The gateway's pipe collapses. The eldest one decides that the best course of action is to sweep it under the rug and seal the gateway portal in Kyndari. This leaves Sol with a one way gateway to Hell. This gateway begins to suck matter from Hell before it is naturally sealed by a large demon. The matter ejected from Hell becomes the centaur 10199 Chariklo and Pluto. The gateway is located outside the Kupier belt but is invisible, but the gravitational forces of the other side of the gate are still expressed on the other side. The gateway is known as "planet X" when humans first gain instruments powerful enough to measure the effects it has on celestial bodies around it.
 
 Using the samples collected on earth, the unfortunates help the Havi create the consumers. The Havi do not question where the samples came from.
 
@@ -40,7 +40,7 @@ After a scientific breakthrough, the humans are now able to construct ships and 
 
 The demons realize that they need to get away from the humans, the Demon lords search for ways to get their people to safety while they find a way to resist the human aggressors.
 
-The demon lord Satan breaks the seal on the gateway to Kyntari. The demons invade and grow stronger on this planet. Satan returns to hell and tells the other lords about his victory. This causes the lords of Hell to break their long standing vow to not interfere with the Havi and begin to break the gateway pipes and invade the other dimension's worlds for resources. This causes the gatecrash to happen.
+The demon lord Satan breaks the seal on the gateway to Kyndari. The demons invade and grow stronger on this planet. Satan returns to hell and tells the other lords about his victory. This causes the lords of Hell to break their long standing vow to not interfere with the Havi and begin to break the gateway pipes and invade the other dimension's worlds for resources. This causes the gatecrash to happen.
 
 The gatecrash devastates the entire connected galaxy. The unfortunates lose their cradle world. Multiple gates are destroyed by the Havi to prevent the demons from spreading.
 Multiple systems are left completely isolated by the gatecrash and some pockets are left with only a few systems connected to each other.
@@ -59,7 +59,7 @@ Tension rises in the republic due to inaction regarding the Consumer threat.
 
 The Humans make their way into Satan's domain. Satan wages a brutal last stand against the humans using the materials they had scavenged from the vacuum dimension during the gatecrash.
 Satan is defeated. In order to convince the humans to spare his life, he tells them about the gateways and reveals how the Havi constructed gates and were able to go between the dimensions at will. 
-Humans find the gateway to Kyntari. The demons had long already stripped the world of all materials that they saw as useful, leaving behind the inorganic matter on the world. There they find a map of the gateways prior to the gatecrash. 
+Humans find the gateway to Kyndari. The demons had long already stripped the world of all materials that they saw as useful, leaving behind the inorganic matter on the world. There they find a map of the gateways prior to the gatecrash. 
 
 After learning the existence of the republic, the Hellborn Human Empire decides to play the long con. A ship is constructed based on patterns and technology available during the first expansion of the solar system that is designed for interstellar travel to the nearest theoretically habitable exoplanet. 
 
