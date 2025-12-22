@@ -15,7 +15,7 @@ The Havi create a gateway to Kepler-452b due to the possibility of a new minor r
 
 The Havi civil war starts. *Insert reason for civil war here*
 
-The unfortunates, led by the eldest one, decide that they want to create their own gateway without the supervision of the Havi. This creates a gateway between *Unfortunate's home world name* and Sol. 
+The unfortunates, led by the eldest one, decide that they want to create their own gateway without the supervision of the Havi. This creates a gateway between Kyntari and Sol. 
 
 During the time when this pipe is open, the unfortunates visit earth and collect biological samples, but they fail to follow all their first visit protocols, leaving behind some technology.
 
@@ -40,7 +40,7 @@ After a scientific breakthrough, the humans are now able to construct ships and 
 
 The demons realize that they need to get away from the humans, the Demon lords search for ways to get their people to safety while they find a way to resist the human aggressors.
 
-The demon lord Satan breaks the seal on the gateway to *Unfortunate's home world name*. The demons invade and grow stronger on this planet. Satan returns to hell and tells the other lords about his victory. This causes the lords of Hell to break their long standing vow to not interfere with the Havi and begin to break the gateway pipes and invade the other dimension's worlds for resources. This causes the gatecrash to happen.
+The demon lord Satan breaks the seal on the gateway to Kyntari. The demons invade and grow stronger on this planet. Satan returns to hell and tells the other lords about his victory. This causes the lords of Hell to break their long standing vow to not interfere with the Havi and begin to break the gateway pipes and invade the other dimension's worlds for resources. This causes the gatecrash to happen.
 
 The gatecrash devastates the entire connected galaxy. The unfortunates lose their cradle world. Multiple gates are destroyed by the Havi to prevent the demons from spreading.
 Multiple systems are left completely isolated by the gatecrash and some pockets are left with only a few systems connected to each other.
@@ -53,13 +53,13 @@ Shining-head loses its mind from loneliness and starts sending Consumer strike t
 The republic does its best to rebuild, but the Havi intentionally kept gate building technology away from them and the unfortunates don't want to admit that they were the ones who built all the gateways because of their shame from building the Sol gateway. The Unfortunates still think the gatecrash is their own fault, but the others don't know what caused it. Repairing the gates that were disabled is too risky as nobody even knows if the gatecrash is still an ongoing event.
 
 Consumers start appearing out of nowhere in republic territory and attacking space stations and planets. The minor races have no idea how to handle the situation. 
-The *aggressive race* starts to develop anti-consumer weapons and soldiers. The other minor races see this as a preparation for war in order to take over the rest of the galaxy.
-Multiple races band together to beat *aggressive race* into submission and demilitarize. Two systems are forced to become neutral systems of the republic.
+The Gor starts to develop anti-consumer weapons and soldiers. The other minor races see this as a preparation for war in order to take over the rest of the galaxy.
+Multiple races band together to beat Gor into submission and demilitarize. Two systems are forced to become neutral systems of the republic.
 Tension rises in the republic due to inaction regarding the Consumer threat.
 
 The Humans make their way into Satan's domain. Satan wages a brutal last stand against the humans using the materials they had scavenged from the vacuum dimension during the gatecrash.
 Satan is defeated. In order to convince the humans to spare his life, he tells them about the gateways and reveals how the Havi constructed gates and were able to go between the dimensions at will. 
-Humans find the gateway to *Unfortunate's home world name*. The demons had long already stripped the world of all materials that they saw as useful, leaving behind the inorganic matter on the world. There they find a map of the gateways prior to the gatecrash. 
+Humans find the gateway to Kyntari. The demons had long already stripped the world of all materials that they saw as useful, leaving behind the inorganic matter on the world. There they find a map of the gateways prior to the gatecrash. 
 
 After learning the existence of the republic, the Hellborn Human Empire decides to play the long con. A ship is constructed based on patterns and technology available during the first expansion of the solar system that is designed for interstellar travel to the nearest theoretically habitable exoplanet. 
 
@@ -76,21 +76,21 @@ The codes are as follows:
 
 The observation station in *Havi name for Kepler system* detects an incoming ship headed for them. They first think it's a Consumer attack and raise all alarms. They then realize it's a completely new race that's appeared out of the blue. [[introduction]]
 
-The Tern *name of Tern that makes first contact* physically intercepts the Human colony ship Progenitor and boards it to learn the human language in preparation for the arrival of the emissary.
+The Tern Tjí-li-la-jei physically intercepts the Human colony ship Progenitor and boards it to learn the human language in preparation for the arrival of the emissary.
 
 The emissary warps directly onto the Progenitor to make a formal first contact with the Humans.
 
 The humans make their wishes clear they come in peace and have traveled for 6005 years to this distant planet using sub-light speed the whole way. They want to colonize the planet they came all this way for, and the planet isn't colonized by anyone else.
 
-The Republic begins debating whether or not to allow the humans to settle. This would include annulling the pre-war law that nobody was allowed to settle on the planet so that natural evolution could be observed. The Human representatives and *name of Tern that makes first contact* are brought to the Center for a first contact diplomatic mission. 
+The Republic begins debating whether or not to allow the humans to settle. This would include annulling the pre-war law that nobody was allowed to settle on the planet so that natural evolution could be observed. The Human representatives and Tjí-li-la-jei are brought to the Center for a first contact diplomatic mission. 
 
 When the humans arrive, the Unfortunates avoid all contact with them because they realize that they're from the doomed world that had a one way gate to hell. The eldest one fears that if people find out that they visited their world already, it will lead to the republic figuring out that he caused the gatecrash. 
 The eldest one knows the Human story about their sun blowing up is bullshit, but he can't call them out.
 The humans know the unfortunate ones have visited them before, because the Progenitus database included the alien artifacts that included their insignia. The humans can't confront them about this information because they need the Unfortunates to admit it themselves.
 
-The humans are allowed to set up a temporary residence in *space station where they let humans stay* while the council tries to make a decision [[railing-safety-standards]], but the discussion is constantly being dragged out and delayed. During this time, the Humans integrate freely with other races and become increasingly important to most of the minor races. Their biggest friends are the Tern, but they're friendly with anyone that likes math. [[explaining-ternary]]  [[ternary-system]]
+The humans are allowed to set up a temporary residence in Ochra while the council tries to make a decision [[railing-safety-standards]], but the discussion is constantly being dragged out and delayed. During this time, the Humans integrate freely with other races and become increasingly important to most of the minor races. Their biggest friends are the Tern, but they're friendly with anyone that likes math. [[explaining-ternary]]  [[ternary-system]]
 
-*space station where they let humans stay* is attacked by the Consumers. The Humans are surprisingly effective at killing Consumers. Most of the minor races are now scared of humans as a military power. [[the-helmet]] The overseer sees the potential in using the Humans to clean up the Consumers.
+Ochra is attacked by the Consumers. The Humans are surprisingly effective at killing Consumers. Most of the minor races are now scared of humans as a military power. [[the-helmet]] The overseer sees the potential in using the Humans to clean up the Consumers.
 
 The location of the Consumer main hive in *Original name of Neo Terra* is discovered by the republic. Early scouting missions reveal that the planet is thoroughly infested and guarded by a shipbuilding gantry and several ships.
 
@@ -104,7 +104,7 @@ Humans start to reproduce quickly to prepare for the coming war for the planet t
 Humans begin the war for Neo Terra. A distraction fleet is sent to a neighboring system to lure the Consumer armada away. The main human fleet is able to take over the ship building gantry and ships. Multiple Consumer ships are destroyed in the battle. Space mines are placed all around Neo Terra in preparation for the Consumer armada returning. The armada never returns.
 Humans create their main settlement on Neo Terra in the spot where there are no major hives and only hives that have shallow roots. This is right above the shining-head supercomputer.
 
-A war breaks out between *aggressive race* and *race nobody gives a fuck about* and the humans decide to get involved, sending 5 ships with human soldiers to defend the *race nobody gives a fuck about*'s home world. Nothing happens as the *aggressive race* lose their entire fleet inside the gateway pipe. Nobody's sure what happened, but the radio communication that got through indicates that they saw something that resembled humans.
+A war breaks out between Gor and Bhrun and the humans decide to get involved, sending 5 ships with human soldiers to defend the Bhrun's home world. Nothing happens as the Gor lose their entire fleet inside the gateway pipe. Nobody's sure what happened, but the radio communication that got through indicates that they saw something that resembled humans.
 
 While the 5 ships are on the way back, a Consumer invasion hits *homeworld of the big bois*. The Human military has been fighting Consumers literally their entire lives and are fully prepared to deal with this issue. *big bois* are now scared of the humans after witnessing what kind of damage they can do. including the orbital bombardments and the "Direction Remover" weapon system that is controlled by an AI that the humans made themselves that targets anything that moves and isn't human. The Republic is shocked to see that the weapons technology has advanced so much in Neo Terra and people start realizing that nobody's physically been to Neo Terra to check on their progress or offer help.
 
