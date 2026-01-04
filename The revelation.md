@@ -1,0 +1,1 @@
+As the Tern saw this, everything began to click in place. The Human saw it raise its head in silent contemplation as its form looked as though it were an engine that had been running ragged and gradually began to fire on all cylinders. Not in a roar, but a melodious hum.

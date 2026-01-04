@@ -8,189 +8,7 @@
         "type": "tabs",
         "children": [
           {
-            "id": "5496166ef6040f7c",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "outline.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "outline"
-            }
-          },
-          {
-            "id": "2e39efc1aa1cdf33",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Arrival at Neo Terran exclusion zone.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Arrival at Neo Terran exclusion zone"
-            }
-          },
-          {
-            "id": "70be3644a9f3899f",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Map of the galaxy notes.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Map of the galaxy notes"
-            }
-          },
-          {
-            "id": "ae16cbaf5700bdb7",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "úlamora.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "úlamora"
-            }
-          },
-          {
-            "id": "96f2de1f175439bf",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Zirmai.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Zirmai"
-            }
-          },
-          {
-            "id": "4cd5f77819bfee0e",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Narcillia.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Narcillia"
-            }
-          },
-          {
-            "id": "fb97052909da9808",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Zirmai.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Zirmai"
-            }
-          },
-          {
-            "id": "a96b8db994fae118",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Zirmai.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Zirmai"
-            }
-          },
-          {
-            "id": "9a63b3971aaffc89",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Kyndari.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Kyndari"
-            }
-          },
-          {
-            "id": "79c3a3234dcabaad",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Orcha.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Orcha"
-            }
-          },
-          {
-            "id": "d19dedb764026f80",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Kyndari.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Kyndari"
-            }
-          },
-          {
-            "id": "d59ccabebe8029ca",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Orcha.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Orcha"
-            }
-          },
-          {
-            "id": "983a9dcb84b80e51",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Zirmai.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Zirmai"
-            }
-          },
-          {
-            "id": "ecbe84d62796d8d8",
+            "id": "f42a8921b62ac03e",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -203,8 +21,7 @@
               "title": "The sentient species of the milky way"
             }
           }
-        ],
-        "currentTab": 13
+        ]
       }
     ],
     "direction": "vertical"
@@ -340,6 +157,7 @@
   },
   "left-ribbon": {
     "hiddenItems": {
+      "bases:Create new base": false,
       "switcher:Open quick switcher": false,
       "graph:Open graph view": false,
       "canvas:Create new canvas": false,
@@ -348,29 +166,34 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "ecbe84d62796d8d8",
+  "active": "f42a8921b62ac03e",
   "lastOpenFiles": [
-    "úlamora.md",
-    "the-helmet.md",
+    "Map of the galaxy notes.md",
     "The sentient species of the milky way.md",
+    "The-Overseer.md",
     "The Center.md",
-    "The battle for Bhrun-Gai.md",
-    "ternary-system.md",
-    "Tarsíus.md",
+    "The-Mourner.md",
+    "The revelation.md",
+    "Raid at Orcha station.md",
+    "the-helmet.md",
+    "the.md",
+    "().md",
+    "outline.md",
+    "Raid.md",
     "Orcha.md",
+    "explaining-ternary.md",
+    "ternary-system.md",
+    "introduction.md",
+    "The battle for Bhrun-Gai.md",
+    "README.md",
+    "railing-safety-standards.md",
     "Narcillia.md",
+    "úlamora.md",
+    "Tarsíus.md",
     "Kyndari.md",
     "Bhrun-Gai.md",
     "Zirmai.md",
-    "Map of the galaxy notes.md",
-    "outline.md",
-    "introduction.md",
     "Arrival at Neo Terran exclusion zone.md",
-    "Welcome.md",
-    "lib/three-thirds/ternary.md",
-    "explaining-ternary.md",
-    "blue_bog/ternary-system.md",
-    "blue_bog",
-    "create a link.md"
+    "blue_bog"
   ]
 }

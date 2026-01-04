@@ -90,7 +90,7 @@ The humans know the unfortunate ones have visited them before, because the Proge
 
 The humans are allowed to set up a temporary residence in Ochra while the council tries to make a decision [[railing-safety-standards]], but the discussion is constantly being dragged out and delayed. During this time, the Humans integrate freely with other races and become increasingly important to most of the minor races. Their biggest friends are the Tern, but they're friendly with anyone that likes math. [[explaining-ternary]]  [[ternary-system]]
 
-Ochra is attacked by the Consumers. The Humans are surprisingly effective at killing Consumers. Most of the minor races are now scared of humans as a military power. [[the-helmet]] The overseer sees the potential in using the Humans to clean up the Consumers.
+Ochra is attacked by the Consumers.  [[Raid at Orcha station.md]] The Humans are surprisingly effective at killing Consumers. Most of the minor races are now scared of humans as a military power. [[the-helmet]] The overseer sees the potential in using the Humans to clean up the Consumers.
 
 The location of the Consumer main hive in *Original name of Neo Terra* is discovered by the republic. Early scouting missions reveal that the planet is thoroughly infested and guarded by a shipbuilding gantry and several ships.
 

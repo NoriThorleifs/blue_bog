@@ -1,0 +1,6 @@
+Do not attempt to console it, it does not want your pity or your sob stories that you share in an attempt to relate to it. Just politely ask it for help leaving its realm and it will safely move you out of harm's way.
+
+This unknowable being clutches a planet that orbits a black hole on the last moment before it is absorbed by it. The Mourner is constantly embracing the planet and pulling it away from the brink of destruction, but never pulls it far enough to get out of harm's way.
+
+The secret behind the mourner is that it is the last Havi remaining in Hell. The Havi sacrificed everything to build an experiment that would grant them the technology to build the first gateway. This was a success and allowed them to finally breach into our dimension. This came at the cost of accidentally creating a black hole right next to their home world, which is now known only as the infinite tomb. 
+The Mourner stayed behind as a warning to all who saw it in the future. Messing with infinite power can grant you everything and leave you with nothing at the same time. 
