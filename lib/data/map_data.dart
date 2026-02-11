@@ -29,7 +29,7 @@ const allNodes = [
     id: '1',
     title: 'Node 1',
     subtitle: 'The first node',
-    offset: Offset(400, 400),
+    offset: Offset(300, 100),
     url: '/node/1',
   ),
   NodeData(
@@ -64,7 +64,7 @@ const allNodes = [
     id: '6',
     title: 'Node 6',
     subtitle: 'The sixth node',
-    offset: Offset(1400, 400),
+    offset: Offset(400, 400),
     url: '/node/6',
   ),
 ];
