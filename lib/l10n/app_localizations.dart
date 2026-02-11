@@ -103,12 +103,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hello World!'**
   String get helloWorld;
-
-  /// First contact with the humans
-  ///
-  /// In en, this message translates to:
-  /// **''**
-  String get chapter1;
 }
 
 class _AppLocalizationsDelegate

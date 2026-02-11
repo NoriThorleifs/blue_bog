@@ -10,7 +10,4 @@ class AppLocalizationsIs extends AppLocalizations {
 
   @override
   String get helloWorld => 'Halló heimur!';
-
-  @override
-  String get chapter1 => '';
 }

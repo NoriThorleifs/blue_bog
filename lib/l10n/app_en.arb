@@ -3,11 +3,5 @@
   "helloWorld": "Hello World!",
   "@helloWorld": {
     "description": "The conventional newborn programmer greeting"
-  },
-  "chapter1": "The alarm blares once. That was a soft alarm, something's wrong. Suddenly, the alarm starts blaring louder and continuously. The computer sounds over the translator",
-  "@chapter1": {
-    "description": "First contact with the humans",
-    "context": "",
-    "type": "text"
   }
 }
