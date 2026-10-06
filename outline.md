@@ -67,10 +67,10 @@ A crew is put together consisting entirely of Terran born humans that do not hav
 
 The truth is that the ship and its entire history of trials and tribulations was fabricated and the ship was warped to a point 5 light years away from Kepler-452. The captain was given a series of secret codes to be broadcast while inside a gateway tube to signal the Human Empire to come. 
 The codes are as follows:
-- The humans are accepted by the Republic and have become meaningful allies to them. This can only be used when the humans are granted a planet to settle on.
-- The Republic has decided to eliminate or enslave the humans.
-- The humans are fighting an existential threat that is not the Republic.
-- The Republic is desperate for help and helping them now will give great leverage to the humans.
+- Code Blue: The humans are accepted by the Republic and have become meaningful allies to them. This can only be used when the humans are granted a planet to settle on.
+- Code Red: The Republic has decided to eliminate or enslave the humans.
+- Code Yellow: The humans are fighting an existential threat that is not the Republic.
+- Code Green: The Republic is desparate for help and helping them now will give great leverage to the humans.
 
 20 years later, the opening sequence of the blue bog occurs.
 
@@ -99,14 +99,16 @@ Nobody has the capability to send an army big enough to take the planet without 
 A lot of useless plans and arguments are made. The overseer proposes that the humans be offered ownership of *Original name of Neo Terra* in exchange for them dealing with the Consumers and clearing them out of the world. The Humans accept, despite having absolutely no available ships and no military. The Humans use this as leverage to speed up the decision to give them the settlement on Kepler.
 
 Due to a misunderstanding, the colonists in the progenitor touch down to the surface of Kepler, establishing the first terrestrial human colony. This creates a lot of political debates. There was no misunderstanding, the captain just lost his patience with interstellar politics and knew they would eventually get away with it.
-Humans start to reproduce quickly to prepare for the coming war for the planet they've ambitiously named Neo Terra.
+Humans start to reproduce quickly to prepare for the coming war for the planet they've ambitiously named Neo Terra. The humans fake demographics and keep most of their colony underground on Kepler.
 
 Humans begin the war for Neo Terra. A distraction fleet is sent to a neighboring system to lure the Consumer armada away. The main human fleet is able to take over the ship building gantry and ships. Multiple Consumer ships are destroyed in the battle. Space mines are placed all around Neo Terra in preparation for the Consumer armada returning. The armada never returns.
 Humans create their main settlement on Neo Terra in the spot where there are no major hives and only hives that have shallow roots. This is right above the shining-head supercomputer.
 
-A war breaks out between Gor and Bhrun and the humans decide to get involved, sending 5 ships with human soldiers to defend the Bhrun's home world. Nothing happens as the Gor lose their entire fleet inside the gateway pipe. Nobody's sure what happened, but the radio communication that got through indicates that they saw something that resembled humans.
+A war breaks out between Gor and Bhrun and the humans decide to get involved, sending 5 ships with human soldiers to defend the Bhrun's home world. Nothing happens as the Gor lose their entire fleet inside the gateway pipe. Nobody's sure what happened, but the radio communication that got through indicates that they saw something that resembled humans. This is not revealed at the time, but this is the humans using code green to get the hellborn humans to help out.
 
 While the 5 ships are on the way back, a Consumer invasion hits *homeworld of the big bois*. The Human military has been fighting Consumers literally their entire lives and are fully prepared to deal with this issue. *big bois* are now scared of the humans after witnessing what kind of damage they can do. including the orbital bombardments and the "Direction Remover" weapon system that is controlled by an AI that the humans made themselves that targets anything that moves and isn't human. The Republic is shocked to see that the weapons technology has advanced so much in Neo Terra and people start realizing that nobody's physically been to Neo Terra to check on their progress or offer help.
+
+The humans begin experimenting with a technological theory (that was secretly leaked to them during the code green) that is so insane that there are no rules and regulations against it because no species would be insane enough to try it: "Wrong Warping". This is the act of entering the gateways at an extreme angle and speed so that by the time you're still being integrated into hell by the gate you entered by, you'll already have reached the exit gate and stay within the vacuum dimension.
 
 A Tern captain is showing his Humans some attention and manages to tune into the military training program that all drafted humans in the appropriate ages must watch. He notices that it mentions ignoring radio calls from people that you don't know and to report strange noises immediately. The Consumers aren't capable of imitating human speech or complex mimicry of any kind. They haven't even shown any sign of higher intelligence at all. When presented with this information, the overseer figures out that there must be another Havi on Neo Terra. This Havi must be the reason why the Consumer attacks were happening. 
 The overseer and 5 representatives go on a mission to Neo Terra. 
