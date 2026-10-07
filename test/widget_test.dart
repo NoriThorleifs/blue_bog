@@ -1,30 +1,36 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:blue_bog/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:blue_bog/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('launch a run, resolve the opening and hold position', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(const ProviderScope(child: BlueBogApp()));
+    expect(find.text('Choose your captain'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    await tester.tap(find.text('Bhrun'));
+    await tester.scrollUntilVisible(find.byType(TextField), 200);
+    await tester.enterText(find.byType(TextField), '42');
+    await tester.tap(find.text('Launch as Bhrun captain'));
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.textContaining('TURN 1'), findsOneWidget);
+    expect(find.text('Captain\'s log, turn one'), findsOneWidget);
+
+    await tester.tap(find.text('Welcome them properly'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bhrun-Gai'), findsWidgets);
+    await tester.tap(find.text('Hold position (end turn)'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('TURN 2'), findsOneWidget);
   });
 }
