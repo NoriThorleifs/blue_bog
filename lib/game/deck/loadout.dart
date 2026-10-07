@@ -46,7 +46,9 @@ class Loadout {
   Loadout copy() => Loadout(slots: [...slots], hold: [...hold]);
 
   Iterable<String> get all => [...slots.whereType<String>(), ...hold];
-  int copiesOf(String id) => all.where((c) => c == id).length;
+
+  /// Copies of a card, whatever tags they have picked up.
+  int copiesOf(String id) => all.where((c) => baseId(c) == baseId(id)).length;
 
   Iterable<Equipment> get slotted =>
       slots.whereType<String>().map(equipmentById);
@@ -56,7 +58,9 @@ class Loadout {
       .where((e) => e.kind == CardKind.equipment)
       .fold(0, (t, e) => t + e.hold);
 
-  CombatLoadout get forCombat => CombatLoadout(slots, hold: hold);
+  /// A snapshot for a fight. Copied, so salvage merged in afterwards
+  /// doesn't change the fight's record.
+  CombatLoadout get forCombat => CombatLoadout([...slots], hold: [...hold]);
 
   String? at(CardSpot spot) => switch (spot) {
     SlotSpot(:final index) => slots[index],
@@ -66,13 +70,19 @@ class Loadout {
   /// Adds a card, merging triples. Cargo goes to the hold first, equipment
   /// to a free slot first. Returns what happened, for the log, or null if
   /// there was no room for it.
+  ///
+  /// Tagged and plain copies merge together, and the merged card keeps
+  /// every tag any of the three had picked up.
   List<String>? add(String id, {SlotSpot? preferred}) {
     final card = equipmentById(id);
     final upgraded = upgradeOf(card);
     if (upgraded != null && copiesOf(id) >= 2) {
-      final keep = _removeCopies(id, 2) ?? preferred;
-      final rest = add(upgraded.id, preferred: keep) ?? const <String>[];
-      return ['Three ${card.name} merged into ${upgraded.name}.', ...rest];
+      final (freed, tags) = _removeCopies(id, 2);
+      final next = equipmentById(
+        taggedId(upgraded.id, {...tags, ...addedTags(id)}),
+      );
+      final rest = add(next.id, preferred: freed ?? preferred) ?? const [];
+      return ['Three ${card.name} merged into ${next.name}.', ...rest];
     }
     final cargo = card.kind != CardKind.equipment;
     final holdFree = hold.length < holdCapacity;
@@ -104,21 +114,64 @@ class Loadout {
     return true;
   }
 
-  /// Removes [count] copies of [id], hold first, and returns the first slot
-  /// one was taken from.
-  SlotSpot? _removeCopies(String id, int count) {
+  /// Removes [count] copies of [id], whatever their tags, hold first.
+  /// Returns the first slot one was taken from, and the tags they had
+  /// picked up.
+  (SlotSpot?, Set<CardTag>) _removeCopies(String id, int count) {
+    bool same(String? c) => c != null && baseId(c) == baseId(id);
     SlotSpot? freed;
+    final tags = <CardTag>{};
     for (var n = 0; n < count; n++) {
-      final inHold = hold.indexOf(id);
+      final inHold = hold.indexWhere(same);
       if (inHold >= 0) {
-        hold.removeAt(inHold);
+        tags.addAll(addedTags(hold.removeAt(inHold)));
         continue;
       }
-      final inSlot = slots.indexOf(id);
+      final inSlot = slots.indexWhere(same);
+      tags.addAll(addedTags(slots[inSlot]!));
       slots[inSlot] = null;
       freed ??= SlotSpot(inSlot);
     }
-    return freed;
+    return (freed, tags);
+  }
+
+  /// Whether the card at [from] can be used on the card at [to].
+  bool canUse(CardSpot from, CardSpot to) {
+    final item = at(from);
+    final target = at(to);
+    if (item == null || target == null || from == to) return false;
+    final tag = equipmentById(item).grantsTag;
+    return tag != null && equipmentById(target).canTake(tag);
+  }
+
+  /// Uses up the card at [from], giving its tag to the card at [to]. See
+  /// [Equipment.grantsTag]. Returns false if it can't.
+  bool use(CardSpot from, CardSpot to) {
+    if (!canUse(from, to)) return false;
+    final tag = equipmentById(at(from)!).grantsTag!;
+    _put(to, taggedId(at(to)!, {tag}));
+    takeOut(from);
+    return true;
+  }
+
+  void _put(CardSpot spot, String id) => switch (spot) {
+    SlotSpot(:final index) => slots[index] = id,
+    HoldSpot(:final index) => hold[index] = id,
+  };
+
+  /// Takes whatever is at [spot] off the ship, as when selling it.
+  ///
+  /// Emptying a cargo pod's slot can leave the hold one card over. Then the
+  /// last card in the hold drops into the freed slot, so selling your last
+  /// pod with one crate aboard keeps the crate. Check [holdFits] after.
+  void takeOut(CardSpot spot) {
+    switch (spot) {
+      case SlotSpot(:final index):
+        slots[index] = null;
+        if (hold.length == holdCapacity + 1) slots[index] = hold.removeLast();
+      case HoldSpot(:final index):
+        hold.removeAt(index);
+    }
   }
 
   /// Swaps whatever is at [from] and [to]. Moving onto an empty hold spot

@@ -1,3 +1,16 @@
+/// A label on a card that other cards can look for. The Cursed Orb, say,
+/// wakes every other card tagged Hellish.
+enum CardTag {
+  hellish('Hellish');
+
+  const CardTag(this.label);
+  final String label;
+}
+
+/// Separates the tags a card has picked up from its id: `laser_1#hellish`
+/// is a Laser that has been tagged Hellish.
+const tagSeparator = '#';
+
 /// What a piece of equipment does each time its timer runs out.
 sealed class Action {
   const Action();
@@ -19,6 +32,16 @@ class FireMissile extends Action {
 class TeleportBomb extends Action {
   const TeleportBomb(this.damage);
   final int damage;
+}
+
+/// Hell's own weapons. Passes through shields and drones and needs no
+/// ammo, but every shot burns the ship that fires it for a quarter of the
+/// damage.
+class Hellfire extends Action {
+  const Hellfire(this.damage);
+  final int damage;
+
+  int get recoil => damage ~/ 4;
 }
 
 /// Refills shields to the ship's maximum.
@@ -119,6 +142,11 @@ class Equipment {
     this.hold = 0,
     this.price = 0,
     this.text = '',
+    this.tags = const {},
+    this.awakens,
+    this.headStart = 0,
+    this.grantsTag,
+    this.shopOdds = 1,
   });
 
   final String id;
@@ -158,6 +186,57 @@ class Equipment {
   /// Flavour, or rules that aren't modelled yet.
   final String text;
 
+  /// Labels other cards can look for, like [CardTag.hellish].
+  final Set<CardTag> tags;
+
+  /// At the start of every fight, every other card with this tag fires
+  /// once.
+  final CardTag? awakens;
+
+  /// Every card on the ship starts each fight this far charged, 0 to 1.
+  final double headStart;
+
+  /// Can be used up to give another card this tag.
+  final CardTag? grantsTag;
+
+  /// How likely a shop is to stock this commodity, relative to the others.
+  final double shopOdds;
+
+  bool has(CardTag tag) => tags.contains(tag);
+
+  /// This card with [extra] tags as well, under the id [taggedId].
+  Equipment withTags(Set<CardTag> extra, String taggedId) => Equipment(
+    id: taggedId,
+    name: name,
+    family: family,
+    tier: tier,
+    kind: kind,
+    cooldown: cooldown,
+    action: action,
+    hull: hull,
+    maxShield: maxShield,
+    maxDrones: maxDrones,
+    ammo: ammo,
+    boost: boost,
+    berths: berths,
+    hospital: hospital,
+    hellShielding: hellShielding,
+    fuel: fuel,
+    hold: hold,
+    price: price,
+    text: text,
+    tags: {...tags, ...extra},
+    awakens: awakens,
+    headStart: headStart,
+    grantsTag: grantsTag,
+    shopOdds: shopOdds,
+  );
+
+  /// Whether [tag] can be given to this card: only equipment and supplies
+  /// take tags, and only once.
+  bool canTake(CardTag tag) =>
+      !has(tag) && (kind == CardKind.equipment || kind == CardKind.supplies);
+
   bool get merges =>
       tier.next != null &&
       kind != CardKind.commodity &&
@@ -166,7 +245,8 @@ class Equipment {
   int? get damage => switch (action) {
     FireLaser(:final damage) ||
     FireMissile(:final damage) ||
-    TeleportBomb(:final damage) => damage,
+    TeleportBomb(:final damage) ||
+    Hellfire(:final damage) => damage,
     _ => null,
   };
 
@@ -178,6 +258,9 @@ class Equipment {
         FireLaser(:final damage) => 'Laser: $damage damage$every',
         FireMissile(:final damage) => 'Missile: $damage damage$every',
         TeleportBomb(:final damage) => 'Teleport bomb: $damage damage$every',
+        Hellfire(:final damage, :final recoil) =>
+          'Hellfire: $damage damage$every, through shields and drones. '
+              'Burns your own hull for $recoil',
         ChargeShields() => 'Charges shields$every',
         BuildDrone() => 'Builds a drone$every',
         null => '',
@@ -197,6 +280,13 @@ class Equipment {
         '+${(hellShielding * 100).round()}% Hell shielding',
       if (fuel != 0) '+$fuel fuel capacity',
       if (hold != 0) '+$hold cargo hold',
+      if (headStart != 0)
+        'Every card starts each fight ${(headStart * 100).round()}% charged',
+      if (awakens case final tag?)
+        'At the start of each fight, every other ${tag.label} card fires '
+            'once',
+      if (grantsTag case final tag?)
+        'Use it on a card to tag that card ${tag.label}. Used up',
     ].where((line) => line.isNotEmpty).toList();
   }
 
@@ -227,6 +317,7 @@ class EquipmentFamily {
     this.fuel = 0,
     this.hold = 0,
     this.price = 30,
+    this.tags = const {},
   });
 
   final String id;
@@ -252,6 +343,7 @@ class EquipmentFamily {
   final int fuel;
   final int hold;
   final int price;
+  final Set<CardTag> tags;
 
   List<Equipment> get tiers => [
     for (final tier in [Tier.basic, Tier.upgraded, Tier.superior])
@@ -269,6 +361,7 @@ class EquipmentFamily {
       FireLaser(:final damage) => FireLaser(damage * x),
       FireMissile(:final damage) => FireMissile(damage * x),
       TeleportBomb(:final damage) => TeleportBomb(damage * x),
+      Hellfire(:final damage) => Hellfire(damage * x),
       final other => other,
     },
     hull: hull * x,
@@ -289,5 +382,6 @@ class EquipmentFamily {
     fuel: fuel * x,
     hold: hold * x,
     price: price * x,
+    tags: tags,
   );
 }

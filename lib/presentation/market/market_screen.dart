@@ -88,12 +88,7 @@ class MarketScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  GridView.count(
-                    crossAxisCount: 3,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
+                  CardGrid(
                     children: [
                       for (final (i, offer) in market.offers.indexed)
                         CardTile(
@@ -231,26 +226,25 @@ class _SellTab extends ConsumerWidget {
     if (spots.isEmpty) {
       return const Center(child: Text('You have nothing to sell.'));
     }
-    return GridView.count(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
-      crossAxisCount: 3,
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
-      children: [
-        for (final spot in spots)
-          if (run.market!.buys(equipmentById(run.loadout.at(spot)!)))
-            CardTile(
-              id: run.loadout.at(spot),
-              footer: '${engine.sellValue(run, run.loadout.at(spot)!)} cr',
-              onTap: () => _sell(context, ref, spot),
-            )
-          else
-            CardTile(
-              id: run.loadout.at(spot),
-              dimmed: true,
-              footer: 'Not bought here',
-            ),
-      ],
+      child: CardGrid(
+        children: [
+          for (final spot in spots)
+            if (run.market!.buys(equipmentById(run.loadout.at(spot)!)))
+              CardTile(
+                id: run.loadout.at(spot),
+                footer: '${engine.sellValue(run, run.loadout.at(spot)!)} cr',
+                onTap: () => _sell(context, ref, spot),
+              )
+            else
+              CardTile(
+                id: run.loadout.at(spot),
+                dimmed: true,
+                footer: 'Not bought here',
+              ),
+        ],
+      ),
     );
   }
 
@@ -277,13 +271,7 @@ class _SellTab extends ConsumerWidget {
       ),
     );
     if (sure != true || !context.mounted) return;
-    final without = run.loadout.copy();
-    switch (spot) {
-      case SlotSpot(:final index):
-        without.slots[index] = null;
-      case HoldSpot(:final index):
-        without.hold.removeAt(index);
-    }
+    final without = run.loadout.copy()..takeOut(spot);
     final lost = engine.crewLostWith(run, without);
     if (lost > 0 && !await confirmCrewLoss(context, lost, run.humans.count)) {
       return;

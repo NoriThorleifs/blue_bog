@@ -112,7 +112,7 @@ class _GalaxyViewState extends State<GalaxyView> {
               child: Stack(
                 children: [
                   Image.asset(
-                    'assets/galaxy.jpg',
+                    'assets/galaxy_ai_generated.jpg',
                     width: mapSize,
                     height: mapSize,
                     fit: BoxFit.cover,

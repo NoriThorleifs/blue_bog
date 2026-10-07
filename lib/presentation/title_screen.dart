@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../app/brawl_controller.dart';
 import '../app/run_controller.dart';
 import '../app/theme.dart';
 import '../game/captain/species.dart';
@@ -32,6 +33,13 @@ class _TitleScreenState extends ConsumerState<TitleScreen> {
     context.go('/map');
   }
 
+  void _brawl() {
+    ref
+        .read(brawlProvider.notifier)
+        .start(_species, seed: int.tryParse(_seed.text.trim()));
+    context.go('/brawl');
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
@@ -42,13 +50,28 @@ class _TitleScreenState extends ConsumerState<TitleScreen> {
           top: false,
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: FilledButton.icon(
-              onPressed: _launch,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-              ),
-              icon: const Icon(Icons.rocket_launch),
-              label: Text('Launch as ${_species.name} captain'),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FilledButton.icon(
+                  onPressed: _launch,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                  icon: const Icon(Icons.rocket_launch),
+                  label: Text('Launch as ${_species.name} captain'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: _brawl,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(44),
+                  ),
+                  icon: const Icon(Icons.sports_mma_outlined),
+                  label: const Text('Brawl: just trade and fight'),
+                ),
+              ],
             ),
           ),
         ),
@@ -56,7 +79,7 @@ class _TitleScreenState extends ConsumerState<TitleScreen> {
       body: DecoratedBox(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/galaxy.jpg'),
+            image: AssetImage('assets/galaxy_ai_generated.jpg'),
             fit: BoxFit.cover,
             opacity: 0.25,
           ),

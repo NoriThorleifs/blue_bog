@@ -385,13 +385,7 @@ class GameEngine {
     if (!state.market!.buys(equipmentById(id))) {
       throw IllegalMove('Trading posts only buy supplies and commodities');
     }
-    final loadout = state.loadout.copy();
-    switch (spot) {
-      case SlotSpot(:final index):
-        loadout.slots[index] = null;
-      case HoldSpot(:final index):
-        loadout.hold.removeAt(index);
-    }
+    final loadout = state.loadout.copy()..takeOut(spot);
     if (!loadout.holdFits) {
       throw IllegalMove('The hold can\'t fit everything without that pod');
     }

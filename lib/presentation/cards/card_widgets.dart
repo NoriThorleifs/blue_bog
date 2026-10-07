@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
@@ -13,6 +15,7 @@ Color cardColour(Equipment card) => switch (card.kind) {
     FireLaser() => const Color(0xFF4DE1FF),
     FireMissile() => const Color(0xFFFFA24D),
     TeleportBomb() => const Color(0xFFFF4D3D),
+    Hellfire() => hellishRed,
     ChargeShields() => const Color(0xFF7FA8FF),
     BuildDrone() => const Color(0xFF5CFF8A),
     null when card.boost != null => const Color(0xFFFFE066),
@@ -31,6 +34,7 @@ class CardTile extends StatelessWidget {
     this.selected = false,
     this.onTap,
     this.footer,
+    this.note,
     this.dimmed = false,
   });
 
@@ -40,6 +44,9 @@ class CardTile extends StatelessWidget {
 
   /// A line under the name, like a price.
   final String? footer;
+
+  /// A small muted line under the footer, like a median price.
+  final String? note;
 
   /// For cards that do nothing where they are, like equipment in the hold.
   final bool dimmed;
@@ -79,34 +86,34 @@ class CardTile extends StatelessWidget {
               ? const SizedBox.expand()
               : Opacity(
                   opacity: dimmed ? 0.55 : 1,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Stack(
+                    fit: StackFit.expand,
                     children: [
-                      TierMarks(card: card, colour: colour),
-                      const SizedBox(height: 2),
-                      Flexible(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 80),
-                            child: Text(
-                              card.name,
-                              textAlign: TextAlign.center,
-                              maxLines: 3,
-                              style: const TextStyle(fontSize: 11, height: 1.1),
-                            ),
+                      CardArt(card: card),
+                      // A dark fade at the bottom keeps the name readable
+                      // over the art.
+                      const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            stops: [0.45, 1],
+                            colors: [Colors.transparent, Color(0xCC000000)],
                           ),
                         ),
                       ),
-                      if (footer != null)
-                        Text(
-                          footer!,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: colour,
-                            fontWeight: FontWeight.w600,
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Three tier marks are wider than a slot in the
+                          // combat replay.
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: TierMarks(card: card, colour: colour),
                           ),
-                        ),
+                          Flexible(child: _label(card, colour)),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -114,34 +121,95 @@ class CardTile extends StatelessWidget {
       ),
     );
   }
+
+  Widget _label(Equipment card, Color colour) => FittedBox(
+    fit: BoxFit.scaleDown,
+    alignment: Alignment.bottomCenter,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 80),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            card.name,
+            textAlign: TextAlign.center,
+            maxLines: 3,
+            style: const TextStyle(
+              fontSize: 11,
+              height: 1.1,
+              shadows: [Shadow(blurRadius: 3)],
+            ),
+          ),
+          if (footer != null)
+            Text(
+              footer!,
+              style: TextStyle(
+                fontSize: 10,
+                color: colour,
+                fontWeight: FontWeight.w600,
+                shadows: const [Shadow(blurRadius: 3)],
+              ),
+            ),
+          if (note != null)
+            Text(
+              note!,
+              style: const TextStyle(fontSize: 9, color: Palette.muted),
+            ),
+        ],
+      ),
+    ),
+  );
 }
 
-/// One triangle per tier; a star for unique cards; a crate for cargo.
+/// A card's placeholder art from `assets/cards/`, one image per family.
+/// Made by `tool/generate_card_icons.py`.
+class CardArt extends StatelessWidget {
+  const CardArt({super.key, required this.card});
+  final Equipment card;
+
+  @override
+  Widget build(BuildContext context) => Image.asset(
+    'assets/cards/${card.family}_ai_generated.png',
+    fit: BoxFit.contain,
+    filterQuality: FilterQuality.medium,
+    errorBuilder: (context, error, stack) => const SizedBox.shrink(),
+  );
+}
+
+/// One triangle per tier; a star for unique cards; a crate for cargo; a
+/// flame for cards tagged Hellish.
 class TierMarks extends StatelessWidget {
   const TierMarks({super.key, required this.card, required this.colour});
   final Equipment card;
   final Color colour;
 
   @override
-  Widget build(BuildContext context) {
-    if (card.kind == CardKind.commodity) {
-      return Icon(Icons.inventory_2_outlined, size: 12, color: colour);
-    }
-    if (card.kind == CardKind.mission) {
-      return Icon(Icons.local_shipping_outlined, size: 12, color: colour);
-    }
-    if (card.tier == Tier.unique) {
-      return Icon(Icons.auto_awesome, size: 12, color: colour);
-    }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var i = 0; i <= card.tier.index; i++)
-          Icon(Icons.change_history, size: 10, color: colour),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      ...switch (card) {
+        Equipment(kind: CardKind.commodity) => [
+          Icon(Icons.inventory_2_outlined, size: 12, color: colour),
+        ],
+        Equipment(kind: CardKind.mission) => [
+          Icon(Icons.local_shipping_outlined, size: 12, color: colour),
+        ],
+        Equipment(tier: Tier.unique) => [
+          Icon(Icons.auto_awesome, size: 12, color: colour),
+        ],
+        _ => [
+          for (var i = 0; i <= card.tier.index; i++)
+            Icon(Icons.change_history, size: 10, color: colour),
+        ],
+      },
+      if (card.has(CardTag.hellish))
+        const Icon(Icons.local_fire_department, size: 11, color: hellishRed),
+    ],
+  );
 }
+
+/// Marks cards tagged Hellish.
+const hellishRed = Color(0xFFFF3D7F);
 
 /// Everything about one card.
 class CardDetails extends StatelessWidget {
@@ -149,6 +217,7 @@ class CardDetails extends StatelessWidget {
     super.key,
     required this.id,
     this.copies,
+    this.median,
     this.actions = const [],
   });
 
@@ -156,6 +225,9 @@ class CardDetails extends StatelessWidget {
 
   /// How many the captain owns, for merge progress.
   final int? copies;
+
+  /// What the card usually costs across the galaxy.
+  final int? median;
   final List<Widget> actions;
 
   @override
@@ -182,6 +254,24 @@ class CardDetails extends StatelessWidget {
               CardKind.mission => 'Mission cargo',
               _ => card.tier.label,
             }, style: text.labelMedium?.copyWith(color: cardColour(card))),
+            if (card.tags.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                children: [
+                  for (final tag in card.tags)
+                    Chip(
+                      avatar: const Icon(
+                        Icons.sell_outlined,
+                        size: 14,
+                        color: hellishRed,
+                      ),
+                      label: Text(tag.label),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 8),
             for (final line in card.describe()) Text(line),
             Text(where, style: text.bodySmall?.copyWith(color: Palette.muted)),
@@ -191,6 +281,10 @@ class CardDetails extends StatelessWidget {
                 card.text,
                 style: text.bodySmall?.copyWith(fontStyle: FontStyle.italic),
               ),
+            ],
+            if (median != null) ...[
+              const SizedBox(height: 6),
+              Text('Galactic median price: $median cr'),
             ],
             if (upgrade != null && copies != null) ...[
               const SizedBox(height: 6),
@@ -208,4 +302,91 @@ class CardDetails extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A slow pulsing glow around [child], to show it can be picked.
+class GlowPulse extends StatefulWidget {
+  const GlowPulse({super.key, required this.child});
+  final Widget child;
+
+  @override
+  State<GlowPulse> createState() => _GlowPulseState();
+}
+
+class _GlowPulseState extends State<GlowPulse>
+    with SingleTickerProviderStateMixin {
+  late final _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _pulse,
+    child: widget.child,
+    builder: (context, child) {
+      final t = Curves.easeInOut.transform(_pulse.value);
+      return DecoratedBox(
+        position: DecorationPosition.foreground,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.125 + 0.3 * t),
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.05 + 0.175 * t),
+              blurRadius: 6 + 10 * t,
+              spreadRadius: 1 + 2 * t,
+            ),
+          ],
+        ),
+        child: child,
+      );
+    },
+  );
+}
+
+/// Cards laid out in a grid of fixed-size squares. A wider screen gets more
+/// columns rather than bigger squares. Below three columns' worth of width
+/// the squares shrink instead, so a narrow phone still gets three.
+class CardGrid extends StatelessWidget {
+  const CardGrid({super.key, required this.children});
+  final List<Widget> children;
+
+  /// A shop square, in logical pixels.
+  static const tile = 120.0;
+  static const gap = 8.0;
+  static const minColumns = 3;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, box) {
+      final columns = max(
+        minColumns,
+        ((box.maxWidth + gap) / (tile + gap)).floor(),
+      );
+      final size = min(tile, (box.maxWidth - gap * (columns - 1)) / columns);
+      return Center(
+        child: SizedBox(
+          width: columns * size + gap * (columns - 1),
+          child: Wrap(
+            spacing: gap,
+            runSpacing: gap,
+            children: [
+              for (final child in children)
+                SizedBox.square(dimension: size, child: child),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }

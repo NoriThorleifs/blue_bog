@@ -198,6 +198,66 @@ class ShipStatsBar extends StatelessWidget {
   }
 }
 
+/// A card in a slot or the hold, optionally draggable to another spot.
+class SpotTile extends StatelessWidget {
+  const SpotTile({
+    super.key,
+    required this.spot,
+    required this.id,
+    required this.size,
+    this.selected = false,
+    this.dimmed = false,
+    this.onTap,
+    this.onDrop,
+    this.glowing = false,
+  });
+
+  final CardSpot spot;
+  final String? id;
+  final double size;
+  final bool selected;
+  final bool dimmed;
+  final ValueChanged<CardSpot>? onTap;
+  final void Function(CardSpot from, CardSpot to)? onDrop;
+
+  /// Pulses to show the card can be picked.
+  final bool glowing;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget tile({bool hovered = false}) {
+      final card = CardTile(
+        id: id,
+        selected: selected || hovered,
+        dimmed: dimmed,
+        onTap: onTap == null || id == null ? null : () => onTap!(spot),
+      );
+      return glowing ? GlowPulse(child: card) : card;
+    }
+
+    final drop = onDrop;
+    if (drop == null) return tile();
+    return DragTarget<CardSpot>(
+      onWillAcceptWithDetails: (details) => details.data != spot,
+      onAcceptWithDetails: (details) => drop(details.data, spot),
+      builder: (context, hovering, _) => id == null
+          ? tile(hovered: hovering.isNotEmpty)
+          : Draggable<CardSpot>(
+              data: spot,
+              feedback: SizedBox.square(
+                dimension: size * 1.15,
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: CardTile(id: id, selected: true),
+                ),
+              ),
+              childWhenDragging: const CardTile(id: null),
+              child: tile(hovered: hovering.isNotEmpty),
+            ),
+    );
+  }
+}
+
 /// Nine slots: three small triangles (top, bottom left, bottom right) that
 /// make one big triangle.
 class Triforce extends StatelessWidget {
@@ -206,12 +266,21 @@ class Triforce extends StatelessWidget {
     required this.slots,
     this.selected,
     this.onTap,
+    this.onDrop,
+    this.glowing = const {},
     this.overlay,
   });
 
   final List<String?> slots;
   final CardSpot? selected;
   final ValueChanged<CardSpot>? onTap;
+
+  /// If set, cards can be dragged between spots: called with where the
+  /// card came from and where it was dropped.
+  final void Function(CardSpot from, CardSpot to)? onDrop;
+
+  /// Slots to highlight with a pulsing glow.
+  final Set<CardSpot> glowing;
 
   /// Something to draw over each slot, like a charge timer in combat.
   final Widget Function(int slot)? overlay;
@@ -250,16 +319,20 @@ class Triforce extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      CardTile(
+                      SpotTile(
+                        spot: SlotSpot(i),
                         id: slots[i],
+                        size: tile,
                         selected: selected == SlotSpot(i),
                         dimmed:
                             slots[i] != null &&
-                            const {
-                              CardKind.commodity,
-                              CardKind.mission,
+                            !const {
+                              CardKind.equipment,
+                              CardKind.supplies,
                             }.contains(equipmentById(slots[i]!).kind),
-                        onTap: onTap == null ? null : () => onTap!(SlotSpot(i)),
+                        onTap: onTap,
+                        onDrop: onDrop,
+                        glowing: glowing.contains(SlotSpot(i)),
                       ),
                       if (overlay != null) IgnorePointer(child: overlay!(i)),
                     ],

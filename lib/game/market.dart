@@ -38,21 +38,23 @@ class Market {
   /// A market has 27 offers: 18 pieces of equipment and 9 commodities. A
   /// trading post has 9: 4 supplies and 5 commodities. Equipment is mostly
   /// basic, sometimes upgraded, rarely super, priced 0.8–1.2 of its value.
-  /// Commodities sell at this shop's going rate.
+  /// Commodities sell at this shop's going rate. [stock] limits which
+  /// equipment families can turn up.
   static Market roll(
     String systemId,
     GameRng rng,
     int galaxySeed, {
     int rerolls = 0,
     bool tradingPost = false,
+    List<EquipmentFamily> stock = equipmentFamilies,
   }) {
     final offers = <Offer>[];
     final families = tradingPost
         ? [
-            for (final f in equipmentFamilies)
+            for (final f in stock)
               if (f.kind == CardKind.supplies) f,
           ]
-        : equipmentFamilies;
+        : stock;
     for (var i = 0; i < (tradingPost ? 4 : 18); i++) {
       final family = rng.pick(families);
       final roll = rng.nextDouble();
@@ -63,7 +65,7 @@ class Market {
       );
     }
     for (var i = 0; i < (tradingPost ? 5 : 9); i++) {
-      final good = rng.pick(commodities);
+      final good = rng.weighted(commodities, (g) => g.shopOdds)!;
       offers.add(Offer(good.id, commodityPrice(good, systemId, galaxySeed)));
     }
     return Market(systemId, offers, rerolls: rerolls, tradingPost: tradingPost);
@@ -93,6 +95,20 @@ int commodityPrice(Equipment good, String systemId, int galaxySeed) {
   }
   final multiplier = 0.6 + (GameRng(h).nextDouble());
   return (good.price * multiplier).round().clamp(1, 1 << 20);
+}
+
+/// What a card usually costs across [markets]: the median of their going
+/// rates, so a captain can tell a bargain from a rip-off. Equipment and
+/// supplies are offered around their base value everywhere.
+int medianPrice(Equipment card, Iterable<String> markets, int galaxySeed) {
+  if (card.kind != CardKind.commodity) return card.price;
+  final prices = [for (final m in markets) commodityPrice(card, m, galaxySeed)]
+    ..sort();
+  if (prices.isEmpty) return card.price;
+  final mid = prices.length ~/ 2;
+  return prices.length.isOdd
+      ? prices[mid]
+      : ((prices[mid - 1] + prices[mid]) / 2).round();
 }
 
 /// What a market pays for a card: half the value of equipment and

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/brawl_controller.dart';
 import '../../app/run_controller.dart';
 import '../../app/theme.dart';
 import '../../game/combat/catalog.dart';
@@ -16,7 +17,10 @@ import '../deck/deck_screen.dart';
 /// happening: both ships' cards charging and firing, hull, shields and
 /// drones, and a running log.
 class CombatScreen extends ConsumerStatefulWidget {
-  const CombatScreen({super.key});
+  const CombatScreen({super.key, this.brawl = false});
+
+  /// Replays the brawl's last fight instead of the run's.
+  final bool brawl;
 
   @override
   ConsumerState<CombatScreen> createState() => _CombatScreenState();
@@ -42,12 +46,22 @@ class _CombatScreenState extends ConsumerState<CombatScreen>
   }
 
   void _onTick(Duration elapsed) {
-    final record = ref.read(runProvider)?.lastCombat;
+    final record = _record();
     if (record == null) return;
     final dt = (elapsed - _last).inMicroseconds / 1e6;
     _last = elapsed;
     setState(() => _time = min(record.result.seconds, _time + dt * _speed));
     if (_time >= record.result.seconds) _ticker.stop();
+  }
+
+  FightRecord? _record({bool watch = false}) {
+    final brawl = widget.brawl;
+    return switch (watch) {
+      true when brawl => ref.watch(brawlProvider)?.lastCombat,
+      true => ref.watch(runProvider)?.lastCombat,
+      false when brawl => ref.read(brawlProvider)?.lastCombat,
+      false => ref.read(runProvider)?.lastCombat,
+    };
   }
 
   void _skip(FightRecord record) {
@@ -57,7 +71,7 @@ class _CombatScreenState extends ConsumerState<CombatScreen>
 
   @override
   Widget build(BuildContext context) {
-    final record = ref.watch(runProvider)?.lastCombat;
+    final record = _record(watch: true);
     if (record == null) return const Scaffold();
     final result = record.result;
     final now = result.at(_time);
@@ -309,6 +323,9 @@ class _Log extends StatelessWidget {
             '$who: $card is shot down by a drone',
           CombatEventKind.teleportHit =>
             '$who: $card goes off inside the hull for ${e.value}',
+          CombatEventKind.hellfireHit =>
+            '$who: $card burns through for ${e.value}, and scorches its own '
+                'hull',
           CombatEventKind.shieldsCharged => '$who: shields at ${e.value}',
           CombatEventKind.droneBuilt => '$who: drone launched',
           CombatEventKind.outOfAmmo => '$who: $card is out of ammunition',

@@ -1,4 +1,4 @@
-"""Generates assets/galaxy.jpg, a top-down Milky Way for the galaxy map.
+"""Generates assets/galaxy_ai_generated.jpg, a top-down Milky Way for the galaxy map.
 
 The image uses the same coordinate space as the game (2970 px square, core at
 (1486, 1400), Sol at (1488, 2308)), so map positions line up with it.
@@ -144,6 +144,6 @@ light += stars[..., None] * np.array([0.9, 0.93, 1.0])
 image = background + (1 - np.exp(-1.15 * light))
 image = np.clip(image, 0, 1) ** 0.95
 Image.fromarray((image * 255).astype(np.uint8)).save(
-    "assets/galaxy.jpg", quality=88, optimize=True
+    "assets/galaxy_ai_generated.jpg", quality=88, optimize=True
 )
-print("wrote assets/galaxy.jpg")
+print("wrote assets/galaxy_ai_generated.jpg")

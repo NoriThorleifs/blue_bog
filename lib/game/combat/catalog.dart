@@ -124,6 +124,56 @@ const equipmentFamilies = [
   ),
 ];
 
+/// Cards made in Hell. Never sold at a station: they come from demon
+/// wrecks and Hell's own events.
+const hellFamilies = [
+  EquipmentFamily(
+    id: 'brimstone',
+    names: ['Brandy Burner', 'Brimstone Projector', 'Hellmouth Cannon'],
+    cooldown: 5,
+    action: Hellfire(24),
+    price: 45,
+    tags: {CardTag.hellish},
+  ),
+  EquipmentFamily(
+    id: 'teeth',
+    names: ['Loose Teeth', 'Tooth Lattice', 'The Chewer\'s Grin'],
+    cooldown: 3,
+    action: FireLaser(14),
+    price: 35,
+    tags: {CardTag.hellish},
+  ),
+  EquipmentFamily(
+    id: 'brandy_mist',
+    names: ['Brandy Mist', 'Fume Bank', 'The Drowning Sea'],
+    cooldown: 7,
+    action: ChargeShields(),
+    maxShield: 40,
+    price: 40,
+    tags: {CardTag.hellish},
+  ),
+  EquipmentFamily(
+    id: 'metal_flesh',
+    names: ['Metal Flesh Graft', 'Living Hull', 'Behemoth Hide'],
+    hull: 140,
+    price: 40,
+    tags: {CardTag.hellish},
+  ),
+];
+
+/// The Mourner's only gift.
+const cursedOrb = Equipment(
+  id: 'cursed_orb',
+  name: 'Cursed Orb',
+  family: 'cursed_orb',
+  tier: Tier.unique,
+  awakens: CardTag.hellish,
+  price: 400,
+  text:
+      'A tiny black hole inside a greasy black stone ball. Heavier than it '
+      'should be, and warm.',
+);
+
 /// Trade goods. Each card is one crate; prices vary from market to market.
 const commodities = [
   Equipment(
@@ -183,6 +233,9 @@ const commodities = [
     tier: Tier.basic,
     kind: CardKind.commodity,
     price: 60,
+    grantsTag: CardTag.hellish,
+    // Rare in shops: most of it comes out of Hell.
+    shopOdds: 0.1,
     text: 'Distilled from things that live in Hell. Do not ask which.',
   ),
   Equipment(
@@ -244,7 +297,9 @@ const mournerCards = [
     name: 'The Backwards Clock',
     family: 'mourner_backwards_clock',
     tier: Tier.unique,
-    boost: ChargeBoost(BoostScope.ship, 20),
+    boost: ChargeBoost(BoostScope.ship, 30),
+    headStart: 0.5,
+    tags: {CardTag.hellish},
     price: 400,
     text: 'Everything happens a little before it should.',
   ),
@@ -267,10 +322,43 @@ final equipmentCatalog = <String, Equipment>{
   for (final e in commodities) e.id: e,
   for (final e in missionCargo) e.id: e,
   for (final e in mournerCards) e.id: e,
+  for (final family in hellFamilies)
+    for (final e in family.tiers) e.id: e,
+  cursedOrb.id: cursedOrb,
 };
 
-Equipment equipmentById(String id) =>
-    equipmentCatalog[id] ?? (throw ArgumentError('Unknown equipment $id'));
+final _tagged = <String, Equipment>{};
+
+/// A card by id. Ids with tags after [tagSeparator] are tagged copies.
+Equipment equipmentById(String id) {
+  if (id.contains(tagSeparator)) {
+    return _tagged[id] ??= equipmentById(
+      baseId(id),
+    ).withTags(addedTags(id), id);
+  }
+  return equipmentCatalog[id] ?? (throw ArgumentError('Unknown equipment $id'));
+}
+
+/// The id without any tags the card has picked up.
+String baseId(String id) => id.split(tagSeparator).first;
+
+/// Tags a card has picked up, beyond the ones it was made with.
+Set<CardTag> addedTags(String id) => {
+  for (final name in id.split(tagSeparator).skip(1))
+    CardTag.values.byName(name),
+};
+
+/// The id of [id] with [tags] added. Tags the card was made with aren't
+/// written into the id.
+String taggedId(String id, Set<CardTag> tags) {
+  final added = {...addedTags(id), ...tags}
+    ..removeAll(equipmentById(baseId(id)).tags);
+  return [
+    baseId(id),
+    for (final tag in CardTag.values)
+      if (added.contains(tag)) tag.name,
+  ].join(tagSeparator);
+}
 
 /// The upgraded version of a card, if it has one.
 Equipment? upgradeOf(Equipment e) {
@@ -367,6 +455,47 @@ final act1Enemies = [
       ],
       hold: ['missile_crate_2', 'feedstock_1'],
     ),
+  ),
+];
+
+/// Demons, weakest first. Only met in Hell.
+final demons = [
+  EnemyTemplate(
+    'Tooth swarm',
+    300,
+    CombatLoadout.of(['teeth_1', 'teeth_1', 'teeth_1']),
+  ),
+  EnemyTemplate(
+    'Brandy leech',
+    450,
+    CombatLoadout.of([
+      'brimstone_1',
+      'brimstone_1',
+      'brandy_mist_1',
+      'metal_flesh_1',
+    ]),
+  ),
+  EnemyTemplate(
+    'Metal-flesh behemoth',
+    800,
+    CombatLoadout.of([
+      'brimstone_1',
+      'brimstone_1',
+      'teeth_2',
+      'metal_flesh_1',
+      'metal_flesh_1',
+    ]),
+  ),
+  EnemyTemplate(
+    'Herald of a demon lord',
+    1200,
+    CombatLoadout.of([
+      'brimstone_2',
+      'teeth_2',
+      'teeth_1',
+      'brandy_mist_2',
+      'metal_flesh_2',
+    ]),
   ),
 ];
 

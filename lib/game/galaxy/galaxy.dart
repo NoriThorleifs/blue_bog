@@ -1,6 +1,6 @@
 import 'dart:math';
 
-/// Size of `assets/galaxy.jpg` in pixels. All system positions use this
+/// Size of `assets/galaxy_ai_generated.jpg` in pixels. All system positions use this
 /// coordinate space.
 const double mapSize = 2970;
 

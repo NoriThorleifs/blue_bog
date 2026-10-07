@@ -49,6 +49,9 @@ enum CombatEventKind {
   missileHit,
   missileIntercepted,
   teleportHit,
+
+  /// Value is the damage dealt; the firing ship takes a quarter of it.
+  hellfireHit,
   shieldsCharged,
   droneBuilt,
   outOfAmmo,
@@ -151,10 +154,20 @@ CombatResult fight(Combatant a, Combatant b, {bool tractorBeam = false}) {
     [for (final s in sides) s.shield],
     [for (final s in sides) s.drones],
   );
+  // Cards like the Cursed Orb wake every other card with a tag before the
+  // first tick.
+  final opening = [
+    for (var s = 0; s < 2; s++)
+      for (final slot in sides[s].awakened()) (s, slot),
+  ];
+  opening.sort((x, y) => _order(sides[x.$1], x.$2) - _order(sides[y.$1], y.$2));
+  for (final (s, slot) in opening) {
+    sides[s].fire(slot, sides[1 - s], 0, s, events);
+  }
   final snapshots = [snap(0)];
   const limit = combatTimeLimit * 10;
   var tick = 0;
-  while (tractorBeam || tick < limit) {
+  while ((tractorBeam || tick < limit) && sides.every((s) => s.hull > 0)) {
     tick++;
     final firing = [
       for (var s = 0; s < 2; s++)
@@ -209,8 +222,27 @@ class _Side {
       e.ammo.forEach((k, v) => ammo[k] = (ammo[k] ?? 0) + v);
     }
     cooldowns = [for (var i = 0; i < 9; i++) _cooldownTicks(i)];
-    timers = [...cooldowns];
+    final headStart = all.fold(0.0, (t, e) => max(t, e.headStart));
+    timers = [
+      for (final c in cooldowns)
+        c == null ? null : max(1, (c * (1 - headStart)).round()),
+    ];
   }
+
+  /// Slots that fire at the very start: every card with a tag that
+  /// another slotted card [Equipment.awakens].
+  List<int> awakened() => [
+    for (var i = 0; i < 9; i++)
+      if (gear[i] case final e? when e.action != null)
+        if (_awakeners(i).any(e.has)) i,
+  ];
+
+  /// Tags woken by every slotted card except the one in [slot].
+  Iterable<CardTag> _awakeners(int slot) => [
+    for (var j = 0; j < 9; j++)
+      if (j != slot)
+        if (gear[j]?.awakens case final tag?) tag,
+  ];
 
   final List<Equipment?> gear;
   int hull;
@@ -303,6 +335,10 @@ class _Side {
         }
         enemy.hull -= damage;
         note(CombatEventKind.teleportHit, damage);
+      case Hellfire(:final damage, :final recoil):
+        enemy.hull -= damage;
+        hull -= recoil;
+        note(CombatEventKind.hellfireHit, damage);
       case ChargeShields():
         shield = maxShield;
         note(CombatEventKind.shieldsCharged, shield);

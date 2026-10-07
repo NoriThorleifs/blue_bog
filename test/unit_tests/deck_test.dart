@@ -183,6 +183,32 @@ void main() {
       expect(after.credits, s.credits + 15);
     });
 
+    test(
+      'selling the last pod drops the one crate in the hold into its slot',
+      () {
+        final s = _atOrcha();
+        final pod = s.loadout.slots.indexOf('cargo_pod_1');
+        expect(s.loadout.hold, ['feedstock_1']);
+        final after = engine.sell(s, SlotSpot(pod));
+        expect(after.loadout.slots[pod], 'feedstock_1');
+        expect(after.loadout.hold, isEmpty);
+        expect(after.credits, s.credits + 10);
+      },
+    );
+
+    test(
+      'selling a pod is still refused if more than one card would spill',
+      () {
+        final s = _atOrcha();
+        s.loadout.hold.add('goods_grain');
+        final pod = s.loadout.slots.indexOf('cargo_pod_1');
+        expect(
+          () => engine.sell(s, SlotSpot(pod)),
+          throwsA(isA<IllegalMove>()),
+        );
+      },
+    );
+
     test('commodity prices differ between markets but not between visits', () {
       final grain = equipmentById('goods_grain');
       final prices = {
