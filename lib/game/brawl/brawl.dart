@@ -51,6 +51,16 @@ final brawlFamilies = [
 bool _allowed(String id) =>
     !brawlExcludedFamilies.contains(equipmentById(id).family);
 
+/// The cards a species starts a brawl with: its ship's cards and hold,
+/// minus anything left out of brawl mode.
+List<String> brawlStartingCards(Species species) => [
+  for (final id in [
+    ...species.ship.startingCards,
+    ...species.ship.startingHold,
+  ])
+    if (_allowed(id)) id,
+];
+
 /// Act 1 enemy tiers by fight number, then the dreadnought, scaled up by
 /// act every four fights after that.
 const _schedule = [0, 1, 2, 2, 3, 3, 4, 4, 5, 5];
@@ -174,11 +184,8 @@ class BrawlEngine {
 
   BrawlState start(Species species, {required int seed}) {
     final loadout = Loadout();
-    for (final id in [
-      ...species.ship.startingCards,
-      ...species.ship.startingHold,
-    ]) {
-      if (_allowed(id)) loadout.add(id);
+    for (final id in brawlStartingCards(species)) {
+      loadout.add(id);
     }
     final rng = GameRng(seed ^ 0xB4A71);
     final station = rng.pick(brawlStations.keys.toList());

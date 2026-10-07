@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../app/brawl_controller.dart';
 import '../app/run_controller.dart';
 import '../app/theme.dart';
+import '../game/brawl/brawl.dart';
 import '../game/captain/species.dart';
 import '../game/combat/catalog.dart';
 import 'cards/card_widgets.dart';
@@ -26,7 +27,7 @@ class _TitleScreenState extends ConsumerState<TitleScreen> {
     super.dispose();
   }
 
-  void _launch() {
+  void _story() {
     ref
         .read(runProvider.notifier)
         .start(_species, seed: int.tryParse(_seed.text.trim()));
@@ -55,7 +56,7 @@ class _TitleScreenState extends ConsumerState<TitleScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 FilledButton.icon(
-                  onPressed: _launch,
+                  onPressed: _brawl,
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                   ),
@@ -64,12 +65,12 @@ class _TitleScreenState extends ConsumerState<TitleScreen> {
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
-                  onPressed: _brawl,
+                  onPressed: _story,
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(44),
                   ),
-                  icon: const Icon(Icons.sports_mma_outlined),
-                  label: const Text('Brawl: just trade and fight'),
+                  icon: const Icon(Icons.auto_stories_outlined),
+                  label: const Text('Story mode: the full campaign'),
                 ),
               ],
             ),
@@ -197,16 +198,17 @@ class _SpeciesCard extends StatelessWidget {
                 style: text.bodySmall?.copyWith(color: Palette.muted),
               ),
               const SizedBox(height: 8),
-              _Stat(Icons.groups_outlined, 'Humans', species.startingHumans),
+              _Stat(
+                Icons.toll_outlined,
+                'Credits',
+                species.startingCredits + BrawlEngine.startingBonus,
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
                 children: [
-                  for (final id in [
-                    ...ship.startingCards,
-                    ...ship.startingHold,
-                  ])
+                  for (final id in brawlStartingCards(species))
                     Chip(
                       label: Text(equipmentById(id).name),
                       labelStyle: text.labelSmall,

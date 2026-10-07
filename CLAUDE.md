@@ -62,7 +62,7 @@ flutter run -d emulator-5554              # the author's test device
   - `content.dart`: wiring, endings, code effects.
 - `lib/game/combat/`: the equipment model (`equipment.dart`), the card catalog, enemy templates and starter loadouts (`catalog.dart`), and the tick-based fight simulator (`combat.dart`).
 - `lib/game/deck/loadout.dart`: nine triforce slots (0–2 top, 3–5 bottom left, 6–8 bottom right), the hold, merging (three of a card make the next tier: ×1, ×3, ×9), and ship stats.
-- `lib/game/brawl/`: brawl mode, a test of combat and commerce alone (title screen button). `brawl.dart` is the engine and state, `brawl_events.dart` the departure and Hell events. Humans, bunks, hospitals, Hell shielding and fuel tanks are left out of it.
+- `lib/game/brawl/`: brawl mode, the default mode (the title screen's main launch button; story mode is the secondary button). Combat and commerce alone. `brawl.dart` is the engine and state, `brawl_events.dart` the departure and Hell events. Humans, bunks, hospitals, Hell shielding and fuel tanks are left out of it.
 - `lib/game/market.dart`: markets (27 offers plus a shipyard) and trading posts (9 offers, supplies and commodities only), commodity prices.
 - `lib/game/galaxy/`: the generator (enforces the lore map rules and readable layouts), territories and borders.
 - `lib/game/faction.dart`: major and minor factions and starting control.

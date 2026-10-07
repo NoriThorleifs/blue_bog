@@ -48,7 +48,7 @@ enum Species {
   ),
   al(
     name: 'Ál',
-    traits: 'Curious, horny, aquatic',
+    traits: 'Curious, adventurous, aquatic',
     blurb:
         'Tentacled explorers from Úlamora who have survived by poking and '
         'prodding their way through everything.',
