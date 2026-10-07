@@ -76,6 +76,16 @@ class LogEntry {
   final String text;
 }
 
+/// Cargo the captain has agreed to carry somewhere.
+class Delivery {
+  const Delivery(this.cardId, this.to, this.reward);
+  final String cardId;
+
+  /// Destination system id.
+  final String to;
+  final int reward;
+}
+
 /// An event waiting for the player. Once a choice is made, [result] holds
 /// the outcome text until the player continues.
 class PendingEvent {
@@ -121,6 +131,7 @@ class RunState {
     this.pending,
     this.market,
     this.lastCombat,
+    List<Delivery>? deliveries,
     List<LogEntry>? log,
     this.ending,
   }) : visited = visited ?? {location},
@@ -130,7 +141,8 @@ class RunState {
        seenEvents = seenEvents ?? {},
 
        eventQueue = eventQueue ?? [],
-       log = log ?? [];
+       log = log ?? [],
+       deliveries = deliveries ?? [];
 
   final Galaxy galaxy;
   final Species species;
@@ -188,6 +200,9 @@ class RunState {
 
   /// The most recent fight, for the combat screen.
   FightRecord? lastCombat;
+
+  /// Cargo the captain has agreed to deliver.
+  List<Delivery> deliveries;
   List<LogEntry> log;
   Ending? ending;
 
@@ -252,6 +267,7 @@ class RunState {
     pending: pending,
     market: market,
     lastCombat: lastCombat,
+    deliveries: [...deliveries],
     log: [...log],
     ending: ending,
   );

@@ -4,6 +4,7 @@ import 'dart:math';
 import 'captain/species.dart';
 import 'combat/catalog.dart';
 import 'combat/combat.dart';
+import 'combat/equipment.dart';
 import 'deck/loadout.dart';
 import 'faction.dart';
 import 'galaxy/galaxy.dart';
@@ -62,8 +63,7 @@ class Route {
   final Gateway? gateway;
   bool get isSublight => gateway == null;
 
-  /// A gateway jump burns 1 fuel. A sublight burn burns 2, however long.
-  int get fuel => isSublight ? 2 : 1;
+  int get fuel => isSublight ? sublightFuelCost : gatewayFuelCost;
 }
 
 /// Thrown when the UI asks for something the rules don't allow.
@@ -784,6 +784,31 @@ class GameEngine {
         if (s.humans.count > 0 && t.rng.chance(chance)) {
           s.flags.add(Flag.hellbornAgentAboard);
         }
+      case StartDelivery():
+        _startDelivery(t, effect, text);
+      case CompleteDeliveries(:final paid):
+        for (final d in s.deliveries.where((d) => d.to == s.location)) {
+          if (!s.loadout.remove(d.cardId) || !paid) continue;
+          s.credits += d.reward;
+          text.write('\n\nDelivered. Paid ${d.reward} credits.');
+          t.log(LogKind.ship, 'Delivered cargo for ${d.reward} credits.');
+        }
+        s.deliveries.removeWhere((d) => d.to == s.location);
+      case SellCommodity(:final markup):
+        final goods = [
+          for (final id in s.cards)
+            if (equipmentById(id).kind == CardKind.commodity) id,
+        ];
+        if (goods.isEmpty) break;
+        int value(String id) =>
+            commodityPrice(equipmentById(id), s.location, s.galaxy.seed);
+        goods.sort((a, b) => value(b).compareTo(value(a)));
+        final price = (value(goods.first) * markup).round();
+        s.loadout.remove(goods.first);
+        s.credits += price;
+        text.write(
+          '\n\nSold ${equipmentById(goods.first).name} for $price credits.',
+        );
       case GrantCard(:final pool):
         _grantCard(t, pool, text);
       case ClaimTagged(:final tag, :final faction):
@@ -911,10 +936,60 @@ class GameEngine {
     );
   }
 
+  void _startDelivery(_Turn t, StartDelivery d, StringBuffer text) {
+    final s = t.s;
+    // Known stations within two working jumps.
+    final reach = <String, int>{s.location: 0};
+    final queue = Queue.of([s.location]);
+    while (queue.isNotEmpty) {
+      final id = queue.removeFirst();
+      if (reach[id]! >= 2) continue;
+      for (final g in s.galaxy.gatewaysOf(id)) {
+        final next = g.other(id);
+        if (s.isGatewayActive(g) && !reach.containsKey(next)) {
+          reach[next] = reach[id]! + 1;
+          queue.add(next);
+        }
+      }
+    }
+    final options = [
+      for (final id in reach.keys)
+        if (id != s.location &&
+            s.revealed.contains(id) &&
+            s.galaxy[id].tags.contains(Tag.station))
+          id,
+    ];
+    final favoured = d.prefer != null && (d.preferWhen?.test(s) ?? true);
+    final to = t.rng.weighted(
+      options,
+      (id) => favoured && id == d.prefer ? 12.0 : 1.0,
+    );
+    if (to == null) {
+      text.write('\n\nThere\'s nowhere nearby to take it, so you pass.');
+      return;
+    }
+    if (s.loadout.add(d.cardId) == null) {
+      text.write('\n\nThere\'s no room aboard for it, so you pass.');
+      return;
+    }
+    s.deliveries.add(Delivery(d.cardId, to, d.reward));
+    text.write(
+      '\n\nDeliver the ${equipmentById(d.cardId).name} to '
+      '${s.nameOf(to)} for ${d.reward} credits.',
+    );
+    t.log(LogKind.ship, 'Took on cargo for ${s.nameOf(to)}.');
+  }
+
   void _grantCard(_Turn t, String pool, StringBuffer text) {
     final s = t.s;
     final options = switch (pool) {
       'salvage' => basicEquipment,
+      'commodity' => commodities,
+      'supplies' => [
+        for (final e in basicEquipment)
+          if (e.kind == CardKind.supplies) e,
+      ],
+      _ when equipmentCatalog.containsKey(pool) => [equipmentById(pool)],
       'mourner' => [
         for (final c in mournerCards)
           if (!s.cards.contains(c.id)) c,

@@ -195,6 +195,18 @@ const commodities = [
   ),
 ];
 
+/// Cargo the captain has been paid to deliver.
+const missionCargo = [
+  Equipment(
+    id: 'parcel_sealed',
+    name: 'Sealed Crate',
+    family: 'parcel_sealed',
+    tier: Tier.basic,
+    kind: CardKind.mission,
+    text: 'Somebody paid well for nobody to ask what\'s inside.',
+  ),
+];
+
 /// Unique cards the Mourner grants to those who ask it politely.
 const mournerCards = [
   Equipment(
@@ -253,6 +265,7 @@ final equipmentCatalog = <String, Equipment>{
   for (final family in equipmentFamilies)
     for (final e in family.tiers) e.id: e,
   for (final e in commodities) e.id: e,
+  for (final e in missionCargo) e.id: e,
   for (final e in mournerCards) e.id: e,
 };
 

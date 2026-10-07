@@ -1,5 +1,6 @@
 import 'package:blue_bog/game/captain/species.dart';
 import 'package:blue_bog/game/content/content.dart';
+import 'package:blue_bog/game/combat/catalog.dart';
 import 'package:blue_bog/game/combat/combat.dart';
 import 'package:blue_bog/game/deck/loadout.dart';
 import 'package:blue_bog/game/engine.dart';
@@ -237,6 +238,86 @@ void main() {
       expect(after.has(Flag.shiningHeadDead), isTrue);
       expect(after.control[Sys.neoTerra], Faction.colonists);
       expect(after.has(Flag.overseerGone), isFalse);
+    });
+  });
+
+  group('never stuck', () {
+    final engine = GameEngine(storyContent);
+
+    test('stranded on a sublight lane with 1 fuel, the Fuel Rats come', () {
+      final s = engine.newRun(Species.al, seed: 5).clone()
+        ..pending = null
+        ..eventQueue.clear()
+        ..location = Sys.ulaval
+        ..revealed.addAll([Sys.ulaval, Sys.ulamora])
+        ..fuel = 1
+        ..credits = 0;
+      expect(const Stranded().test(s), isTrue);
+      expect(engine.hold(s).pending?.eventId, 'fuel_rats_stranded');
+    });
+
+    test(
+      'everywhere has at least three repeatable things to do when holding',
+      () {
+        final base = engine.newRun(Species.tern, seed: 3).clone()
+          ..pending = null
+          ..credits = 0
+          ..fuel = 0
+          ..humans = const HumanResources(count: 3, loyalty: 50, drift: 0);
+        base.revealed.addAll(base.galaxy.systems.keys);
+        for (final id in base.galaxy.systems.keys) {
+          final s = base.clone()..location = id;
+          final options = storyContent.events.where(
+            (e) =>
+                e.triggers.contains(Trigger.hold) &&
+                !e.once &&
+                (e.condition?.test(s) ?? true),
+          );
+          expect(options.length, greaterThanOrEqualTo(3), reason: id);
+          final earns = options.where(
+            (e) => e.choices.any(
+              (c) =>
+                  (c.condition?.test(s) ?? true) &&
+                  c.outcomes.any(
+                    (o) => o.effects.any(
+                      (x) =>
+                          (x is Credits && x.amount > 0) ||
+                          (x is Fuel && x.amount > 0),
+                    ),
+                  ),
+            ),
+          );
+          expect(earns, isNotEmpty, reason: '$id has no way to earn anything');
+        }
+      },
+    );
+
+    test('every card an event can give exists', () {
+      const pools = {'salvage', 'commodity', 'supplies', 'mourner'};
+      Iterable<Effect> all(Iterable<Effect> effects) sync* {
+        for (final e in effects) {
+          yield e;
+          if (e case Combat(:final win, :final lose)) {
+            yield* all([...win, ...lose]);
+          }
+        }
+      }
+
+      for (final e in storyContent.events) {
+        for (final c in e.choices) {
+          for (final o in c.outcomes) {
+            for (final x in all(o.effects)) {
+              if (x case GrantCard(:final pool)) {
+                expect(
+                  pools.contains(pool) || equipmentCatalog.containsKey(pool),
+                  isTrue,
+                  reason: '${e.id}: $pool',
+                );
+              }
+            }
+          }
+        }
+      }
     });
   });
 }

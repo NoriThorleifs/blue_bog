@@ -283,4 +283,66 @@ void main() {
       );
     });
   });
+
+  group('courier jobs', () {
+    // Tern start at the Center, one jump from Orcha Station.
+    RunState courierAtCenter(int seed) =>
+        _dismiss(engine.newRun(Species.tern, seed: seed)).clone()
+          ..pending = const PendingEvent('courier_job');
+
+    test('before the raid, the crate nearly always goes to Orcha', () {
+      var toOrcha = 0;
+      for (var seed = 0; seed < 40; seed++) {
+        final s = engine.choose(courierAtCenter(seed), 0);
+        expect(s.deliveries, hasLength(1));
+        expect(s.cards, contains('parcel_sealed'));
+        if (s.deliveries.single.to == Sys.orcha) toOrcha++;
+      }
+      expect(toOrcha, greaterThan(32));
+    });
+
+    test('after the raid, it goes anywhere nearby', () {
+      var toOrcha = 0;
+      for (var seed = 0; seed < 40; seed++) {
+        final start = courierAtCenter(seed)..flags.add(Flag.orchaRaid);
+        if (engine.choose(start, 0).deliveries.single.to == Sys.orcha) {
+          toOrcha++;
+        }
+      }
+      expect(toOrcha, lessThan(32));
+    });
+
+    test('delivering pays, and mission cargo cannot be sold', () {
+      var s = engine.acknowledge(engine.choose(courierAtCenter(1), 0));
+      final to = s.deliveries.single.to;
+      final market = Market.roll(Sys.orcha, GameRng(1), 1);
+      expect(market.buys(equipmentById('parcel_sealed')), isFalse);
+
+      s = s.clone()
+        ..location = to
+        ..pending = const PendingEvent('parcel_delivered');
+      final credits = s.credits;
+      final after = engine.choose(s, 0);
+      expect(after.credits, credits + 45);
+      expect(after.cards, isNot(contains('parcel_sealed')));
+      expect(after.deliveries, isEmpty);
+    });
+
+    test('opening the crate to find eggs loses the fee', () {
+      var s = engine.acknowledge(engine.choose(courierAtCenter(1), 0));
+      s = s.clone()..location = s.deliveries.single.to;
+      for (var seed = 0; seed < 30; seed++) {
+        final attempt = s.clone()
+          ..rngState = seed
+          ..pending = const PendingEvent('parcel_delivered');
+        final after = engine.choose(attempt, 1);
+        if (after.eventQueue.contains('roach_hatchling')) {
+          expect(after.credits, s.credits);
+          expect(after.deliveries, isEmpty);
+          return;
+        }
+      }
+      fail('never found eggs');
+    });
+  });
 }

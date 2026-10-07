@@ -7,6 +7,7 @@ import '../../game/combat/equipment.dart';
 /// Colour for a card's family, so cards of a kind read as a kind.
 Color cardColour(Equipment card) => switch (card.kind) {
   CardKind.commodity => const Color(0xFFD9B98C),
+  CardKind.mission => const Color(0xFFFFFFFF),
   CardKind.supplies => const Color(0xFFA7B4C2),
   CardKind.equipment => switch (card.action) {
     FireLaser() => const Color(0xFF4DE1FF),
@@ -126,6 +127,9 @@ class TierMarks extends StatelessWidget {
     if (card.kind == CardKind.commodity) {
       return Icon(Icons.inventory_2_outlined, size: 12, color: colour);
     }
+    if (card.kind == CardKind.mission) {
+      return Icon(Icons.local_shipping_outlined, size: 12, color: colour);
+    }
     if (card.tier == Tier.unique) {
       return Icon(Icons.auto_awesome, size: 12, color: colour);
     }
@@ -163,6 +167,7 @@ class CardDetails extends StatelessWidget {
       CardKind.equipment => 'Works in a slot.',
       CardKind.supplies => 'Works from a slot or the hold.',
       CardKind.commodity => 'Trade goods. Worth more at some markets.',
+      CardKind.mission => 'Cargo you\'ve been paid to deliver. Can\'t be sold.',
     };
     return Card(
       child: Padding(
@@ -172,10 +177,11 @@ class CardDetails extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(card.name, style: text.titleLarge),
-            Text(
-              card.kind == CardKind.commodity ? 'Commodity' : card.tier.label,
-              style: text.labelMedium?.copyWith(color: cardColour(card)),
-            ),
+            Text(switch (card.kind) {
+              CardKind.commodity => 'Commodity',
+              CardKind.mission => 'Mission cargo',
+              _ => card.tier.label,
+            }, style: text.labelMedium?.copyWith(color: cardColour(card))),
             const SizedBox(height: 8),
             for (final line in card.describe()) Text(line),
             Text(where, style: text.bodySmall?.copyWith(color: Palette.muted)),

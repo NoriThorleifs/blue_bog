@@ -226,7 +226,8 @@ final factionEvents = <GameEvent>[
     always: true,
     once: false,
     text:
-        'Your tanks are dry. A human tender is already pulling alongside, '
+        'You don\'t have the fuel to go anywhere. A human tender is already '
+        'pulling alongside, '
         'as if they\'d been waiting. "Fuel Rats. Out of fuel in the middle '
         'of nowhere? Embarrassing. We can fix that. It\'ll cost you."',
     choices: _ratChoices,
@@ -287,7 +288,7 @@ final factionEvents = <GameEvent>[
     always: true,
     once: false,
     text:
-        'Your tanks are dry and the Fuel Rats aren\'t coming. There is a '
+        'There isn\'t enough fuel to go anywhere, and the Fuel Rats aren\'t coming. There is a '
         'wreck drifting a few thousand kilometres off.',
     choices: [
       Choice.simple(
@@ -489,12 +490,8 @@ final factionEvents = <GameEvent>[
   ),
 ];
 
-/// Out of fuel, somewhere you can't buy any.
-const _strandedHere = AllOf([
-  NotInHell(),
-  FuelBelow(1),
-  Not(AllOf([AtTag(Tag.station), CreditsAtLeast(2)])),
-]);
+/// Not enough fuel for any route out, somewhere you can't buy any.
+const _strandedHere = Stranded();
 
 const _stranded = AllOf([_strandedHere, NoFlag(Flag.fuelRatsEnemy)]);
 

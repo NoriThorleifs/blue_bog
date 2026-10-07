@@ -1,4 +1,9 @@
+import 'dart:math';
+
 import '../captain/species.dart';
+import '../combat/catalog.dart';
+import '../combat/equipment.dart';
+import '../galaxy/galaxy.dart';
 import '../faction.dart';
 import '../run_state.dart';
 
@@ -104,6 +109,53 @@ class AtDeadGateway extends Condition {
   bool test(RunState s) =>
       !s.inHell &&
       s.galaxy.gatewaysOf(s.location).any((g) => !s.isGatewayActive(g));
+}
+
+/// The ship can't afford any route out of here, and can't buy fuel here
+/// either.
+class Stranded extends Condition {
+  const Stranded();
+  @override
+  bool test(RunState s) {
+    if (s.inHell) return false;
+    final here = s.location;
+    final costs = [
+      for (final g in s.galaxy.gatewaysOf(here))
+        if (s.isGatewayActive(g)) gatewayFuelCost,
+      for (final l in s.galaxy.lanesOf(here))
+        if (s.revealed.contains(l.other(here))) sublightFuelCost,
+    ];
+    if (costs.isEmpty) return false;
+    final cheapest = costs.reduce(min);
+    if (s.fuel >= cheapest) return false;
+    final canBuy =
+        s.here.tags.contains(Tag.station) && s.credits >= cheapest - s.fuel;
+    return !canBuy;
+  }
+}
+
+/// Cargo is due here.
+class DeliveryHere extends Condition {
+  const DeliveryHere();
+  @override
+  bool test(RunState s) =>
+      !s.inHell && s.deliveries.any((d) => d.to == s.location);
+}
+
+/// The captain is carrying cargo for [systemId].
+class DeliveryTo extends Condition {
+  const DeliveryTo(this.systemId);
+  final String systemId;
+  @override
+  bool test(RunState s) => s.deliveries.any((d) => d.to == systemId);
+}
+
+/// The ship carries at least one card of this kind.
+class HasCardKind extends Condition {
+  const HasCardKind(this.kind);
+  final CardKind kind;
+  @override
+  bool test(RunState s) => s.cards.any((id) => equipmentById(id).kind == kind);
 }
 
 /// The current system is controlled by [faction].
@@ -374,8 +426,33 @@ class MaybeAgent extends Effect {
   final double chance;
 }
 
-/// Gives the captain a card from [pool]: `salvage` for a random basic card,
-/// or a name in `cardPools`. Unique pools never repeat a card.
+/// Takes on [cardId] to deliver to a known station within two jumps, for
+/// [reward] credits. If [preferWhen] holds and [prefer] is in reach, it's
+/// almost always the destination.
+class StartDelivery extends Effect {
+  const StartDelivery(this.cardId, this.reward, {this.prefer, this.preferWhen});
+  final String cardId;
+  final int reward;
+  final String? prefer;
+  final Condition? preferWhen;
+}
+
+/// Hands over everything due here, and collects payment if [paid].
+class CompleteDeliveries extends Effect {
+  const CompleteDeliveries({this.paid = true});
+  final bool paid;
+}
+
+/// Sells the most valuable commodity aboard at this system's going rate
+/// times [markup]. Nothing happens if there's no cargo.
+class SellCommodity extends Effect {
+  const SellCommodity(this.markup);
+  final double markup;
+}
+
+/// Gives the captain a card: `salvage` for a random basic piece of
+/// equipment, `commodity` or `supplies` for one of those, `mourner` for a
+/// unique gift, or a card id for that exact card.
 class GrantCard extends Effect {
   const GrantCard(this.pool);
   final String pool;

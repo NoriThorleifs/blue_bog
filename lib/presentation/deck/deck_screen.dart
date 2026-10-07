@@ -255,7 +255,10 @@ class Triforce extends StatelessWidget {
                         selected: selected == SlotSpot(i),
                         dimmed:
                             slots[i] != null &&
-                            equipmentById(slots[i]!).kind == CardKind.commodity,
+                            const {
+                              CardKind.commodity,
+                              CardKind.mission,
+                            }.contains(equipmentById(slots[i]!).kind),
                         onTap: onTap == null ? null : () => onTap!(SlotSpot(i)),
                       ),
                       if (overlay != null) IgnorePointer(child: overlay!(i)),

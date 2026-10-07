@@ -91,6 +91,12 @@ class Gateway {
       x.compareTo(y) < 0 ? '$x|$y' : '$y|$x';
 }
 
+/// Fuel burned by a gateway jump.
+const gatewayFuelCost = 1;
+
+/// Fuel burned by a sublight burn, however long it takes.
+const sublightFuelCost = 2;
+
 /// A route that can only be flown at sublight speed. Takes several turns.
 class SublightLane {
   SublightLane(String a, String b, {required this.turns})

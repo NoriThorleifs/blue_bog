@@ -78,7 +78,9 @@ class Market {
 
   /// Whether this shop will buy [card]. Trading posts only take supplies
   /// and commodities.
-  bool buys(Equipment card) => !tradingPost || card.kind != CardKind.equipment;
+  bool buys(Equipment card) =>
+      card.kind != CardKind.mission &&
+      (!tradingPost || card.kind != CardKind.equipment);
 }
 
 /// A commodity's price at a given market: 0.6–1.6 of its base value, fixed

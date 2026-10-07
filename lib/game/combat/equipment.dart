@@ -92,6 +92,9 @@ enum CardKind {
 
   /// Trade goods. Do nothing; worth money at the right market.
   commodity,
+
+  /// Something you've been paid to carry somewhere. Can't be sold.
+  mission,
 }
 
 /// A card: equipment, supplies or a commodity.
@@ -155,7 +158,10 @@ class Equipment {
   /// Flavour, or rules that aren't modelled yet.
   final String text;
 
-  bool get merges => tier.next != null && kind != CardKind.commodity;
+  bool get merges =>
+      tier.next != null &&
+      kind != CardKind.commodity &&
+      kind != CardKind.mission;
 
   int? get damage => switch (action) {
     FireLaser(:final damage) ||

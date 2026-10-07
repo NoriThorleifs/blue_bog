@@ -6,13 +6,14 @@ import '../faction.dart';
 import '../story/rules.dart';
 import 'beats.dart';
 import 'events_core.dart';
+import 'events_everyday.dart';
 import 'events_factions.dart';
 import 'faction_beats.dart';
 import 'events_galaxy.dart';
 
 /// All written content, bundled for the engine.
 final storyContent = StoryContent(
-  events: [...coreEvents, ...galaxyEvents, ...factionEvents],
+  events: [...coreEvents, ...galaxyEvents, ...factionEvents, ...everydayEvents],
   beats: [...storyBeats, ...factionBeats],
   openingEvent: 'opening',
   hellEntryEvent: 'hell_breach',

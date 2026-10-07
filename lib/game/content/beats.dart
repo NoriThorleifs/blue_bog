@@ -17,6 +17,8 @@ final storyBeats = <StoryBeat>[
     condition: const AllOf([TurnAtLeast(3), NoFlag(Flag.orchaRaid)]),
     chance: 0.2,
     deadline: 6,
+    // A courier crate bound for Orcha holds the raid off until it arrives.
+    modifiers: const [(DeliveryTo(Sys.orcha), 0.15), (AtSystem(Sys.orcha), 3)],
     effects: const [
       SetFlag(Flag.orchaRaid),
       AddCounter(Counter.consumerThreat, 1),
