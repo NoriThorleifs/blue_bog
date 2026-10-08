@@ -34,6 +34,11 @@ class BrawlController extends Notifier<BrawlState?> {
   String? repair() => _attempt(_engine.repair);
   String? upgradeHull() => _attempt(_engine.upgradeHull);
   String? launch() => _attempt(_engine.launch);
+  String? dealTwentySeven(int stake) =>
+      _attempt((s) => _engine.dealTwentySeven(s, stake));
+  String? takeTile(int index) => _attempt((s) => _engine.takeTile(s, index));
+  String? keepCounting() => _attempt(_engine.keepCounting);
+  String? walkAway() => _attempt(_engine.walkAway);
   String? spinRoulette(RouletteBet bet) =>
       _attempt((s) => _engine.spinRoulette(s, bet));
   String? choose(int index) => _attempt((s) => _engine.choose(s, index));

@@ -77,9 +77,11 @@ void main() {
     );
   });
 
-  test('every station runs roulette for now', () {
+  test('human stations run roulette, and the rest run 27', () {
     expect(stationGames.keys.toSet(), brawlStations.keys.toSet());
-    expect(stationGames.values.toSet(), {GamblingGame.roulette});
+    expect(stationGames['orcha'], GamblingGame.roulette);
+    expect(stationGames['kepler'], GamblingGame.roulette);
+    expect(stationGames['ulaval'], GamblingGame.al);
   });
 
   test('the ball always comes to rest in the pocket the engine chose', () {

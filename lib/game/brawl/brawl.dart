@@ -6,6 +6,7 @@ import '../combat/combat.dart';
 import '../deck/loadout.dart';
 import '../engine.dart' show IllegalMove;
 import '../gambling/roulette.dart';
+import '../gambling/twenty_seven.dart';
 import '../market.dart';
 import '../rng.dart';
 import 'brawl_events.dart';
@@ -43,17 +44,20 @@ const brawlStations = {
 enum GamblingGame {
   roulette('Roulette'),
   gor('Gor gambling hall'),
-  al('Ál gambling pool');
+  al('27');
 
   const GamblingGame(this.label);
   final String label;
 }
 
-/// Every station runs roulette for now. The Gor and Ál games are
-/// placeholders until their rules are decided; assign them here per
-/// station when they're ready.
+/// The games are run in Galactic Republic stations. Most Republic
+/// cultures count in threes, thanks to the Tern; the humans, still on base
+/// ten, brought roulette. For now the human stations run roulette and
+/// every other station runs 27, the Ál game, until the Gor game exists.
+const _humanStations = {'orcha', 'kepler'};
 final stationGames = {
-  for (final id in brawlStations.keys) id: GamblingGame.roulette,
+  for (final id in brawlStations.keys)
+    id: _humanStations.contains(id) ? GamblingGame.roulette : GamblingGame.al,
 };
 
 /// Families left out of brawl mode. Humans are out while we test it, so
@@ -114,6 +118,7 @@ class BrawlState {
     this.leavingHell = false,
     this.lastCombat,
     this.lastSpin,
+    this.twentySeven,
     this.lost = false,
     Set<String>? flags,
     List<String>? log,
@@ -155,6 +160,9 @@ class BrawlState {
 
   /// The most recent roulette spin, for the wheel to play back.
   RouletteSpin? lastSpin;
+
+  /// The game of 27 on the table, in progress or just finished.
+  TwentySeven? twentySeven;
   bool lost;
   Set<String> flags;
 
@@ -190,6 +198,7 @@ class BrawlState {
     leavingHell: leavingHell,
     lastCombat: lastCombat,
     lastSpin: lastSpin,
+    twentySeven: twentySeven,
     lost: lost,
     flags: {...flags},
     log: [...log],
@@ -397,6 +406,56 @@ class BrawlEngine {
     });
   }
 
+  void _requireGame(BrawlState s, GamblingGame game) {
+    _requireDocked(s);
+    if (s.gamblingGame != game) throw IllegalMove('Not played here');
+  }
+
+  /// Deals a game of 27. The stake is one of [twentySevenStakes], or every
+  /// credit the captain has, and is paid up front.
+  BrawlState dealTwentySeven(BrawlState state, int stake) {
+    _requireGame(state, GamblingGame.al);
+    if (state.twentySeven case final g? when !g.over) {
+      throw IllegalMove('Finish the count first');
+    }
+    final allIn = stake == state.credits && stake > 0;
+    if (!twentySevenStakes.contains(stake) && !allIn) {
+      throw IllegalMove('The table doesn\'t take that bet');
+    }
+    if (state.credits < stake) throw IllegalMove('Not enough credits');
+    return _step(state, (s, rng) {
+      s
+        ..credits -= stake
+        ..twentySeven = TwentySeven.deal(stake, rng)
+        ..log = [];
+    });
+  }
+
+  BrawlState takeTile(BrawlState state, int index) =>
+      _count(state, CountStatus.counting, (g, rng) => g.take(index, rng));
+
+  BrawlState keepCounting(BrawlState state) =>
+      _count(state, CountStatus.holy, (g, rng) => g.keepCounting(rng));
+
+  BrawlState walkAway(BrawlState state) =>
+      _count(state, CountStatus.holy, (g, _) => g.walk());
+
+  BrawlState _count(
+    BrawlState state,
+    CountStatus need,
+    TwentySeven Function(TwentySeven, GameRng) move,
+  ) {
+    _requireGame(state, GamblingGame.al);
+    final game = state.twentySeven;
+    if (game == null || game.status != need) throw IllegalMove('Not now');
+    return _step(state, (s, rng) {
+      final next = move(game, rng);
+      s
+        ..twentySeven = next
+        ..credits += next.payout;
+    });
+  }
+
   // Events and fights --------------------------------------------------------
 
   /// Leaves the station. Something always happens on the way out; the
@@ -404,8 +463,10 @@ class BrawlEngine {
   BrawlState launch(BrawlState state) {
     _requireDocked(state);
     return _step(state, (s, rng) {
+      // Leaving mid-count forfeits the stake on the table.
       s
         ..plannedFight = const Fight()
+        ..twentySeven = null
         ..log = [];
       _pickEvent(s, rng);
     });

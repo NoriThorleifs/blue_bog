@@ -8,6 +8,7 @@ import '../../app/theme.dart';
 import '../../game/brawl/brawl.dart';
 import '../../game/gambling/roulette.dart';
 import '../deck/deck_screen.dart' show showError;
+import 'twenty_seven_screen.dart';
 
 /// The station's gambling den: whichever game the locals play.
 class GamblingScreen extends ConsumerWidget {
@@ -19,6 +20,7 @@ class GamblingScreen extends ConsumerWidget {
     if (brawl == null) return const Scaffold();
     return switch (brawl.gamblingGame) {
       GamblingGame.roulette => const RouletteScreen(),
+      GamblingGame.al => const TwentySevenScreen(),
       final game => _ComingSoon(game: game, station: brawl.stationName),
     };
   }
@@ -49,9 +51,7 @@ class _ComingSoon extends StatelessWidget {
                   GamblingGame.gor =>
                     'The Gor are still arguing about the rules. Loudly. '
                         'Come back later.',
-                  GamblingGame.al =>
-                    'The Ál are still inventing this one, mostly by poking '
-                        'it. Come back later.',
+                  GamblingGame.al => '',
                   GamblingGame.roulette => '',
                 },
                 textAlign: TextAlign.center,
