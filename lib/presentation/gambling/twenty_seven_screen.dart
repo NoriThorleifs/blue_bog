@@ -139,34 +139,37 @@ class _TwentySevenScreenState extends ConsumerState<TwentySevenScreen>
           ),
           SafeArea(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
               children: [
-                _Stone(
-                  child: Text(
-                    'Take one tile from each triad and add it to the count. '
-                    'Bust on one over a multiple of three, or past 27. On 9 '
-                    'you may walk away with 1.5× your stake. Reach 27 for '
-                    '4.5×.',
-                    style: text.bodySmall?.copyWith(color: Colors.white),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _Stone(
+                    child: Text(
+                      'Take one tile from each triad and add it to the count. '
+                      'Bust on one over a multiple of three, or past 27. On 9 '
+                      'you may walk away with 1.5× your stake. Reach 27 for '
+                      '4.5×.',
+                      style: text.bodySmall?.copyWith(color: Colors.white),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                AnimatedBuilder(
-                  animation: _shake,
-                  builder: (context, child) {
-                    final t = _shake.value;
-                    return Transform.translate(
-                      offset: Offset(sin(t * pi * 7) * 10 * (1 - t), 0),
-                      child: child,
-                    );
-                  },
-                  child: _CountPanel(game: game),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: AnimatedBuilder(
+                    animation: _shake,
+                    builder: (context, child) {
+                      final t = _shake.value;
+                      return Transform.translate(
+                        offset: Offset(sin(t * pi * 7) * 10 * (1 - t), 0),
+                        child: child,
+                      );
+                    },
+                    child: _CountPanel(game: game),
+                  ),
                 ),
                 const SizedBox(height: 12),
-                _Stone(
-                  padding: 6,
-                  child: _Track(count: game?.count ?? 0, water: _water),
-                ),
+                _Track(count: game?.count ?? 0, water: _water),
                 const SizedBox(height: 20),
                 if (game case final g? when g.status == CountStatus.counting)
                   ..._triad(g, text),
@@ -292,64 +295,67 @@ class _TwentySevenScreenState extends ConsumerState<TwentySevenScreen>
 
   List<Widget> _betting(BrawlState brawl, BrawlController controller) => [
     const SizedBox(height: 12),
-    _Stone(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Stake',
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(color: Colors.white),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              for (final s in twentySevenStakes) ...[
-                ChoiceChip(
-                  label: Text('$s cr'),
-                  selected: _stake == s,
-                  onSelected: s > brawl.credits
-                      ? null
-                      : (_) => setState(() => _stake = s),
+    Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: _Stone(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Stake',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(color: Colors.white),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                for (final s in twentySevenStakes) ...[
+                  ChoiceChip(
+                    label: Text('$s cr'),
+                    selected: _stake == s,
+                    onSelected: s > brawl.credits
+                        ? null
+                        : (_) => setState(() => _stake = s),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Palette.hell,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: brawl.credits <= 0
+                        ? null
+                        : () =>
+                              _report(controller.dealTwentySeven(brawl.credits)),
+                    child: const Text(
+                      'Count it all!',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 8),
               ],
-              Expanded(
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Palette.hell,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: brawl.credits <= 0
-                      ? null
-                      : () =>
-                            _report(controller.dealTwentySeven(brawl.credits)),
-                  child: const Text(
-                    'Count it all!',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                backgroundColor: _aqua,
+                foregroundColor: _deep,
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(52),
-              backgroundColor: _aqua,
-              foregroundColor: _deep,
+              onPressed: _stake > brawl.credits
+                  ? null
+                  : () => _report(controller.dealTwentySeven(_stake)),
+              icon: const Icon(Icons.change_history),
+              label: Text(
+                'Deal: $_stake cr',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
-            onPressed: _stake > brawl.credits
-                ? null
-                : () => _report(controller.dealTwentySeven(_stake)),
-            icon: const Icon(Icons.change_history),
-            label: Text(
-              'Deal: $_stake cr',
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     ),
   ];
