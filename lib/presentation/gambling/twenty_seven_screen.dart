@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'dart:ui' show ImageFilter;
+import 'dart:ui' show FragmentProgram, FragmentShader;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +16,13 @@ const _bust = Color(0xFFFF5A5F);
 const _aqua = Color(0xFF2EC4C6);
 const _deep = Color(0xFF061833);
 const _foam = Color(0xFFBFF6F2);
+const _stone = Color(0xFF1A2733);
+const _floorShadow = Color(0xFF010B16);
+
+/// The pool shader, loaded once and shared by every visit to the table.
+final Future<FragmentProgram> _poolProgram = FragmentProgram.fromAsset(
+  'shaders/pool.frag',
+);
 
 /// 27, the Ál counting game, played in a shallow pool. See
 /// `lib/game/gambling/twenty_seven.dart` for the rules.
@@ -127,12 +134,14 @@ class _TwentySevenScreenState extends ConsumerState<TwentySevenScreen>
       ),
       body: Stack(
         children: [
-          Positioned.fill(child: _Pool(water: _water)),
+          Positioned.fill(
+            child: RepaintBoundary(child: _Pool(water: _water)),
+          ),
           SafeArea(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               children: [
-                _Glass(
+                _Stone(
                   child: Text(
                     'Take one tile from each triad and add it to the count. '
                     'Bust on one over a multiple of three, or past 27. On 9 '
@@ -154,7 +163,7 @@ class _TwentySevenScreenState extends ConsumerState<TwentySevenScreen>
                   child: _CountPanel(game: game),
                 ),
                 const SizedBox(height: 12),
-                _Glass(
+                _Stone(
                   padding: 6,
                   child: _Track(count: game?.count ?? 0, water: _water),
                 ),
@@ -283,7 +292,7 @@ class _TwentySevenScreenState extends ConsumerState<TwentySevenScreen>
 
   List<Widget> _betting(BrawlState brawl, BrawlController controller) => [
     const SizedBox(height: 12),
-    _Glass(
+    _Stone(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -347,66 +356,68 @@ class _TwentySevenScreenState extends ConsumerState<TwentySevenScreen>
 }
 
 /// The pool: an aqua and deep-blue gradient that slowly drifts, with
-/// caustic light playing over the floor.
-class _Pool extends StatelessWidget {
+/// caustic light playing over the floor. Drawn by `shaders/pool.frag`; until
+/// the shader has loaded, the water is still.
+class _Pool extends StatefulWidget {
   const _Pool({required this.water});
   final Animation<double> water;
 
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: water,
-    builder: (context, _) {
-      final a = water.value * 2 * pi;
-      final shimmer = 0.5 + 0.5 * sin(a);
-      return DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment(cos(a) * 0.8, -1),
-            end: Alignment(-cos(a) * 0.8, 1),
-            colors: [
-              _deep,
-              Color.lerp(const Color(0xFF0B4F6C), _aqua, shimmer * 0.6)!,
-              Color.lerp(_aqua, const Color(0xFF0B3A5C), shimmer)!,
-              _deep,
-            ],
-            stops: const [0, 0.4, 0.7, 1],
-          ),
-        ),
-        child: CustomPaint(painter: _CausticsPainter(water.value)),
-      );
-    },
-  );
+  State<_Pool> createState() => _PoolState();
 }
 
-class _CausticsPainter extends CustomPainter {
-  _CausticsPainter(this.t);
-  final double t;
+class _PoolState extends State<_Pool> {
+  FragmentShader? _shader;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..blendMode = BlendMode.plus
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-    final a = t * 2 * pi;
-    for (var k = 0; k < 14; k++) {
-      final y0 = size.height * (k + 0.5) / 14;
-      final path = Path()..moveTo(0, y0);
-      for (var x = 0.0; x <= size.width; x += 12) {
-        final y =
-            y0 +
-            sin(x / 53 + a * 2 + k) * 9 +
-            sin(x / 23 - a * 3 + k * 1.7) * 4;
-        path.lineTo(x, y);
-      }
-      paint.color = _foam.withValues(alpha: 0.05 + 0.04 * sin(a + k).abs());
-      canvas.drawPath(path, paint);
-    }
+  void initState() {
+    super.initState();
+    _poolProgram.then((program) {
+      if (mounted) setState(() => _shader = program.fragmentShader());
+    }, onError: (Object error) => debugPrint('Pool shader failed: $error'));
   }
 
   @override
-  bool shouldRepaint(_CausticsPainter old) => old.t != t;
+  void dispose() {
+    _shader?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => switch (_shader) {
+    final shader? => CustomPaint(
+      painter: _PoolPainter(shader, widget.water),
+      child: const SizedBox.expand(),
+    ),
+    null => const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [_deep, Color(0xFF0B4F6C), _deep],
+        ),
+      ),
+    ),
+  };
+}
+
+class _PoolPainter extends CustomPainter {
+  _PoolPainter(this.shader, this.water) : super(repaint: water);
+  final FragmentShader shader;
+  final Animation<double> water;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    shader
+      ..setFloat(0, size.width)
+      ..setFloat(1, size.height)
+      ..setFloat(2, water.value);
+    canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
+  }
+
+  @override
+  bool shouldRepaint(_PoolPainter old) =>
+      old.shader != shader || old.water != water;
 }
 
 /// The count in ternary words, as the dealer calls it.
@@ -435,88 +446,146 @@ class _CountPanel extends StatelessWidget {
     return TweenAnimationBuilder<Color?>(
       tween: ColorTween(end: colour),
       duration: const Duration(milliseconds: 400),
-      builder: (context, c, _) => ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Color.lerp(Colors.black, c, 0.12)!.withValues(alpha: 0.55),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: c!.withValues(alpha: 0.8), width: 1.5),
-              boxShadow: [
-                if (glowing)
-                  BoxShadow(color: c.withValues(alpha: 0.5), blurRadius: 24),
-              ],
-            ),
-            child: Column(
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 350),
-                  transitionBuilder: (child, a) => FadeTransition(
-                    opacity: a,
-                    child: ScaleTransition(
-                      scale: Tween(begin: 0.7, end: 1.0).animate(
-                        CurvedAnimation(parent: a, curve: Curves.easeOutBack),
-                      ),
-                      child: child,
+      builder: (context, c, _) => _Stone(
+        padding: 16,
+        tint: c,
+        glow: glowing ? c : null,
+        child: Column(
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 350),
+              transitionBuilder: (child, a) => FadeTransition(
+                opacity: a,
+                child: ScaleTransition(
+                  scale: Tween(begin: 0.7, end: 1.0).animate(
+                    CurvedAnimation(parent: a, curve: Curves.easeOutBack),
+                  ),
+                  child: child,
+                ),
+              ),
+              child: Column(
+                key: ValueKey(count),
+                children: [
+                  Text(
+                    intToTernaryString(count),
+                    textAlign: TextAlign.center,
+                    style: text.headlineSmall?.copyWith(
+                      color: c!,
+                      shadows: [if (glowing) Shadow(color: c, blurRadius: 16)],
                     ),
                   ),
-                  child: Column(
-                    key: ValueKey(count),
-                    children: [
-                      Text(
-                        intToTernaryString(count),
-                        textAlign: TextAlign.center,
-                        style: text.headlineSmall?.copyWith(
-                          color: c,
-                          shadows: [
-                            if (glowing) Shadow(color: c, blurRadius: 16),
-                          ],
-                        ),
-                      ),
-                      Text('$count', style: text.titleMedium),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  verdict,
-                  textAlign: TextAlign.center,
-                  style: text.bodyMedium,
-                ),
-              ],
+                  Text('$count', style: text.titleMedium),
+                ],
+              ),
             ),
-          ),
+            const SizedBox(height: 6),
+            Text(verdict, textAlign: TextAlign.center, style: text.bodyMedium),
+          ],
         ),
       ),
     );
   }
 }
 
-/// A dark frosted-glass panel, so text stays readable over the water.
-class _Glass extends StatelessWidget {
-  const _Glass({required this.child, this.padding = 12});
+/// A slab of stone standing in the pool, like the tiles: a dry top face, a
+/// sliver of its side above the waterline and a shadow on the floor.
+/// Opaque, so text stays readable over the water, and painted once: nothing
+/// on it moves with the water.
+class _Stone extends StatelessWidget {
+  const _Stone({required this.child, this.padding = 12, this.tint, this.glow});
   final Widget child;
   final double padding;
 
+  /// Colours the face and edge, for the count's verdicts.
+  final Color? tint;
+
+  /// A halo round the slab, for the verdicts worth shouting about.
+  final Color? glow;
+
+  /// How much of the slab's side shows below its face.
+  static const thick = 7.0;
+
   @override
-  Widget build(BuildContext context) => ClipRRect(
-    borderRadius: BorderRadius.circular(16),
-    child: BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-      child: Container(
-        padding: EdgeInsets.all(padding),
-        decoration: BoxDecoration(
-          color: const Color(0xFF020B18).withValues(alpha: 0.62),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _foam.withValues(alpha: 0.18)),
-        ),
-        child: child,
-      ),
+  Widget build(BuildContext context) => CustomPaint(
+    painter: _StonePainter(tint: tint, glow: glow),
+    child: Padding(
+      padding: EdgeInsets.fromLTRB(padding, padding, padding, padding + thick),
+      child: child,
     ),
   );
+}
+
+class _StonePainter extends CustomPainter {
+  _StonePainter({this.tint, this.glow});
+  final Color? tint;
+  final Color? glow;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const thick = _Stone.thick;
+    const waterline = thick * 0.35;
+    final face = tint == null ? _stone : Color.lerp(_stone, tint, 0.12)!;
+    final side = Color.lerp(face, Colors.black, 0.45)!;
+    final slab = RRect.fromRectAndRadius(
+      Offset.zero & Size(size.width, size.height - thick),
+      const Radius.circular(16),
+    );
+    RRect sunk(double dy) => slab.shift(Offset(0, dy));
+
+    // Flat layers stand in for blurs throughout: the water under them
+    // moves, so a blur would be worked out again every frame.
+    // Fine steps of a pixel or so, from a wide faint rim in to a dark core,
+    // read as a soft edge.
+    final shadow = slab.shift(const Offset(thick * 0.8, thick * 1.6));
+    for (var i = 0; i < 6; i++) {
+      canvas.drawRRect(
+        shadow.inflate(6.0 - i * 1.6),
+        Paint()..color = _floorShadow.withValues(alpha: 0.09),
+      );
+    }
+    if (glow case final g?) {
+      for (final grow in [12.0, 8.0, 4.0]) {
+        canvas.drawRRect(
+          slab.inflate(grow),
+          Paint()..color = g.withValues(alpha: 0.09),
+        );
+      }
+    }
+    // The side: under water up to the waterline, dry above it, with a
+    // bright meniscus where the surface meets it.
+    canvas
+      ..drawRRect(sunk(thick), Paint()..color = side)
+      ..drawRRect(sunk(thick), Paint()..color = _aqua.withValues(alpha: 0.35))
+      ..drawRRect(sunk(waterline), Paint()..color = side)
+      ..drawRRect(
+        sunk(waterline),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..color = _foam.withValues(alpha: 0.5),
+      )
+      ..drawRRect(
+        slab,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color.lerp(face, Colors.white, 0.12)!, face],
+          ).createShader(slab.outerRect),
+      )
+      ..drawRRect(
+        slab.deflate(0.75),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..color =
+              tint?.withValues(alpha: 0.8) ??
+              Color.lerp(face, Colors.white, 0.3)!,
+      );
+  }
+
+  @override
+  bool shouldRepaint(_StonePainter old) => old.tint != tint || old.glow != glow;
 }
 
 /// A heading that sits straight on the water.
@@ -549,16 +618,28 @@ class _Track extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, box) {
       final geometry = _Board(box.maxWidth);
-      return TweenAnimationBuilder<double>(
-        tween: Tween(end: count.toDouble()),
-        duration: const Duration(milliseconds: 750),
-        curve: Curves.easeInOutCubic,
-        builder: (context, reach, _) => AnimatedBuilder(
-          animation: water,
-          builder: (context, _) => CustomPaint(
-            size: Size(box.maxWidth, geometry.height),
-            painter: _TrackPainter(geometry, reach, water.value),
-          ),
+      // The numbers never move, so they get their own layer and are
+      // painted once; only the tentacle repaints with the water.
+      return SizedBox(
+        width: box.maxWidth,
+        height: geometry.height,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            RepaintBoundary(
+              child: CustomPaint(painter: _CellsPainter(geometry)),
+            ),
+            RepaintBoundary(
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(end: count.toDouble()),
+                duration: const Duration(milliseconds: 750),
+                curve: Curves.easeInOutCubic,
+                builder: (context, reach, _) => CustomPaint(
+                  painter: _TentaclePainter(geometry, reach, water),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     },
@@ -618,18 +699,16 @@ class _Board {
   }
 }
 
-class _TrackPainter extends CustomPainter {
-  _TrackPainter(this.board, this.reach, this.wave);
+/// The numbered cells, 0 to 27.
+class _CellsPainter extends CustomPainter {
+  _CellsPainter(this.board);
   final _Board board;
-  final double reach;
-  final double wave;
 
   @override
   void paint(Canvas canvas, Size size) {
     for (var n = 0; n <= holyGoal; n++) {
       _cell(canvas, n);
     }
-    _tentacle(canvas);
   }
 
   void _cell(Canvas canvas, int n) {
@@ -664,20 +743,30 @@ class _TrackPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    label.paint(
-      canvas,
-      rect.center - Offset(label.width / 2, label.height / 2),
-    );
+    label
+      ..paint(canvas, rect.center - Offset(label.width / 2, label.height / 2))
+      ..dispose();
   }
 
-  /// A smooth, glossy black tentacle. No suckers: Ál tentacles don't have
-  /// them.
-  void _tentacle(Canvas canvas) {
+  @override
+  bool shouldRepaint(_CellsPainter old) => old.board.width != board.width;
+}
+
+/// A smooth, glossy black tentacle. No suckers: Ál tentacles don't have
+/// them.
+class _TentaclePainter extends CustomPainter {
+  _TentaclePainter(this.board, this.reach, this.water) : super(repaint: water);
+  final _Board board;
+  final double reach;
+  final Animation<double> water;
+
+  @override
+  void paint(Canvas canvas, Size size) {
     final tip = board.routeAt(reach);
     const start = -1.3;
     final length = tip - start;
     final step = 0.06;
-    final phase = wave * 2 * pi * 6;
+    final phase = water.value * 2 * pi * 6;
     final thick = board.cell * 1.08;
     final spine = <Offset>[];
     final widths = <double>[];
@@ -709,20 +798,21 @@ class _TrackPainter extends CustomPainter {
       right.add(c - normal * widths[i] / 2);
     }
     final body = Path()..addPolygon([...left, ...right.reversed], true);
-    canvas
-      ..drawPath(
-        body.shift(Offset(board.cell * 0.12, board.cell * 0.22)),
-        Paint()
-          ..color = Colors.black.withValues(alpha: 0.55)
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, board.cell * 0.2),
-      )
-      ..drawPath(
-        body,
-        Paint()
-          ..shader = LinearGradient(
-            colors: const [Color(0xFF020306), Color(0xFF10141C)],
-          ).createShader(body.getBounds()),
+    // Two flat shadows, a near dark one and a far faint one, instead of a
+    // blur that would be worked out again every frame.
+    for (final (dx, dy, alpha) in [(0.2, 0.32, 0.2), (0.1, 0.18, 0.35)]) {
+      canvas.drawPath(
+        body.shift(Offset(board.cell * dx, board.cell * dy)),
+        Paint()..color = Colors.black.withValues(alpha: alpha),
       );
+    }
+    canvas.drawPath(
+      body,
+      Paint()
+        ..shader = LinearGradient(
+          colors: const [Color(0xFF020306), Color(0xFF10141C)],
+        ).createShader(body.getBounds()),
+    );
     // A wet sheen along its back.
     final sheen = Path();
     for (var i = 0; i < mid.length; i++) {
@@ -734,19 +824,25 @@ class _TrackPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = board.cell * 0.09
-        ..color = const Color(0xFF7FA6B8).withValues(alpha: 0.35)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, board.cell * 0.05),
+        ..strokeWidth = board.cell * 0.08
+        ..color = const Color(0xFF7FA6B8).withValues(alpha: 0.3),
     );
   }
 
   @override
-  bool shouldRepaint(_TrackPainter old) =>
-      old.reach != reach || old.wave != wave || old.board.width != board.width;
+  bool shouldRepaint(_TentaclePainter old) =>
+      old.reach != reach ||
+      old.water != water ||
+      old.board.width != board.width;
 }
 
 /// A triangular tile standing in shallow water. [flip] turns it over
 /// (0 to 1); [lift] raises it out of the water.
+///
+/// The tile is painted in three layers: ripples spreading under it and the
+/// water's surface over it move every frame, while the tile itself only
+/// changes when it's picked or flipped, so it has a layer of its own and
+/// is painted once.
 class _Tile extends StatelessWidget {
   const _Tile({
     required this.value,
@@ -775,6 +871,7 @@ class _Tile extends StatelessWidget {
     final angle = flip * pi;
     // Past halfway through the flip, the front is the side facing us.
     final showFront = !faceDown || angle > pi / 2;
+    final rise = lift + sin(flip * pi) * 0.6;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedOpacity(
@@ -789,16 +886,25 @@ class _Tile extends StatelessWidget {
               ..translateByDouble(0, -14 * lift, 0, 1)
               ..rotateY(angle)
               ..scaleByDouble(angle > pi / 2 ? -1 : 1, 1, 1, 1),
-            child: AnimatedBuilder(
-              animation: water,
-              builder: (context, _) => CustomPaint(
-                painter: _TilePainter(
-                  value: value,
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: _RipplePainter(water),
+                foregroundPainter: _SurfacePainter(
+                  water: water,
                   faceUp: showFront,
-                  picked: picked,
-                  ripple: water.value,
-                  lift: lift + sin(flip * pi) * 0.6,
-                  label: !small,
+                  lift: rise,
+                ),
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: _TilePainter(
+                      value: value,
+                      faceUp: showFront,
+                      picked: picked,
+                      lift: rise,
+                      label: !small,
+                    ),
+                    child: const SizedBox.expand(),
+                  ),
                 ),
               ),
             ),
@@ -809,24 +915,26 @@ class _Tile extends StatelessWidget {
   }
 }
 
-class _TilePainter extends CustomPainter {
-  _TilePainter({
-    required this.value,
-    required this.faceUp,
-    required this.picked,
-    required this.ripple,
-    required this.lift,
-    required this.label,
-  });
+/// A tile's triangle at one size, and the paths every frame reuses.
+class _TileShape {
+  _TileShape(this.size) : thick = size.height * 0.1;
+  final Size size;
+  final double thick;
 
-  final int value;
-  final bool faceUp;
-  final bool picked;
-  final double ripple;
-  final double lift;
-  final bool label;
+  /// The water is a little shallower than the tile is thick, so the top
+  /// face stays dry and a sliver of the side shows above the surface.
+  double get waterline => thick * 0.28;
 
-  Path _tri(Size s, Offset shift, {double grow = 0}) {
+  late final top = tri(Offset.zero);
+
+  /// Everything but the top face.
+  late final aroundTop = Path()
+    ..fillType = PathFillType.evenOdd
+    ..addRect(Offset.zero & size)
+    ..addPath(top, Offset.zero);
+
+  Path tri(Offset shift, {double grow = 0}) {
+    final s = size;
     final c = Offset(s.width / 2, s.height * 0.6) + shift;
     Offset p(double x, double y) => Offset(
       c.dx + (x - s.width / 2) * (1 + grow),
@@ -839,66 +947,96 @@ class _TilePainter extends CustomPainter {
     ], true);
   }
 
+  /// The triangle at [shift] with every edge pushed out by [d] pixels (in
+  /// with a negative [d]): scaled about its incentre, the one point as far
+  /// from all three edges.
+  Path outset(Offset shift, double d) {
+    final s = size;
+    final a = Offset(s.width / 2, s.height * 0.06);
+    final b = Offset(s.width * 0.05, s.height * 0.86);
+    final c = Offset(s.width * 0.95, s.height * 0.86);
+    final (la, lb, lc) = ((b - c).distance, (c - a).distance, (a - b).distance);
+    final perimeter = la + lb + lc;
+    final centre = (a * la + b * lb + c * lc) / perimeter;
+    final area =
+        ((b.dx - a.dx) * (c.dy - a.dy) - (c.dx - a.dx) * (b.dy - a.dy)).abs() /
+        2;
+    final k = (area / (perimeter / 2) + d) / (area / (perimeter / 2));
+    Offset p(Offset v) => centre + (v - centre) * k + shift;
+    return Path()..addPolygon([p(a), p(b), p(c)], true);
+  }
+
+  /// The colour of the top face.
+  static Color face(int value, {required bool faceUp}) => faceUp
+      ? Color.lerp(_deep, switch (value) {
+          1 => const Color(0xFF5E7CE2),
+          2 => const Color(0xFF9B6BD6),
+          _ => const Color(0xFF2FB39F),
+        }, 0.55)!
+      : const Color(0xFF0E4D55);
+
+  static Color outline(Color face) => Color.lerp(face, Colors.white, 0.35)!;
+}
+
+/// Keeps the [_TileShape] for the last size painted. The water painters
+/// live as long as their tile, so the shape is worked out once.
+mixin _ShapeCache on CustomPainter {
+  _TileShape? _shape;
+  _TileShape shapeFor(Size size) =>
+      _shape?.size == size ? _shape! : _shape = _TileShape(size);
+}
+
+/// Ripples spreading out from where the tile meets the water.
+class _RipplePainter extends CustomPainter with _ShapeCache {
+  _RipplePainter(this.water) : super(repaint: water);
+  final Animation<double> water;
+
   @override
   void paint(Canvas canvas, Size size) {
-    final h = size.height;
-    final thick = h * 0.1;
-    // The water is a little shallower than the tile is thick, so the top
-    // face stays dry and a sliver of the side shows above the surface.
-    final waterline = thick * 0.28;
-    final colour = switch (value) {
-      1 => const Color(0xFF5E7CE2),
-      2 => const Color(0xFF9B6BD6),
-      _ => const Color(0xFF2FB39F),
-    };
-    final face = faceUp
-        ? Color.lerp(_deep, colour, 0.55)!
-        : const Color(0xFF0E4D55);
-    final side = Color.lerp(face, Colors.black, 0.45)!;
-
-    // Ripples spreading out from where the tile meets the water.
+    final shape = shapeFor(size);
     for (var k = 0; k < 3; k++) {
-      final r = (ripple * 4 + k / 3) % 1;
+      final r = (water.value * 4 + k / 3) % 1;
       canvas.drawPath(
-        _tri(size, Offset(0, thick), grow: 0.05 + r * 0.28),
+        shape.tri(Offset(0, shape.thick), grow: 0.05 + r * 0.28),
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5
           ..color = _foam.withValues(alpha: (1 - r) * 0.28),
       );
     }
+  }
 
-    // Shadow on the pool floor, softer and further away when lifted.
-    canvas.drawPath(
-      _tri(size, Offset(thick * 1.3, thick * (2.4 + lift * 2.5))),
-      Paint()
-        ..color = const Color(0xFF010B16).withValues(alpha: 0.8 - lift * 0.25)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 7 + lift * 10),
-    );
+  @override
+  bool shouldRepaint(_RipplePainter old) => old.water != water;
+}
 
-    // The tile's thickness, mostly under water.
-    canvas.drawPath(_tri(size, Offset(0, thick)), Paint()..color = side);
-    final submerged = Path.combine(
-      PathOperation.difference,
-      _tri(size, Offset(0, thick)),
-      _tri(size, Offset(0, waterline * (1 + lift * 3))),
-    );
-    canvas.drawPath(
-      submerged,
-      Paint()..color = _aqua.withValues(alpha: 0.45 * (1 - lift)),
-    );
-    // The waterline: a bright meniscus where the surface meets the sides.
+/// The moving water over the tile: the bright meniscus where the surface
+/// meets its sides and, face down, the Ál back's rolling waves.
+class _SurfacePainter extends CustomPainter with _ShapeCache {
+  _SurfacePainter({
+    required this.water,
+    required this.faceUp,
+    required this.lift,
+  }) : super(repaint: water);
+
+  final Animation<double> water;
+  final bool faceUp;
+  final double lift;
+
+  /// Laid out once per size, not every frame.
+  TextPainter? _question;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (_shape?.size != size) _question = null;
+    final shape = shapeFor(size);
+    final h = size.height;
+    final ripple = water.value;
     canvas
       ..save()
-      ..clipPath(
-        Path.combine(
-          PathOperation.difference,
-          Path()..addRect(Offset.zero & size),
-          _tri(size, Offset.zero),
-        ),
-      )
+      ..clipPath(shape.aroundTop)
       ..drawPath(
-        _tri(size, Offset(0, waterline)),
+        shape.tri(Offset(0, shape.waterline)),
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2
@@ -907,11 +1045,108 @@ class _TilePainter extends CustomPainter {
           ),
       )
       ..restore();
+    if (faceUp) return;
+
+    // The Ál back: rolling waves, and a question.
+    canvas
+      ..save()
+      ..clipPath(shape.top);
+    final wave = Paint()
+      ..color = _aqua.withValues(alpha: 0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.02;
+    for (var row = 0; row < 6; row++) {
+      final y = h * (0.3 + row * 0.1);
+      final path = Path()..moveTo(0, y);
+      for (var x = 0.0; x <= size.width; x += size.width / 24) {
+        path.lineTo(
+          x,
+          y + sin(x / size.width * 4 * pi + row + ripple * 2 * pi) * h * 0.022,
+        );
+      }
+      canvas.drawPath(path, wave);
+    }
+    canvas.restore();
+    final q = _question ??= TextPainter(
+      text: TextSpan(
+        text: '?',
+        style: TextStyle(
+          color: Colors.white70,
+          fontSize: h * 0.28,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    q.paint(canvas, Offset(size.width / 2 - q.width / 2, h * 0.38));
+    canvas.drawPath(
+      shape.top,
+      Paint()
+        ..color = _TileShape.outline(_TileShape.face(0, faceUp: false))
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_SurfacePainter old) =>
+      old.water != water || old.faceUp != faceUp || old.lift != lift;
+}
+
+/// The tile itself: its shadow, its sides and its dry top face.
+class _TilePainter extends CustomPainter {
+  _TilePainter({
+    required this.value,
+    required this.faceUp,
+    required this.picked,
+    required this.lift,
+    required this.label,
+  });
+
+  final int value;
+  final bool faceUp;
+  final bool picked;
+  final double lift;
+  final bool label;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final shape = _TileShape(size);
+    final h = size.height;
+    final thick = shape.thick;
+    final face = _TileShape.face(value, faceUp: faceUp);
+    final side = Color.lerp(face, Colors.black, 0.45)!;
+
+    // Shadow on the pool floor, softer and further away when lifted. Flat
+    // layers stand in for a blur, which would be worked out again every
+    // frame as the water under it moves.
+    // Fine steps, from a wide faint rim in to a dark core, read as a soft
+    // edge.
+    final floor = Offset(thick * 1.3, thick * (2.4 + lift * 2.5));
+    final darkness = 0.8 - lift * 0.25;
+    final spread = 7 + lift * 10;
+    for (var i = 0; i < 6; i++) {
+      canvas.drawPath(
+        shape.outset(floor, spread * (1 - i / 3.5)),
+        Paint()..color = _floorShadow.withValues(alpha: darkness * 0.2),
+      );
+    }
+
+    // The tile's thickness, mostly under water.
+    canvas.drawPath(shape.tri(Offset(0, thick)), Paint()..color = side);
+    final submerged = Path.combine(
+      PathOperation.difference,
+      shape.tri(Offset(0, thick)),
+      shape.tri(Offset(0, shape.waterline * (1 + lift * 3))),
+    );
+    canvas.drawPath(
+      submerged,
+      Paint()..color = _aqua.withValues(alpha: 0.45 * (1 - lift)),
+    );
 
     // The dry top face.
-    final top = _tri(size, Offset.zero);
     canvas.drawPath(
-      top,
+      shape.top,
       Paint()
         ..shader = LinearGradient(
           begin: Alignment.topLeft,
@@ -955,49 +1190,15 @@ class _TilePainter extends CustomPainter {
           ),
           textDirection: TextDirection.ltr,
         )..layout();
-        name.paint(canvas, Offset(size.width / 2 - name.width / 2, h * 0.64));
+        name
+          ..paint(canvas, Offset(size.width / 2 - name.width / 2, h * 0.64))
+          ..dispose();
       }
-    } else {
-      // The Ál back: rolling waves, and a question.
-      canvas
-        ..save()
-        ..clipPath(top);
-      final wave = Paint()
-        ..color = _aqua.withValues(alpha: 0.5)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.02;
-      for (var row = 0; row < 6; row++) {
-        final y = h * (0.3 + row * 0.1);
-        final path = Path()..moveTo(0, y);
-        for (var x = 0.0; x <= size.width; x += size.width / 24) {
-          path.lineTo(
-            x,
-            y +
-                sin(x / size.width * 4 * pi + row + ripple * 2 * pi) *
-                    h *
-                    0.022,
-          );
-        }
-        canvas.drawPath(path, wave);
-      }
-      canvas.restore();
-      final q = TextPainter(
-        text: TextSpan(
-          text: '?',
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: h * 0.28,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      q.paint(canvas, Offset(size.width / 2 - q.width / 2, h * 0.38));
     }
     canvas.drawPath(
-      top,
+      shape.top,
       Paint()
-        ..color = picked ? _gold : Color.lerp(face, Colors.white, 0.35)!
+        ..color = picked ? _gold : _TileShape.outline(face)
         ..style = PaintingStyle.stroke
         ..strokeWidth = picked ? 4 : 1.5,
     );
@@ -1008,8 +1209,8 @@ class _TilePainter extends CustomPainter {
       old.value != value ||
       old.faceUp != faceUp ||
       old.picked != picked ||
-      old.ripple != ripple ||
-      old.lift != lift;
+      old.lift != lift ||
+      old.label != label;
 }
 
 /// Bubbles rising through the pool: a few for Holy 2, a golden flood for 27.
