@@ -311,6 +311,13 @@ class _BuyTab extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        FilledButton.tonalIcon(
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+          onPressed: () => context.push('/brawl/gambling'),
+          icon: const Icon(Icons.casino),
+          label: Text('LETS GO GAMBLING! · ${brawl.gamblingGame.label}'),
+        ),
         const SizedBox(height: 12),
         Row(
           children: [

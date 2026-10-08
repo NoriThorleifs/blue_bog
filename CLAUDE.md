@@ -31,6 +31,8 @@ dart run tool/simulate.dart 2000          # headless bot runs: endings, pacing
 dart run tool/simulate.dart story 42      # print one run's full log
 dart run tool/combat_balance.dart         # combat balance matrix and targets
 dart run tool/brawl_sim.dart 300          # brawl mode bots: careful vs Hell divers
+dart run tool/build_tournament.dart       # same-budget builds fight each other; hull upgrade value
+dart run tool/item_balance.dart           # random 9-card builds; value of every card per 100 cr
 python3 tool/generate_galaxy.py           # regenerate assets/galaxy_ai_generated.jpg
 python3 tool/generate_card_icons.py       # regenerate assets/cards/*_ai_generated.png
 python3 tool/generate_mourner_concepts.py # concept_art/mourner_*_ai_generated.png
@@ -79,16 +81,17 @@ The lore notes (`outline.md`, species, places) are the author's canon. Ask befor
 
 - **Combat.** Every captain flies the same ship: 500 hull and nine slots. Cards fire on cooldown timers.
   - Lasers are blocked by shields.
-  - Missiles need ammo and are stopped by drones.
+  - Missiles need ammo and are stopped by drones. Fabricators build 1, 3 or 9 drones per charge by tier, and each drone out repairs 1 hull a second.
   - Teleport bombs need charges and go through everything.
-  - Shields refill to their combined maximum.
+  - Shields refill to their combined maximum. Shield generators grow faster than ×3 per tier (30, 105, 360), so lasers fall off late. Shield Capacitors add a little max shield and speed up shield generators in their triangle.
   - Triangle and ship-wide charge boosts, capped at 50%.
   - The 60 s limit means escape, with no loot. Story bosses use tractor beams, so there is no escape.
   - Hull damage carries over between fights. Humans patch it to 75%; shipyards repair fully and sell hull upgrades.
   - Story fights map a strength rating to an enemy template, scaled by act (interim ×2 / ×3).
   - Known issue: teleport bombs are overtuned.
-- **Brawl mode.** Station (buy, sell, repair) → departure event → fight → another station, until the ship is lost. The chewer event lets a captain dive into Hell: no shipyard, 25 hull lost a turn, demons (`demons` in `catalog.dart`), Hell cards and Hell Brandy, and the Mourner, who always gives the Cursed Orb once. Leaving Hell shifts the difficulty curve by Hell's clocks.
-- **Card tags.** Cards carry tags (`CardTag` in `equipment.dart`, only Hellish so far) that other cards look for. Hell's own families (`hellFamilies`, never sold) are born Hellish. Tags picked up later are written into the card id (`laser_1#hellish`), and merging keeps them. Hell Brandy sells like any commodity or can be used (Ship tab: tap, Use, tap a glowing card) to tag a card Hellish. The Cursed Orb fires every other Hellish card at the start of a fight. Hellfire passes shields and drones but burns its user for a quarter.
+- **Brawl mode.** Station (buy, sell, repair) → departure event → fight → another station, until the ship is lost. The chewer event lets a captain dive into Hell: no shipyard, 25 hull lost a turn, demons (`demons` in `catalog.dart`), Hell cards and Hell Brandy, and the Hell Clock (one per brawl, from the Mourner or the clock event). Leaving Hell shifts the difficulty curve by Hell's clocks.
+- **Gambling.** "LETS GO GAMBLING!" in the brawl shop. Every station runs roulette for now (`stationGames` in `brawl.dart`; `lib/game/gambling/roulette.dart`, European single zero, stakes 25 or 50, or all in with no limit). Gor and Ál games are planned and have placeholder screens. The engine picks the number with `GameRng`; the wheel animation (`lib/presentation/gambling/`) is worked backwards from it.
+- **Card tags.** Cards carry tags (`CardTag` in `equipment.dart`, only Hellish so far) that other cards look for. Hell's own families (`hellFamilies`, never sold) are born Hellish. Tags picked up later are written into the card id (`laser_1#hellish`), and merging keeps them. Hell Brandy sells like any commodity or can be used (Ship tab: tap, Use, tap a glowing card) to tag a card Hellish. The Hell Clock (ship-wide charge boost, every card starts half charged, and every other Hellish card fires at the start of a fight) is the only unique in brawl mode. Hell's own cards are deliberately stronger for their price than station cards. Hellfire passes shields and drones but burns its user for a quarter.
 - **Cards.** Kinds: equipment (works in a slot), supplies (work from the hold too), commodities, and mission cargo (can't be sold). The hold starts at 0 and only cargo pods add space. Removing accommodation sends humans away.
 - **HR.** Human count, loyalty and drift are visible as a mood word. The hidden bond changes event odds and unlocks Code Green.
 - **Story.** Three acts driven by the gateway network. Beats come from `outline.md`. Code Blue, Red or Yellow ending, with a 9-turn war for Red and Yellow. Hell and the Mourner are deadly. Hellborn agents are hidden in the crew.

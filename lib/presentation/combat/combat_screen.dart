@@ -327,7 +327,7 @@ class _Log extends StatelessWidget {
             '$who: $card burns through for ${e.value}, and scorches its own '
                 'hull',
           CombatEventKind.shieldsCharged => '$who: shields at ${e.value}',
-          CombatEventKind.droneBuilt => '$who: drone launched',
+          CombatEventKind.droneBuilt => '$who: drones out: ${e.value}',
           CombatEventKind.outOfAmmo => '$who: $card is out of ammunition',
         };
         return Opacity(

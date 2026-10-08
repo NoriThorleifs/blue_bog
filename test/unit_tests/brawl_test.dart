@@ -117,12 +117,12 @@ void main() {
       expect(() => engine.reroll(s), throwsA(isA<IllegalMove>()));
     });
 
-    test('the Mourner always gives the Cursed Orb, and lets you go', () {
+    test('the Mourner always gives the Hell Clock, and lets you go', () {
       for (var choice = 0; choice < 3; choice++) {
         var s = inHell('hell_mourner')..hull = 50;
         s = engine.proceed(engine.choose(s, choice));
         expect(s.lost, isFalse);
-        expect(s.loadout.all, contains('cursed_orb'));
+        expect(s.loadout.all, contains('hell_clock'));
         expect(s.inHell, isFalse);
         expect(s.docked, isTrue);
         expect(s.flags, contains(metMourner));
@@ -133,13 +133,22 @@ void main() {
       final s = inHell('hell_mourner');
       while (s.loadout.add('plating_1') != null) {}
       final after = engine.choose(s, 0);
-      expect(after.loadout.all, contains('cursed_orb'));
+      expect(after.loadout.all, contains('hell_clock'));
     });
 
     test('the Mourner only turns up once', () {
       final s = inHell('hell_clocks')..flags.add(metMourner);
       final mourner = brawlEventsById['hell_mourner']!;
       expect(mourner.condition!(s), isFalse);
+    });
+
+    test('there is one Hell Clock per brawl, from either event', () {
+      final mourner = brawlEventsById['hell_mourner']!;
+      final found = inHell('hell_clocks')..flags.add(hasHellClock);
+      expect(mourner.condition!(found), isFalse);
+      expect(engine.canChoose(found, 1), isFalse, reason: 'no second clock');
+      final fresh = inHell('hell_clocks');
+      expect(engine.canChoose(fresh, 1), isTrue);
     });
   });
 
@@ -213,7 +222,7 @@ void main() {
       final first = result.events.firstWhere(
         (e) => e.kind == CombatEventKind.hellfireHit,
       );
-      expect(first.value, 24);
+      expect(first.value, 32);
       expect(result.hull, lessThan(baseHull));
     });
 
@@ -223,7 +232,7 @@ void main() {
         final result = fight(
           Combatant(
             name: 'a',
-            loadout: CombatLoadout.of(['cursed_orb', 'brimstone_1', 'laser_1']),
+            loadout: CombatLoadout.of(['hell_clock', 'brimstone_1', 'laser_1']),
           ),
           Combatant(name: 'b', loadout: CombatLoadout.of(['laser_1'])),
         );
@@ -239,7 +248,7 @@ void main() {
       final result = fight(
         Combatant(
           name: 'a',
-          loadout: CombatLoadout.of(['cursed_orb', 'laser_1#hellish']),
+          loadout: CombatLoadout.of(['hell_clock', 'laser_1#hellish']),
         ),
         Combatant(name: 'b', loadout: CombatLoadout.of(['laser_1'])),
       );
@@ -247,11 +256,11 @@ void main() {
       expect(result.events.first.kind, CombatEventKind.laserHit);
     });
 
-    test('the Backwards Clock starts every card half charged', () {
+    test('the Hell Clock starts every card half charged', () {
       final result = fight(
         Combatant(
           name: 'a',
-          loadout: CombatLoadout.of(['mourner_backwards_clock', 'laser_1']),
+          loadout: CombatLoadout.of(['hell_clock', 'laser_1']),
         ),
         Combatant(name: 'b', loadout: CombatLoadout.of(['plating_1'])),
       );

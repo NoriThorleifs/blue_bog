@@ -90,7 +90,7 @@ void main(List<String> args) {
       for (var seed = 0; seed < runs; seed++) {
         final s = play(species, seed, diver: diver);
         won.add(s.fightsWon);
-        if (s.flags.contains(metMourner)) orbs++;
+        if (s.flags.contains(hasHellClock)) orbs++;
         if (s.lost && s.inHell) diedInHell++;
       }
       won.sort();
@@ -99,7 +99,7 @@ void main(List<String> args) {
         '  ${species.name.padRight(12)} fights won '
         'p10 ${pct(10)}  median ${pct(50)}  p90 ${pct(90)}  '
         'max ${won.last}   died in Hell ${100 * diedInHell ~/ runs}%  '
-        'got the orb ${100 * orbs ~/ runs}%',
+        'got the Hell Clock ${100 * orbs ~/ runs}%',
       );
     }
   }

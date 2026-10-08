@@ -481,20 +481,6 @@ def mourner_polite_request():
     i.save('mourner_polite_request')
 
 
-def mourner_backwards_clock():
-    i = Icon((220, 180, 110))
-    ellipse(i, (0.16, 0.16, 0.84, 0.84), f=0.3, width=0.035)
-    for k in range(12):
-        a = math.radians(k * 30)
-        stroke(i, [(0.5 + 0.28 * math.cos(a), 0.5 + 0.28 * math.sin(a)),
-                   (0.5 + 0.32 * math.cos(a), 0.5 + 0.32 * math.sin(a))], WHITE, 0.012)
-    stroke(i, [(0.5, 0.5), (0.5, 0.28)], WHITE, 0.025)
-    stroke(i, [(0.5, 0.5), (0.36, 0.58)], WHITE, 0.025)
-    arc(i, (0.06, 0.06, 0.94, 0.94), 200, 300, HELL, 0.03)
-    poly(i, [(0.12, 0.40), (0.08, 0.26), (0.20, 0.30)], HELL, 1, 0.01)
-    i.save('mourner_backwards_clock')
-
-
 def mourner_grief_engine():
     i = Icon(TELEPORT)
     poly(i, star(0.5, 0.5, 0.36, 0.28, 10), SYSTEM, 0.35, 0.02)
@@ -504,13 +490,24 @@ def mourner_grief_engine():
     i.save('mourner_grief_engine')
 
 
-def cursed_orb():
+def hell_clock():
+    """A brass clock ticking backwards, set in a greasy black stone ball
+    with a tiny black hole at its heart."""
     i = Icon(HELL)
-    ellipse(i, (0.16, 0.16, 0.84, 0.84), (60, 55, 60), 1.0, 0.02)
-    ellipse(i, (0.24, 0.22, 0.48, 0.38), (200, 200, 210), 0.55, 0.0)
-    ellipse(i, (0.40, 0.40, 0.60, 0.60), HELL, 0.0, 0.02)
-    ellipse(i, (0.44, 0.44, 0.56, 0.56), (0, 0, 0), 0.0, 0.01)
-    i.save('cursed_orb')
+    ellipse(i, (0.10, 0.10, 0.90, 0.90), (60, 55, 60), 1.0, 0.02)
+    ellipse(i, (0.18, 0.15, 0.42, 0.30), (200, 200, 210), 0.45, 0.0)
+    brass = (220, 180, 110)
+    ellipse(i, (0.24, 0.24, 0.76, 0.76), brass, 0.25, 0.03)
+    for k in range(12):
+        a = math.radians(k * 30)
+        stroke(i, [(0.5 + 0.20 * math.cos(a), 0.5 + 0.20 * math.sin(a)),
+                   (0.5 + 0.24 * math.cos(a), 0.5 + 0.24 * math.sin(a))], brass, 0.012)
+    stroke(i, [(0.5, 0.5), (0.5, 0.32)], brass, 0.022)
+    stroke(i, [(0.5, 0.5), (0.38, 0.57)], brass, 0.022)
+    arc(i, (0.04, 0.04, 0.96, 0.96), 200, 300, HELL, 0.03)
+    poly(i, [(0.10, 0.40), (0.06, 0.26), (0.18, 0.30)], HELL, 1, 0.01)
+    ellipse(i, (0.45, 0.45, 0.55, 0.55), (0, 0, 0), 1.0, 0.012)
+    i.save('hell_clock')
 
 
 ALL = [laser, missiles, teleporter, shield, fabricator, plating,
@@ -520,7 +517,7 @@ ALL = [laser, missiles, teleporter, shield, fabricator, plating,
        goods_ice, goods_ore, goods_chitin, goods_medicine, goods_nanopaste,
        goods_brandy, goods_relics, parcel_sealed, mourner_event_horizon,
        mourner_unfallen_world, mourner_polite_request,
-       mourner_backwards_clock, mourner_grief_engine, cursed_orb]
+       mourner_grief_engine, hell_clock]
 
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)

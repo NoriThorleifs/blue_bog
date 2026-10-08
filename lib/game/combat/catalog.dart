@@ -29,6 +29,9 @@ const equipmentFamilies = [
     cooldown: 6,
     action: ChargeShields(),
     maxShield: 30,
+    // Shields grow faster than three per tier, so lasers that dominate
+    // early hit a wall later on.
+    maxShieldTiers: [30, 105, 360],
   ),
   EquipmentFamily(
     id: 'fabricator',
@@ -45,7 +48,10 @@ const equipmentFamilies = [
   EquipmentFamily(
     id: 'shield_capacitor',
     names: ['Shield Capacitor', 'Capacitor Ring', 'Halo Reservoir'],
-    maxShield: 30,
+    maxShield: 15,
+    boostScope: BoostScope.triangle,
+    boostPercents: [20, 30, 40],
+    boostOnly: ChargeShields,
   ),
 
   // Synergy ---------------------------------------------------------------
@@ -125,54 +131,43 @@ const equipmentFamilies = [
 ];
 
 /// Cards made in Hell. Never sold at a station: they come from demon
-/// wrecks and Hell's own events.
+/// wrecks and Hell's own events. Stronger for their price than anything
+/// sold at a station, since getting them means going to Hell.
 const hellFamilies = [
   EquipmentFamily(
     id: 'brimstone',
     names: ['Brandy Burner', 'Brimstone Projector', 'Hellmouth Cannon'],
     cooldown: 5,
-    action: Hellfire(24),
+    action: Hellfire(32),
     price: 45,
     tags: {CardTag.hellish},
   ),
   EquipmentFamily(
     id: 'teeth',
     names: ['Loose Teeth', 'Tooth Lattice', 'The Chewer\'s Grin'],
-    cooldown: 3,
-    action: FireLaser(14),
+    cooldown: 2.5,
+    action: FireLaser(18),
     price: 35,
     tags: {CardTag.hellish},
   ),
   EquipmentFamily(
     id: 'brandy_mist',
     names: ['Brandy Mist', 'Fume Bank', 'The Drowning Sea'],
-    cooldown: 7,
+    cooldown: 6,
     action: ChargeShields(),
-    maxShield: 40,
+    maxShield: 50,
+    maxShieldTiers: [50, 175, 600],
     price: 40,
     tags: {CardTag.hellish},
   ),
   EquipmentFamily(
     id: 'metal_flesh',
     names: ['Metal Flesh Graft', 'Living Hull', 'Behemoth Hide'],
-    hull: 140,
+    hull: 180,
     price: 40,
     tags: {CardTag.hellish},
   ),
 ];
-
-/// The Mourner's only gift.
-const cursedOrb = Equipment(
-  id: 'cursed_orb',
-  name: 'Cursed Orb',
-  family: 'cursed_orb',
-  tier: Tier.unique,
-  awakens: CardTag.hellish,
-  price: 400,
-  text:
-      'A tiny black hole inside a greasy black stone ball. Heavier than it '
-      'should be, and warm.',
-);
 
 /// Trade goods. Each card is one crate; prices vary from market to market.
 const commodities = [
@@ -260,6 +255,24 @@ const missionCargo = [
   ),
 ];
 
+/// Hell's great prize: from the Mourner, or found ticking in the murk.
+/// One per brawl.
+const hellClock = Equipment(
+  id: 'hell_clock',
+  name: 'Hell Clock',
+  family: 'hell_clock',
+  tier: Tier.unique,
+  boost: ChargeBoost(BoostScope.ship, 30),
+  headStart: 0.5,
+  awakens: CardTag.hellish,
+  tags: {CardTag.hellish},
+  price: 400,
+  text:
+      'A brass clock ticking backwards, set into a greasy black stone ball '
+      'with a tiny black hole at its heart. Everything happens a little '
+      'before it should.',
+);
+
 /// Unique cards the Mourner grants to those who ask it politely.
 const mournerCards = [
   Equipment(
@@ -292,17 +305,7 @@ const mournerCards = [
     price: 400,
     text: 'Most things will leave you alone if you ask nicely.',
   ),
-  Equipment(
-    id: 'mourner_backwards_clock',
-    name: 'The Backwards Clock',
-    family: 'mourner_backwards_clock',
-    tier: Tier.unique,
-    boost: ChargeBoost(BoostScope.ship, 30),
-    headStart: 0.5,
-    tags: {CardTag.hellish},
-    price: 400,
-    text: 'Everything happens a little before it should.',
-  ),
+  hellClock,
   Equipment(
     id: 'mourner_grief_engine',
     name: 'Grief Engine',
@@ -324,7 +327,6 @@ final equipmentCatalog = <String, Equipment>{
   for (final e in mournerCards) e.id: e,
   for (final family in hellFamilies)
     for (final e in family.tiers) e.id: e,
-  cursedOrb.id: cursedOrb,
 };
 
 final _tagged = <String, Equipment>{};

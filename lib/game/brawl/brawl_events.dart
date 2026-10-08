@@ -124,8 +124,9 @@ class BrawlEvent {
 /// The flag set once the Mourner has given its gift.
 const metMourner = 'mourner';
 
-/// The flag set once the Backwards Clock has been found.
-const foundClock = 'clock';
+/// The flag set once the captain has the Hell Clock, from the Mourner or
+/// found in the murk. There is only one per brawl.
+const hasHellClock = 'hell_clock';
 
 const _brandy = 'goods_brandy';
 
@@ -466,12 +467,14 @@ final brawlEvents = <BrawlEvent>[
       ]),
       Choice('Follow the ticking', const [
         Outcome(
-          'A brass clock hangs in the murk, ticking backwards. When you '
-          'bring it aboard every other clock on the ship agrees with it '
-          'at once.',
+          'A brass clock hangs in the murk, ticking backwards, set into a '
+          'greasy black stone ball. There is a hole in the world at its '
+          'centre. When you bring it aboard every other clock on the ship '
+          'agrees with it at once, and everything made in Hell starts to '
+          'hum.',
           effects: [
-            GainCards(['mourner_backwards_clock']),
-            SetFlag(foundClock),
+            GainCards(['hell_clock'], force: true),
+            SetFlag(hasHellClock),
           ],
         ),
         Outcome(
@@ -479,7 +482,7 @@ final brawlEvents = <BrawlEvent>[
           weight: 2,
           effects: [HullChange(-40), Fight(demon: 1)],
         ),
-      ], available: (s) => !s.flags.contains(foundClock)),
+      ], available: (s) => !s.flags.contains(hasHellClock)),
     ],
   ),
   BrawlEvent(
@@ -543,7 +546,10 @@ final brawlEvents = <BrawlEvent>[
     id: 'hell_mourner',
     title: 'The Mourner',
     hell: true,
-    condition: (s) => s.hellTurns >= 2 && !s.flags.contains(metMourner),
+    condition: (s) =>
+        s.hellTurns >= 2 &&
+        !s.flags.contains(metMourner) &&
+        !s.flags.contains(hasHellClock),
     weight: (s) => 0.4 + 0.3 * s.hellTurns,
     text:
         'A planet hangs at the lip of a black hole. Something vast and '
@@ -557,12 +563,14 @@ final brawlEvents = <BrawlEvent>[
         Outcome(
           'It considers you for a long time. Then the black hole lets go '
           'of your ship, and something small and heavy is pressed into '
-          'your hold: a greasy black stone ball, warm, with a hole in the '
-          'world at its centre. For your trouble.\n\n'
+          'your hold: a brass clock ticking backwards, set into a greasy '
+          'black stone ball with a hole in the world at its centre. For '
+          'your trouble.\n\n'
           'When the stars come back they are ordinary ones.',
           effects: [
-            GainCards(['cursed_orb'], force: true),
+            GainCards(['hell_clock'], force: true),
             SetFlag(metMourner),
+            SetFlag(hasHellClock),
             LeaveHell(),
             NoFight(),
           ],
@@ -573,12 +581,13 @@ final brawlEvents = <BrawlEvent>[
           'It does not want your pity. It lets you know this at length, '
           'and your hull lets you know too.\n\n'
           'Then, as if remembering its manners, it gives you something '
-          'anyway: a greasy black stone ball, warm, with a hole in the '
-          'world at its centre. It sets you down somewhere safe.',
+          'anyway: a brass clock ticking backwards, set into a greasy black '
+          'stone ball. It sets you down somewhere safe.',
           effects: [
             HullChange(-120, lethal: false),
-            GainCards(['cursed_orb'], force: true),
+            GainCards(['hell_clock'], force: true),
             SetFlag(metMourner),
+            SetFlag(hasHellClock),
             LeaveHell(),
             NoFight(),
           ],
@@ -589,12 +598,14 @@ final brawlEvents = <BrawlEvent>[
           'It does not notice. The black hole does: it is a long time '
           'before your ship stops screaming.\n\n'
           'When it is over, the Mourner is setting you down somewhere '
-          'safe, as gently as it holds its world. There is a greasy black '
-          'stone ball in your hold that was not there before.',
+          'safe, as gently as it holds its world. There is a clock in your '
+          'hold that was not there before, ticking backwards inside a '
+          'greasy black stone ball.',
           effects: [
             HullChange(-250, lethal: false),
-            GainCards(['cursed_orb'], force: true),
+            GainCards(['hell_clock'], force: true),
             SetFlag(metMourner),
+            SetFlag(hasHellClock),
             LeaveHell(),
             NoFight(),
           ],

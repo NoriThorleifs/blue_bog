@@ -2,12 +2,23 @@ import 'package:blue_bog/game/combat/catalog.dart';
 import 'package:blue_bog/game/combat/combat.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Combatant ship(List<String> ids, {int hull = 100000, String name = 'ship'}) =>
-    Combatant(name: name, loadout: CombatLoadout.of(ids), baseHull: hull);
+Combatant ship(
+  List<String> ids, {
+  int hull = 100000,
+  String name = 'ship',
+  List<String> hold = const [],
+}) => Combatant(
+  name: name,
+  loadout: CombatLoadout.of(ids, hold: hold),
+  baseHull: hull,
+);
 
 /// A target that never shoots back.
-Combatant target(List<String> ids, {int hull = 100000}) =>
-    ship(ids, hull: hull, name: 'target');
+Combatant target(
+  List<String> ids, {
+  int hull = 100000,
+  List<String> hold = const [],
+}) => ship(ids, hull: hull, name: 'target', hold: hold);
 
 void main() {
   test('shields absorb laser damage before the hull', () {
@@ -51,6 +62,94 @@ void main() {
       r.events.firstWhere((e) => e.side == 0 && e.time == 12).kind,
       CombatEventKind.missileIntercepted,
     );
+  });
+
+  test(
+    'a merged fabricator builds as many drones as the three it replaced',
+    () {
+      int interceptions(String fabricator, String feedstock) {
+        final r = fight(
+          ship(
+            ['missiles_1', 'missiles_1', 'missiles_1'],
+            hold: ['missile_crate_2'],
+          ),
+          target([fabricator], hold: [feedstock]),
+        );
+        return r.events
+            .where((e) => e.kind == CombatEventKind.missileIntercepted)
+            .length;
+      }
+
+      final three =
+          fight(
+                ship(
+                  ['missiles_1', 'missiles_1', 'missiles_1'],
+                  hold: ['missile_crate_2'],
+                ),
+                target(
+                  ['fabricator_1', 'fabricator_1', 'fabricator_1'],
+                  hold: ['feedstock_2'],
+                ),
+              ).events
+              .where((e) => e.kind == CombatEventKind.missileIntercepted)
+              .length;
+      expect(interceptions('fabricator_2', 'feedstock_2'), three);
+      expect(
+        interceptions('fabricator_2', 'feedstock_2'),
+        greaterThan(interceptions('fabricator_1', 'feedstock_2')),
+      );
+    },
+  );
+
+  test('a Swarm Mother puts out nine drones at once', () {
+    final r = fight(
+      ship(['laser_1']),
+      target(['fabricator_3'], hold: ['feedstock_2']),
+    );
+    final first = r.events.firstWhere(
+      (e) => e.kind == CombatEventKind.droneBuilt,
+    );
+    expect(first.value, 9);
+  });
+
+  test('drones out patch the hull a little every second', () {
+    final hurt = Combatant(
+      name: 'hurt',
+      loadout: CombatLoadout.of(['fabricator_2'], hold: ['feedstock_2']),
+      hull: 200,
+    );
+    final r = fight(hurt, target(['plating_1']));
+    // Three drones from the first build at 8 s, one hull each per second
+    // for the remaining 53 seconds.
+    expect(r.hull, 200 + 3 * 53);
+  });
+
+  test('shield capacitors speed up shield generators in their triangle', () {
+    double firstCharge(List<String?> slots) => fight(
+      Combatant(
+        name: 'me',
+        loadout: CombatLoadout([
+          ...slots,
+          ...List.filled(9 - slots.length, null),
+        ]),
+      ),
+      target([]),
+    ).events.firstWhere((e) => e.kind == CombatEventKind.shieldsCharged).time;
+    expect(firstCharge(['shield_1']), 6);
+    expect(firstCharge(['shield_1', 'shield_capacitor_1']), closeTo(4.8, 0.05));
+    expect(
+      firstCharge(['shield_1', null, null, 'shield_capacitor_1']),
+      6,
+      reason: 'only its own triangle',
+    );
+  });
+
+  test('shields grow faster than lasers as they merge', () {
+    for (final (tier, shield) in [(1, 30), (2, 105), (3, 360)]) {
+      expect(equipmentById('shield_$tier').maxShield, shield);
+    }
+    // A super laser shot against a super shield is stopped outright.
+    expect(equipmentById('laser_3').damage, lessThan(360));
   });
 
   test('teleported bombs go through shields and drones', () {

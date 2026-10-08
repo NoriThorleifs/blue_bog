@@ -180,7 +180,17 @@ CombatResult fight(Combatant a, Combatant b, {bool tractorBeam = false}) {
     for (final (s, slot) in firing) {
       sides[s].fire(slot, sides[1 - s], tick / 10, s, events);
     }
-    if (firing.isNotEmpty) snapshots.add(snap(tick / 10));
+    // Drones patch the hull a little every second.
+    var repaired = false;
+    if (tick % 10 == 0) {
+      for (final side in sides) {
+        if (side.drones > 0 && side.hull > 0 && side.hull < side.maxHull) {
+          side.hull = min(side.maxHull, side.hull + side.drones * droneRepair);
+          repaired = true;
+        }
+      }
+    }
+    if (firing.isNotEmpty || repaired) snapshots.add(snap(tick / 10));
     if (sides[0].hull <= 0 || sides[1].hull <= 0) break;
     if (tick > 100000) break;
   }
@@ -210,7 +220,8 @@ class _Side {
     : gear = [
         for (final id in c.loadout.slots) id == null ? null : equipmentById(id),
       ],
-      hull = c.hull {
+      hull = c.hull,
+      maxHull = c.maxHull {
     final all = gear.whereType<Equipment>();
     maxShield = all.fold(0, (t, e) => t + e.maxShield);
     maxDrones = all.fold(0, (t, e) => t + e.maxDrones);
@@ -246,6 +257,7 @@ class _Side {
 
   final List<Equipment?> gear;
   int hull;
+  final int maxHull;
   int shield = 0;
   int drones = 0;
   late final int maxShield;
@@ -342,10 +354,16 @@ class _Side {
       case ChargeShields():
         shield = maxShield;
         note(CombatEventKind.shieldsCharged, shield);
-      case BuildDrone():
+      case BuildDrone(:final count):
         if (drones >= maxDrones) return;
-        if (!_use(Ammo.droneFeedstock)) return note(CombatEventKind.outOfAmmo);
-        drones++;
+        var built = 0;
+        while (built < count &&
+            drones < maxDrones &&
+            _use(Ammo.droneFeedstock)) {
+          drones++;
+          built++;
+        }
+        if (built == 0) return note(CombatEventKind.outOfAmmo);
         note(CombatEventKind.droneBuilt, drones);
     }
   }

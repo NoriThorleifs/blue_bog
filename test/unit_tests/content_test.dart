@@ -182,7 +182,7 @@ void main() {
       expect(after.inHell, isFalse);
       expect(after.has(Flag.codeGreenUsed), isTrue);
       expect(after.has(Flag.mournerLore), isTrue);
-      expect(after.cards.where((c) => c.startsWith('mourner')), hasLength(1));
+      expect(after.cards.where(_isMournerGift), hasLength(1));
 
       // Knowing how, you can ask again. The gift is never the same twice.
       final again = engine.acknowledge(after).clone()
@@ -192,7 +192,7 @@ void main() {
           .choicesFor(again)
           .indexWhere((c) => c.label.startsWith('Ask politely'));
       final second = engine.choose(again, ask);
-      final gifts = second.cards.where((c) => c.startsWith('mourner'));
+      final gifts = second.cards.where(_isMournerGift);
       expect(gifts, hasLength(2));
       expect(gifts.toSet(), hasLength(2));
     });
@@ -321,3 +321,5 @@ void main() {
     });
   });
 }
+
+bool _isMournerGift(String id) => mournerCards.any((c) => c.id == id);

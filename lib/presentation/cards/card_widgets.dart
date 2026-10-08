@@ -18,6 +18,7 @@ Color cardColour(Equipment card) => switch (card.kind) {
     Hellfire() => hellishRed,
     ChargeShields() => const Color(0xFF7FA8FF),
     BuildDrone() => const Color(0xFF5CFF8A),
+    null when card.boost?.only == ChargeShields => const Color(0xFF7FA8FF),
     null when card.boost != null => const Color(0xFFFFE066),
     null when card.berths > 0 => const Color(0xFFFFD25A),
     null when card.hospital > 0 => const Color(0xFFFF8FB8),

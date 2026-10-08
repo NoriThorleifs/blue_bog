@@ -49,9 +49,17 @@ class ChargeShields extends Action {
   const ChargeShields();
 }
 
+/// Hull each drone out repairs per second of a fight.
+const droneRepair = 1;
+
 /// Builds one drone, up to the ship's maximum. Uses one unit of feedstock.
 class BuildDrone extends Action {
-  const BuildDrone();
+  const BuildDrone([this.count = 1]);
+
+  /// Drones built per activation, each using one unit of feedstock. Like
+  /// damage, this triples per tier, so merging three fabricators keeps
+  /// their output.
+  final int count;
 }
 
 enum Ammo {
@@ -262,18 +270,25 @@ class Equipment {
           'Hellfire: $damage damage$every, through shields and drones. '
               'Burns your own hull for $recoil',
         ChargeShields() => 'Charges shields$every',
-        BuildDrone() => 'Builds a drone$every',
+        BuildDrone(count: 1) => 'Builds a drone$every',
+        BuildDrone(:final count) => 'Builds $count drones$every',
         null => '',
       },
       if (hull != 0) '+$hull hull',
       if (maxShield != 0) '+$maxShield max shield',
       if (maxDrones != 0) '+$maxDrones max drones',
+      if (action is BuildDrone)
+        'Each drone out repairs $droneRepair hull a second',
       for (final e in ammo.entries) '${e.value} ${e.key.label} per fight',
       if (boost case final b?)
-        '${b.scope == BoostScope.triangle ? 'Cards in this triangle' : 'Every other card'}'
-            '${b.only == FireMissile ? ' (missiles' : ''}'
+        '${switch (b.only) {
+              const (FireMissile) => 'Missiles',
+              const (ChargeShields) => 'Shield generators',
+              _ => b.scope == BoostScope.triangle ? 'Cards' : 'Every other card',
+            }}'
             '${b.maxDamage != null ? ' of ${b.maxDamage} damage or less' : ''}'
-            '${b.only == FireMissile ? ')' : ''} charge ${b.percent}% faster',
+            '${b.scope == BoostScope.triangle ? ' in this triangle' : ''}'
+            ' charge ${b.percent}% faster',
       if (berths != 0) '+$berths human berths',
       if (hospital != 0) '+$hospital hospital',
       if (hellShielding != 0)
@@ -318,6 +333,7 @@ class EquipmentFamily {
     this.hold = 0,
     this.price = 30,
     this.tags = const {},
+    this.maxShieldTiers,
   });
 
   final String id;
@@ -345,6 +361,9 @@ class EquipmentFamily {
   final int price;
   final Set<CardTag> tags;
 
+  /// Max shield per tier, where it doesn't simply triple.
+  final List<int>? maxShieldTiers;
+
   List<Equipment> get tiers => [
     for (final tier in [Tier.basic, Tier.upgraded, Tier.superior])
       _at(tier, [1, 3, 9][tier.index]),
@@ -362,10 +381,11 @@ class EquipmentFamily {
       FireMissile(:final damage) => FireMissile(damage * x),
       TeleportBomb(:final damage) => TeleportBomb(damage * x),
       Hellfire(:final damage) => Hellfire(damage * x),
+      BuildDrone(:final count) => BuildDrone(count * x),
       final other => other,
     },
     hull: hull * x,
-    maxShield: maxShield * x,
+    maxShield: maxShieldTiers?[tier.index] ?? maxShield * x,
     maxDrones: maxDrones * x,
     ammo: {for (final e in ammo.entries) e.key: e.value * x},
     boost: boostPercents == null

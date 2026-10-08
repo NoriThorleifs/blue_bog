@@ -7,6 +7,7 @@ import 'app/run_controller.dart';
 import 'app/theme.dart';
 import 'presentation/brawl/brawl_screen.dart';
 import 'presentation/combat/combat_screen.dart';
+import 'presentation/gambling/gambling_screen.dart';
 import 'presentation/deck/deck_screen.dart';
 import 'presentation/map/galaxy_map_screen.dart';
 import 'presentation/market/market_screen.dart';
@@ -42,6 +43,10 @@ final routerProvider = Provider(
           GoRoute(
             path: 'combat',
             builder: (context, state) => const CombatScreen(brawl: true),
+          ),
+          GoRoute(
+            path: 'gambling',
+            builder: (context, state) => const GamblingScreen(),
           ),
         ],
       ),

@@ -6,6 +6,7 @@ import '../game/brawl/brawl.dart';
 import '../game/captain/species.dart';
 import '../game/deck/loadout.dart';
 import '../game/engine.dart' show IllegalMove;
+import '../game/gambling/roulette.dart';
 
 final brawlEngineProvider = Provider((ref) => const BrawlEngine());
 
@@ -33,6 +34,8 @@ class BrawlController extends Notifier<BrawlState?> {
   String? repair() => _attempt(_engine.repair);
   String? upgradeHull() => _attempt(_engine.upgradeHull);
   String? launch() => _attempt(_engine.launch);
+  String? spinRoulette(RouletteBet bet) =>
+      _attempt((s) => _engine.spinRoulette(s, bet));
   String? choose(int index) => _attempt((s) => _engine.choose(s, index));
   String? proceed() => _attempt(_engine.proceed);
   String? use(CardSpot from, CardSpot to) =>

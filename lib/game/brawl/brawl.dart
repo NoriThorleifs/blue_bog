@@ -5,6 +5,7 @@ import '../combat/catalog.dart';
 import '../combat/combat.dart';
 import '../deck/loadout.dart';
 import '../engine.dart' show IllegalMove;
+import '../gambling/roulette.dart';
 import '../market.dart';
 import '../rng.dart';
 import 'brawl_events.dart';
@@ -36,6 +37,23 @@ const brawlStations = {
   'narcillia': 'Narcillia',
   'zirmai': 'Zirmai',
   'kyberon': 'Kyberon',
+};
+
+/// The gambling den each station runs, by who mostly lives there.
+enum GamblingGame {
+  roulette('Roulette'),
+  gor('Gor gambling hall'),
+  al('Ál gambling pool');
+
+  const GamblingGame(this.label);
+  final String label;
+}
+
+/// Every station runs roulette for now. The Gor and Ál games are
+/// placeholders until their rules are decided; assign them here per
+/// station when they're ready.
+final stationGames = {
+  for (final id in brawlStations.keys) id: GamblingGame.roulette,
 };
 
 /// Families left out of brawl mode. Humans are out while we test it, so
@@ -95,6 +113,7 @@ class BrawlState {
     this.hellTurns = 0,
     this.leavingHell = false,
     this.lastCombat,
+    this.lastSpin,
     this.lost = false,
     Set<String>? flags,
     List<String>? log,
@@ -133,6 +152,9 @@ class BrawlState {
   /// Set when an event lets the ship out of Hell, until it docks.
   bool leavingHell;
   FightRecord? lastCombat;
+
+  /// The most recent roulette spin, for the wheel to play back.
+  RouletteSpin? lastSpin;
   bool lost;
   Set<String> flags;
 
@@ -140,6 +162,7 @@ class BrawlState {
   List<String> log;
 
   String get stationName => brawlStations[station]!;
+  GamblingGame get gamblingGame => stationGames[station]!;
   ShipStats get stats => ShipStats.of(loadout, hullUpgrades: hullUpgrades);
   EnemyTemplate get nextEnemy => brawlEnemy(round);
   BrawlEvent? get currentEvent => event == null ? null : brawlEventsById[event];
@@ -166,6 +189,7 @@ class BrawlState {
     hellTurns: hellTurns,
     leavingHell: leavingHell,
     lastCombat: lastCombat,
+    lastSpin: lastSpin,
     lost: lost,
     flags: {...flags},
     log: [...log],
@@ -344,6 +368,32 @@ class BrawlEngine {
         ..credits -= cost
         ..hullUpgrades += 1
         ..hull += ShipStats.hullPerUpgrade;
+    });
+  }
+
+  // Gambling -------------------------------------------------------------------
+
+  /// One spin of the roulette wheel. Only at a station that runs roulette.
+  /// The stake is one of [rouletteStakes], or every credit the captain has.
+  BrawlState spinRoulette(BrawlState state, RouletteBet bet) {
+    _requireDocked(state);
+    if (state.gamblingGame != GamblingGame.roulette) {
+      throw IllegalMove('No roulette here');
+    }
+    final allIn = bet.stake == state.credits && bet.stake > 0;
+    if (!rouletteStakes.contains(bet.stake) && !allIn) {
+      throw IllegalMove('The table doesn\'t take that bet');
+    }
+    if (state.credits < bet.stake) throw IllegalMove('Not enough credits');
+    return _step(state, (s, rng) {
+      final spin = RouletteSpin(
+        bet,
+        wheelOrder[rng.nextInt(wheelOrder.length)],
+      );
+      s
+        ..credits += spin.net
+        ..lastSpin = spin
+        ..log = [];
     });
   }
 
