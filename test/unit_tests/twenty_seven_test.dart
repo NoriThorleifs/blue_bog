@@ -1,8 +1,8 @@
-import 'package:blue_bog/game/brawl/brawl.dart';
-import 'package:blue_bog/game/captain/species.dart';
-import 'package:blue_bog/game/engine.dart' show IllegalMove;
-import 'package:blue_bog/game/gambling/twenty_seven.dart';
-import 'package:blue_bog/game/rng.dart';
+import 'package:blue_bog/game_engine/brawl/brawl.dart';
+import 'package:blue_bog/game_engine/captain/species.dart';
+import 'package:blue_bog/game_engine/engine.dart' show IllegalMove;
+import 'package:blue_bog/game_engine/gambling/twenty_seven.dart';
+import 'package:blue_bog/game_engine/rng.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const engine = BrawlEngine();

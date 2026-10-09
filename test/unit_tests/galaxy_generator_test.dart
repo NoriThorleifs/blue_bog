@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:blue_bog/game/galaxy/galaxy.dart';
-import 'package:blue_bog/game/galaxy/galaxy_generator.dart';
+import 'package:blue_bog/game_engine/galaxy/galaxy.dart';
+import 'package:blue_bog/game_engine/galaxy/galaxy_generator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -4,13 +4,13 @@
 //   flutter run -d linux -t tool/combat_preview.dart
 //   flutter run -d emulator-5554 -t tool/combat_preview.dart
 //   flutter run -d linux -t tool/combat_preview.dart --dart-define=FIGHT=hell
-import 'package:blue_bog/app/sound.dart';
-import 'package:blue_bog/app/theme.dart';
-import 'package:blue_bog/game/brawl/brawl_enemies.dart';
-import 'package:blue_bog/game/combat/catalog.dart'
+import 'package:blue_bog/functions/sound.dart';
+import 'package:blue_bog/components/theme.dart';
+import 'package:blue_bog/game_engine/brawl/brawl_enemies.dart';
+import 'package:blue_bog/game_engine/combat/catalog.dart'
     show CombatLoadout, EnemyTemplate;
-import 'package:blue_bog/game/combat/combat.dart';
-import 'package:blue_bog/presentation/combat/combat_screen.dart';
+import 'package:blue_bog/game_engine/combat/combat.dart';
+import 'package:blue_bog/screens/combat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

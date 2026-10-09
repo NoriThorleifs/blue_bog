@@ -1,8 +1,8 @@
-import 'package:blue_bog/app/sound.dart';
-import 'package:blue_bog/game/brawl/brawl_enemies.dart';
-import 'package:blue_bog/game/combat/catalog.dart';
-import 'package:blue_bog/game/combat/combat.dart';
-import 'package:blue_bog/presentation/combat/battle_sounds.dart';
+import 'package:blue_bog/functions/battle_sounds.dart';
+import 'package:blue_bog/functions/sound.dart';
+import 'package:blue_bog/game_engine/brawl/brawl_enemies.dart';
+import 'package:blue_bog/game_engine/combat/catalog.dart';
+import 'package:blue_bog/game_engine/combat/combat.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 FightRecord _record(List<String> ids, EnemyTemplate enemy) {

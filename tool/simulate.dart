@@ -6,12 +6,12 @@
 //   dart run tool/simulate.dart story 42   # print the full log of seed 42
 import 'dart:math';
 
-import 'package:blue_bog/game/captain/species.dart';
-import 'package:blue_bog/game/combat/catalog.dart';
-import 'package:blue_bog/game/content/content.dart';
-import 'package:blue_bog/game/engine.dart';
-import 'package:blue_bog/game/rng.dart';
-import 'package:blue_bog/game/run_state.dart';
+import 'package:blue_bog/game_engine/captain/species.dart';
+import 'package:blue_bog/game_engine/combat/catalog.dart';
+import 'package:blue_bog/game_engine/content/content.dart';
+import 'package:blue_bog/game_engine/engine.dart';
+import 'package:blue_bog/game_engine/rng.dart';
+import 'package:blue_bog/game_engine/run_state.dart';
 
 final engine = GameEngine(storyContent);
 

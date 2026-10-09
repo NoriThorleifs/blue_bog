@@ -1,10 +1,10 @@
 import 'dart:math';
 
-import 'package:blue_bog/game/brawl/brawl.dart';
-import 'package:blue_bog/game/captain/species.dart';
-import 'package:blue_bog/game/engine.dart' show IllegalMove;
-import 'package:blue_bog/game/gambling/roulette.dart';
-import 'package:blue_bog/presentation/gambling/gambling_screen.dart';
+import 'package:blue_bog/functions/roulette_motion.dart';
+import 'package:blue_bog/game_engine/brawl/brawl.dart';
+import 'package:blue_bog/game_engine/captain/species.dart';
+import 'package:blue_bog/game_engine/engine.dart' show IllegalMove;
+import 'package:blue_bog/game_engine/gambling/roulette.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const engine = BrawlEngine();

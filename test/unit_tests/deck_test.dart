@@ -1,15 +1,15 @@
-import 'package:blue_bog/game/captain/species.dart';
-import 'package:blue_bog/game/combat/catalog.dart';
-import 'package:blue_bog/game/combat/equipment.dart';
-import 'package:blue_bog/game/content/content.dart';
-import 'package:blue_bog/game/deck/loadout.dart';
-import 'package:blue_bog/game/engine.dart';
-import 'package:blue_bog/game/galaxy/galaxy.dart';
-import 'package:blue_bog/game/market.dart';
-import 'package:blue_bog/game/rng.dart';
-import 'package:blue_bog/game/run_state.dart';
-import 'package:blue_bog/game/story/keys.dart';
-import 'package:blue_bog/game/story/rules.dart';
+import 'package:blue_bog/game_engine/captain/species.dart';
+import 'package:blue_bog/game_engine/combat/catalog.dart';
+import 'package:blue_bog/game_engine/combat/equipment.dart';
+import 'package:blue_bog/game_engine/content/content.dart';
+import 'package:blue_bog/game_engine/deck/loadout.dart';
+import 'package:blue_bog/game_engine/engine.dart';
+import 'package:blue_bog/game_engine/galaxy/galaxy.dart';
+import 'package:blue_bog/game_engine/market.dart';
+import 'package:blue_bog/game_engine/rng.dart';
+import 'package:blue_bog/game_engine/run_state.dart';
+import 'package:blue_bog/game_engine/story/keys.dart';
+import 'package:blue_bog/game_engine/story/rules.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final engine = GameEngine(storyContent);

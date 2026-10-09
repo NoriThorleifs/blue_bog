@@ -1,4 +1,4 @@
-import 'package:blue_bog/three-thirds/ternary_number_translator.dart';
+import 'package:blue_bog/functions/three_thirds/ternary_number_translator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

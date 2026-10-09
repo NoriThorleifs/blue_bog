@@ -1,14 +1,14 @@
-How the lore in this vault drives the game's map, turns and events. The code lives in `lib/game/`. Story content (beats and events) is in `lib/game/content/` and can be edited without touching the engine.
+How the lore in this vault drives the game's map, turns and events. The code lives in `lib/game_engine/`. Story content (beats and events) is in `lib/game_engine/content/` and can be edited without touching the engine.
 
 ## Where the game starts in the timeline
 
-Everything in [[outline]] up to "The humans are allowed to set up a temporary residence in Ochra" has already happened when a run starts. These flags are set at turn 1: `gatecrash`, `gor_demilitarised`, `first_contact`, `humans_at_orcha`.
+Everything in [[lore/outline|outline]] up to "The humans are allowed to set up a temporary residence in Ochra" has already happened when a run starts. These flags are set at turn 1: `gatecrash`, `gor_demilitarised`, `first_contact`, `humans_at_orcha`.
 
 From there the outline plays out as **story beats**, checked at the end of every turn. Each beat has a base chance per turn, hidden modifiers (captain's choices, the humans aboard), and usually a deadline so the story can't stall. Outcomes are random within limits, so the galaxy's story differs between runs.
 
 | Act | Beat | Notes |
 | --- | --- | --- |
-| 1 | Consumers raid Orcha | Local event if you're docked there: [[Raid at Orcha station]] |
+| 1 | Consumers raid Orcha | Local event if you're docked there: [[lore/Raid at Orcha station|Raid at Orcha station]] |
 | 1 | Hive world located | Reveals the hive world (later Neo Terra) at sublight from Orcha |
 | 1 | Overseer's offer | Council session at the Center where you can spend influence |
 | 1 | Kepler "misunderstanding" | Touchdown. Sets up the Kepler vote in act 2 |
@@ -17,7 +17,7 @@ From there the outline plays out as **story beats**, checked at the end of every
 | 1 | Consumers invade Bhrun-Gai | The Direction Remover |
 | 1→2 | Center–Træ Træ Tene gateway restored | Starts act 2 |
 | 2 | Wrong warping | Raises Hell risk in every pipe |
-| 2 | Training broadcast → Overseer suspects | A Tern captain with a good bond can be the one who notices ([[The revelation]]) |
+| 2 | Training broadcast → Overseer suspects | A Tern captain with a good bond can be the one who notices ([[lore/The revelation|The revelation]]) |
 | 2 | Overseer goes to Neo Terra | Shining-head dies, the Overseer is lost to the Mourner. More gateway restorations follow |
 | 2 | Kepler vote | Legal settlement grants a planet; eviction forces Code Red |
 | 2→3 | Gateway into Kyndari's network restored | Starts act 3 |
@@ -31,8 +31,8 @@ From there the outline plays out as **story beats**, checked at the end of every
 - Kepler ↔ Bhrun-Gai only. Bhrun-Gai ↔ Kepler and Ghor-Dum. Ghor-Dum ↔ Bhrun-Gai and one random, but never more than 2 jumps from the Center.
 - Sublight only: Neo Terra from Orcha (hidden until the hive is found), Ur-Gor from Ghor-Dum, Úlaval from Úlamora, Sol from Kepler.
 - Kyndari ↔ Sol is a working, human-built gateway. Kyndari's network is connected to act 2 only by dead gateways.
-- At most 4 gateways per star, from [[how FTL works]].
-- Distances from [[Map of the galaxy notes]]: Sol–Center 2600 ly, Sol–Kepler 1810 ly, Neo Terra–Træ Træ Tene 127 px, Úlamora–Úlaval 54 px.
+- At most 4 gateways per star, from [[lore/how FTL works|how FTL works]].
+- Distances from [[lore/Map of the galaxy notes|Map of the galaxy notes]]: Sol–Center 2600 ly, Sol–Kepler 1810 ly, Neo Terra–Træ Træ Tene 127 px, Úlamora–Úlaval 54 px.
 - The Center is not at the galactic core. It sits off toward the edge, up and to one side of Sol, and the act 1 network clusters around it. Orcha → Neo Terra → Træ Træ Tene points toward the open galaxy, where act 2 spreads out. Kyndari and act 3 lie beyond Sol on the opposite side.
 - Readability: pipes (gateways and sublight lanes) never cross, never pass within 50 px of a system they don't connect, and two pipes at the same system are always at least 22.5° apart. Dead gateways (other than the Center's) are at most 1000 px long.
 - Everything else is random per seed: positions, the extra systems (some from the vault, like Pax Morra, Kyberon, Narcillia, Zirmai and Tarsíus, others generated), and the links between them.
@@ -67,7 +67,7 @@ With a random-choice bot over 3000 runs: Yellow 38%, Red 23%, Blue 13%, ship los
 ## Decisions I made that you may want to change
 
 - **Spellings**: notes and prompt disagree. I used *Orcha Station* (note title; the prompt says Ocha, the outline Ochra), *Ghor-Dum* (prompt; species note says Gor-Dhum), *Træ Træ Tene* (map notes; prompt says tre-tre-trene), *Úlaval* (prompt and species note; map notes say Úlavan).
-- The Center ↔ Orcha gateway is fixed, because [[Orcha]] says the station is the junction on the Center–Gor route.
+- The Center ↔ Orcha gateway is fixed, because [[lore/Orcha|Orcha]] says the station is the junction on the Center–Gor route.
 - The "big bois" homeworld invaded by Consumers is assumed to be Bhrun-Gai.
 - Who restores the Træ Træ Tene gateway is not in the outline. I wrote it as a Tern crew pushed through by a council rattled by the humans, with the Unfortunates "consulting" and the Overseer's veto failing.
 - Code Green is once per run.
@@ -83,7 +83,7 @@ With a random-choice bot over 3000 runs: Yellow 38%, Red 23%, Blue 13%, ship los
 
 ## Territories and borders
 
-`lib/game/galaxy/territory.dart`. Gates take up so much room in Hell that they sit at intervals, so every **gate node** (any system with a gateway, working or dead) claims the space nearest to it, out to a maximum reach. Space beyond every reach belongs to nobody, because the Havi never expanded across the whole galaxy. Systems without gateways (Neo Terra, Ur-Gor, Úlaval) sit inside someone else's territory.
+`lib/game_engine/galaxy/territory.dart`. Gates take up so much room in Hell that they sit at intervals, so every **gate node** (any system with a gateway, working or dead) claims the space nearest to it, out to a maximum reach. Space beyond every reach belongs to nobody, because the Havi never expanded across the whole galaxy. Systems without gateways (Neo Terra, Ur-Gor, Úlaval) sit inside someone else's territory.
 
 Each node measures distance its own way, and the border styles fall out of that:
 - **Colonial**: square distance, which gives ruled straight lines, right angles and diagonals. The Center and Orcha always use it.
@@ -97,7 +97,7 @@ The galaxy image is generated by `tool/generate_galaxy.py`, a top-down barred sp
 
 ## Factions
 
-`lib/game/faction.dart`. **Major factions** hold territory and can expand. **Minor factions** hold little or none, but have ships and fight you if you're their enemy. Every human faction follows the captain of the Promethius as the de facto leader of humanity. That's what keeps humans pulling roughly the same way even though not all of them recognise the Havi's authority.
+`lib/game_engine/faction.dart`. **Major factions** hold territory and can expand. **Minor factions** hold little or none, but have ships and fight you if you're their enemy. Every human faction follows the captain of the Promethius as the de facto leader of humanity. That's what keeps humans pulling roughly the same way even though not all of them recognise the Havi's authority.
 
 | Faction | Kind | Leader | How it gets territory |
 | --- | --- | --- | --- |
@@ -138,7 +138,7 @@ The galaxy image is generated by `tool/generate_galaxy.py`, a top-down barred sp
 
 ## Deck building (base)
 
-`lib/game/deck/`. The power system is ternary.
+`lib/game_engine/deck/`. The power system is ternary.
 
 - **Nine slots** in a triforce: three small triangles of three slots each, making one big triangle. Only slotted cards do anything. A **hold** of 9 keeps spares.
 - **Stacking.** One card is one card, two are two cards. Three of the same card, anywhere in slots or hold, **merge** into its upgraded version. Three upgraded copies merge into the **super** version. Super cards don't merge further. A merged card keeps a slot position if one of its copies had one.

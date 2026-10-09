@@ -1,12 +1,12 @@
-import 'package:blue_bog/game/captain/species.dart';
-import 'package:blue_bog/game/content/content.dart';
-import 'package:blue_bog/game/engine.dart';
-import 'package:blue_bog/game/faction.dart';
-import 'package:blue_bog/game/galaxy/galaxy.dart';
-import 'package:blue_bog/game/run_state.dart';
-import 'package:blue_bog/game/story/keys.dart';
-import 'package:blue_bog/game/story/rules.dart';
-import 'package:blue_bog/game/story/story.dart';
+import 'package:blue_bog/game_engine/captain/species.dart';
+import 'package:blue_bog/game_engine/content/content.dart';
+import 'package:blue_bog/game_engine/engine.dart';
+import 'package:blue_bog/game_engine/faction.dart';
+import 'package:blue_bog/game_engine/galaxy/galaxy.dart';
+import 'package:blue_bog/game_engine/run_state.dart';
+import 'package:blue_bog/game_engine/story/keys.dart';
+import 'package:blue_bog/game_engine/story/rules.dart';
+import 'package:blue_bog/game_engine/story/story.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Content with a scripted event so engine rules can be tested in isolation.

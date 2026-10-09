@@ -1,12 +1,12 @@
-import 'package:blue_bog/game/brawl/brawl.dart';
-import 'package:blue_bog/game/brawl/brawl_events.dart';
-import 'package:blue_bog/game/captain/species.dart';
-import 'package:blue_bog/game/combat/catalog.dart';
-import 'package:blue_bog/game/combat/combat.dart';
-import 'package:blue_bog/game/combat/equipment.dart';
-import 'package:blue_bog/game/deck/loadout.dart';
-import 'package:blue_bog/game/engine.dart' show IllegalMove;
-import 'package:blue_bog/game/market.dart';
+import 'package:blue_bog/game_engine/brawl/brawl.dart';
+import 'package:blue_bog/game_engine/brawl/brawl_events.dart';
+import 'package:blue_bog/game_engine/captain/species.dart';
+import 'package:blue_bog/game_engine/combat/catalog.dart';
+import 'package:blue_bog/game_engine/combat/combat.dart';
+import 'package:blue_bog/game_engine/combat/equipment.dart';
+import 'package:blue_bog/game_engine/deck/loadout.dart';
+import 'package:blue_bog/game_engine/engine.dart' show IllegalMove;
+import 'package:blue_bog/game_engine/market.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const engine = BrawlEngine();

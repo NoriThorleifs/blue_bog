@@ -5,7 +5,7 @@ concept_art/mourner_<n>_ai_generated.png (see the naming rule in CLAUDE.md).
 
     python3 tool/generate_mourner_concepts.py
 
-The scene, from The-Mourner.md: in Hell, whose space is an amber,
+The scene, from lore/The-Mourner.md: in Hell, whose space is an amber,
 alcoholic murk, a planet hangs at the lip of a black hole. Something vast
 and unknowable holds it there, forever pulling it back from the brink and
 never quite far enough.

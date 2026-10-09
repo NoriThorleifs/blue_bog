@@ -27,10 +27,10 @@
 // gives value per 100 credits, which is what over- or underpowered means.
 import 'dart:math';
 
-import 'package:blue_bog/game/combat/catalog.dart';
-import 'package:blue_bog/game/combat/combat.dart';
-import 'package:blue_bog/game/combat/equipment.dart';
-import 'package:blue_bog/game/deck/loadout.dart';
+import 'package:blue_bog/game_engine/combat/catalog.dart';
+import 'package:blue_bog/game_engine/combat/combat.dart';
+import 'package:blue_bog/game_engine/combat/equipment.dart';
+import 'package:blue_bog/game_engine/deck/loadout.dart';
 
 /// Ammo bought with each launcher family, tier for tier.
 const ammoFor = {

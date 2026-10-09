@@ -1,5 +1,5 @@
-import 'package:blue_bog/game/combat/catalog.dart';
-import 'package:blue_bog/game/combat/combat.dart';
+import 'package:blue_bog/game_engine/combat/catalog.dart';
+import 'package:blue_bog/game_engine/combat/combat.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Combatant ship(

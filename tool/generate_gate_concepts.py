@@ -5,7 +5,7 @@ concept_art/gate_<n>_ai_generated.png (see the naming rule in CLAUDE.md).
 
     python3 tool/generate_gate_concepts.py
 
-From how FTL works.md: gates are ancient circular relics that exist at the
+From lore/how FTL works.md: gates are ancient circular relics that exist at the
 same point in both dimensions. Approaching one fades a ship into the other
 dimension. In Hell, each gate's energy barrier stretches as a pipe to the
 gate it is paired with. Traffic is split into thirds: one lower third in,

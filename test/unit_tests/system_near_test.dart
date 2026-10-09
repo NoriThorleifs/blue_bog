@@ -1,8 +1,8 @@
-import 'package:blue_bog/game/captain/species.dart';
-import 'package:blue_bog/game/content/content.dart';
-import 'package:blue_bog/game/engine.dart';
-import 'package:blue_bog/game/galaxy/galaxy.dart';
-import 'package:blue_bog/presentation/map/galaxy_view.dart';
+import 'package:blue_bog/components/map/galaxy_view.dart';
+import 'package:blue_bog/game_engine/captain/species.dart';
+import 'package:blue_bog/game_engine/content/content.dart';
+import 'package:blue_bog/game_engine/engine.dart';
+import 'package:blue_bog/game_engine/galaxy/galaxy.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

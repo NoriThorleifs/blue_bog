@@ -6,9 +6,9 @@
 //   dart run tool/enemy_balance.dart [builds]
 import 'dart:math';
 
-import 'package:blue_bog/game/brawl/brawl_enemies.dart';
-import 'package:blue_bog/game/combat/catalog.dart';
-import 'package:blue_bog/game/combat/combat.dart';
+import 'package:blue_bog/game_engine/brawl/brawl_enemies.dart';
+import 'package:blue_bog/game_engine/combat/catalog.dart';
+import 'package:blue_bog/game_engine/combat/combat.dart';
 
 import 'item_balance.dart' show Build, generate;
 

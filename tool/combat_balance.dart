@@ -4,9 +4,9 @@
 //   dart run tool/combat_balance.dart
 import 'dart:math';
 
-import 'package:blue_bog/game/captain/species.dart';
-import 'package:blue_bog/game/combat/catalog.dart';
-import 'package:blue_bog/game/combat/combat.dart';
+import 'package:blue_bog/game_engine/captain/species.dart';
+import 'package:blue_bog/game_engine/combat/catalog.dart';
+import 'package:blue_bog/game_engine/combat/combat.dart';
 
 /// Every species' starting ship.
 final starterKits = {

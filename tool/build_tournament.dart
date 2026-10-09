@@ -11,11 +11,11 @@
 // upgrades bought first (50, 100, 200, 400 cr), to show what max hull is
 // worth. Every pair fights twice, once from each side, at full hull with a
 // 60 s limit: a win scores 1, an escape 0.5.
-import 'package:blue_bog/game/combat/catalog.dart';
-import 'package:blue_bog/game/combat/combat.dart';
-import 'package:blue_bog/game/combat/equipment.dart';
-import 'package:blue_bog/game/deck/loadout.dart';
-import 'package:blue_bog/game/market.dart';
+import 'package:blue_bog/game_engine/combat/catalog.dart';
+import 'package:blue_bog/game_engine/combat/combat.dart';
+import 'package:blue_bog/game_engine/combat/equipment.dart';
+import 'package:blue_bog/game_engine/deck/loadout.dart';
+import 'package:blue_bog/game_engine/market.dart';
 
 /// What each captain shops for, in order, cycled.
 const archetypes = {

@@ -4,13 +4,13 @@
 //   dart run tool/brawl_sim.dart [runs]
 import 'dart:math';
 
-import 'package:blue_bog/game/brawl/brawl.dart';
-import 'package:blue_bog/game/brawl/brawl_events.dart';
-import 'package:blue_bog/game/captain/species.dart';
-import 'package:blue_bog/game/combat/catalog.dart';
-import 'package:blue_bog/game/combat/equipment.dart';
-import 'package:blue_bog/game/deck/loadout.dart';
-import 'package:blue_bog/game/engine.dart' show IllegalMove;
+import 'package:blue_bog/game_engine/brawl/brawl.dart';
+import 'package:blue_bog/game_engine/brawl/brawl_events.dart';
+import 'package:blue_bog/game_engine/captain/species.dart';
+import 'package:blue_bog/game_engine/combat/catalog.dart';
+import 'package:blue_bog/game_engine/combat/equipment.dart';
+import 'package:blue_bog/game_engine/deck/loadout.dart';
+import 'package:blue_bog/game_engine/engine.dart' show IllegalMove;
 
 const engine = BrawlEngine();
 

@@ -24,7 +24,7 @@ SS = 4  # supersampling
 S = SIZE * SS
 OUT = os.path.join(os.path.dirname(__file__), '..', 'assets', 'cards')
 
-# Card colours, matching cardColour() in lib/presentation/cards/card_widgets.dart.
+# Card colours, matching cardColour() in lib/components/cards/card_widgets.dart.
 LASER = (77, 225, 255)
 MISSILE = (255, 162, 77)
 TELEPORT = (255, 77, 61)

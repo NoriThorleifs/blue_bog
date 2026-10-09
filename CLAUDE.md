@@ -1,6 +1,6 @@
 # Blue Bog
 
-A Flutter roguelike deck-building auto-battler set in the author's sci-fi universe. The repo root is also an Obsidian vault of lore notes (`outline.md` is the master timeline). The game was built iteratively with the author, who playtests on an Android phone emulator.
+A Flutter roguelike deck-building auto-battler set in the author's sci-fi universe. The repo root is also an Obsidian vault: the lore notes live in `lore/` (`lore/outline.md` is the master timeline) and the design docs sit at the root. The game was built iteratively with the author, who playtests on an Android phone emulator.
 
 ## Design priorities (set by the author after playtesting)
 
@@ -17,15 +17,16 @@ The game tries to be four things at once (exploration, deck builder, commerce, v
 
 - **Visiting every node is pointless.** Exploration has no payoff.
 - **Repeating "Odd jobs" at one station is boring,** and it's still a viable strategy. Passive income must not be a way to play.
-- **Arbitrage between two adjacent markets gives infinite money and gets boring fast.** Commodity going rates are fixed per market for the whole run (`commodityPrice` in `lib/game/market.dart`), so one profitable pair can be exploited forever. Supply shocks (below) only make grain and ice swing. Trading needs saturation or price drift, limited demand, risk, or contracts, so that profit means decisions.
-- **Being at the right place for a story beat doesn't feel like it matters,** and being one jump away means missing it entirely. Story beats are tied to exact locations (`localEvent` in `lib/game/story/story.dart`). They should reach the captain wherever they are, or be telegraphed with time to get there, and the captain's involvement should visibly change outcomes.
+- **Arbitrage between two adjacent markets gives infinite money and gets boring fast.** Commodity going rates are fixed per market for the whole run (`commodityPrice` in `lib/game_engine/market.dart`), so one profitable pair can be exploited forever. Supply shocks (below) only make grain and ice swing. Trading needs saturation or price drift, limited demand, risk, or contracts, so that profit means decisions.
+- **Being at the right place for a story beat doesn't feel like it matters,** and being one jump away means missing it entirely. Story beats are tied to exact locations (`localEvent` in `lib/game_engine/story/story.dart`). They should reach the captain wherever they are, or be telegraphed with time to get there, and the captain's involvement should visibly change outcomes.
 
 The direction implied: turn the map into a sequence of meaningful choices between fights and trades, make the deck and combat the reason to keep going, make commerce feed the deck (buying cards, ammo, upgrades) rather than being an end in itself, and keep the story as a backdrop that reacts to you.
 
 ## Commands
 
 ```bash
-flutter test                              # all tests (~110, ~15 s)
+flutter test                              # unit and widget tests in test/ (~180, ~15 s)
+flutter test integration_test -d linux    # end-to-end app tests (or -d emulator-5554)
 flutter analyze                           # 3 known infos in the old ternary test
 dart run tool/simulate.dart 2000          # headless bot runs: endings, pacing
 dart run tool/simulate.dart story 42      # print one run's full log
@@ -52,34 +53,54 @@ flutter run -d linux -t tool/combat_preview.dart --dart-define=FIGHT=hell  # com
 - Verify UI on the Android emulator, phone-sized, not on web or desktop.
 - `dart format` after edits. The formatter rewraps lines, so string-match edits against the current file contents.
 - Never `pkill -f` with a pattern that also matches your own shell command line: it kills the command itself (exit 144).
-- The game domain (`lib/game/`) is pure Dart with no Flutter imports, so tools can run it headlessly. Keep it that way.
+- The game engine (`lib/game_engine/`) is pure Dart with no Flutter imports, so tools can run it headlessly. Keep it that way.
 - All randomness goes through `GameRng` (seeded, state in `RunState.rngState`). Combat is deterministic.
 - `RunState` is cloned by the engine and never mutated in place by callers. Engine actions take a state and return a new one, and throw `IllegalMove` for things the UI shouldn't offer.
 
+## Code organisation
+
+Only `main.dart` and `routing_table.dart` (the go_router `routerProvider`) sit directly under `lib/`. Everything else goes in one of these folders:
+
+- `lib/game_engine/`: the game engine and its rules, pure Dart (see Conventions). Pieces split off an engine file stay inside this folder, next to the file they came from (`engine.dart` and `engine/`).
+- `lib/functions/`: business logic outside the engine. When a file is split, or several screens use the same logic function, the function goes in a file here.
+- `lib/components/`: the same for UI: widgets, painters and UI helpers split off a screen or shared by several screens.
+- `lib/providers/`: every Riverpod provider, except the router.
+- `lib/screens/`: one file per screen.
+- `lib/l10n/`: generated localisations.
+
+When a file grows past about 500 lines, split it: functions into `lib/functions/` (or alongside, inside `lib/game_engine/`), widgets and painters into `lib/components/`. Catalog files (written content and data tables: events, beats, the card and enemy catalogs) are exempt from the size limit, but are organised by theme: one file per theme, such as all the Hell events in `hell_events.dart`. A new event goes in the file for its theme, or a new theme file. The order of the combined event list feeds the seeded random picks, so moving events between files changes what a given seed plays out. Private names that move to another file become public with a specific name (`_Log` became `CombatLog`). A split file can `export` its new parts so existing imports keep working, as `engine.dart`, `catalog.dart` and `rules.dart` do.
+
+Tests: `test/unit_tests/` for unit tests, `test/widget_tests/` for widget tests, and `integration_test/` for end-to-end tests only.
+
+Lore: every lore note goes in `lore/`. From a file outside it, link with the path, as in `[[lore/outline|outline]]`.
+
 ## Code map
 
-- `lib/game/engine.dart`: turn flow, travel, Hell, story beats, effect application, markets, shipyard, combat wiring.
-- `lib/game/run_state.dart`: everything about a run in progress, plus `HumanResources` (the hidden bond mechanic).
-- `lib/game/story/`: `rules.dart` (conditions and effects as sealed classes), `story.dart` (events, choices, beats), `keys.dart` (flags and counters).
-- `lib/app/sound.dart`: the `SoundBoard` (flutter_soloud): loads every `Sfx` at startup, throttles repeats, mute toggle in the combat top bar. It stays silent rather than failing without an audio device.
-- `lib/game/content/`: all written content.
+- `lib/game_engine/engine.dart`: the `GameEngine` actions and queries: travel, markets, shipyard, choices. Each action runs on an `EngineTurn` (`engine/turn.dart`); turn flow and story beats are in `engine/turn_flow.dart`, effect application and combat wiring in `engine/effects.dart`, borders, gateways and acts in `engine/world_effects.dart`. `StoryContent` is in `engine/story_content.dart`.
+- `lib/game_engine/run_state.dart`: everything about a run in progress, plus `HumanResources` (the hidden bond mechanic).
+- `lib/game_engine/story/`: `conditions.dart` and `rules.dart` (conditions and effects as sealed classes), `story.dart` (events, choices, beats), `keys.dart` (flags and counters).
+- `lib/functions/sound.dart`: the `SoundBoard` (flutter_soloud): loads every `Sfx` at startup, throttles repeats, mute toggle in the combat top bar. It stays silent rather than failing without an audio device.
+- `lib/game_engine/content/`: all written content.
   - `beats.dart`, `faction_beats.dart`: galaxy timeline beats.
-  - `events_*.dart`: events.
+  - `events/`: events, one file per theme: the run's own moments (`run_events.dart`), Hell, the crew, events story beats queue, act 1 places, acts 2 and 3, the Consumers, deliveries, holding position, stations, the frontier, species home worlds, the House of the Elephant, the Fuel Rats, pirates, and the wars. `content.dart` combines them.
   - `content.dart`: wiring, endings, code effects.
-- `lib/game/combat/`: the equipment model (`equipment.dart`), the card catalog, enemy templates and starter loadouts (`catalog.dart`), and the tick-based fight simulator (`combat.dart`).
-- `lib/game/deck/loadout.dart`: nine triforce slots (0–2 top, 3–5 bottom left, 6–8 bottom right), the hold, merging (three of a card make the next tier: ×1, ×3, ×9), and ship stats.
-- `lib/game/brawl/`: brawl mode, the default mode (the title screen's main launch button; story mode is the secondary button). Combat and commerce alone. `brawl.dart` is the engine and state, `brawl_events.dart` the departure and Hell events, `brawl_enemies.dart` the enemy pools by stage (picked by seed, never the same ship twice in a row; after fight 10 the last pool scales by act) and special ships that only events send: the Neo Terran defence platform, and three missable elites, one per stage, each with a once-per-brawl event window and a unique trophy card (`eliteTrophies` in `catalog.dart`): the Last Vote (pirate shakedown, fights 4–5), the Gor champion (duel with a tractor beam, fights 8–10) and the Unmerged foundry (Tern bounty, fights 11–14). Nobody (see `Nobody.md`) can turn up once, any time from fight 9: run for it (100 hull) or kill him before his Boarding Teleporter charges at 40 s, when he boards and the captain is lost (`Board` action). He can't be escaped by the time limit, and his teleporter can never be acquired: unique cards are never salvaged. Humans, bunks, hospitals, Hell shielding and fuel tanks are left out of it.
-- `lib/game/market.dart`: markets (27 offers plus a shipyard) and trading posts (9 offers, supplies and commodities only), commodity prices, and supply shocks (`SupplyShock`): each season (3 turns or fights) a station has a 10% chance each of famine (grain) or drought (water ice), paying 2.5–4× its going rate, and of a bumper harvest (grain) or ice glut (water ice), at 0.25–0.45×. The brawl Buy tab shows the shock at this station; there's no news of other stations, since a brawl captain can't choose where to go.
-- `lib/game/galaxy/`: the generator (enforces the lore map rules and readable layouts), territories and borders.
-- `lib/game/faction.dart`: major and minor factions and starting control.
-- `lib/presentation/`: screens. Galaxy map, event overlay, HUD, loadout triforce (`deck/`), market (`market/`), combat replay (`combat/`: the screen lays the ships side by side on wide windows and stacked on phones; `battle_effects.dart` paints shots, shields, drones and numbers from the fight record and the replay clock; `battle_sounds.dart` turns the record into timed sound cues that play as the clock passes them), shared card widgets (`cards/`).
+- `lib/game_engine/combat/`: the equipment model (`equipment.dart`), the card catalog and starter loadouts (`catalog.dart`), enemy templates (`enemies.dart`), and the tick-based fight simulator (`combat.dart`).
+- `lib/game_engine/deck/loadout.dart`: nine triforce slots (0–2 top, 3–5 bottom left, 6–8 bottom right), the hold, merging (three of a card make the next tier: ×1, ×3, ×9), and ship stats.
+- `lib/game_engine/brawl/`: brawl mode, the default mode (the title screen's main launch button; story mode is the secondary button). Combat and commerce alone. `brawl.dart` is the engine, `brawl_state.dart` the state and stations, `brawl_outcomes.dart` applies event effects, `brawl_event_model.dart` the event types, `events/` the departure, elite and Hell events by theme, combined in `brawl_events.dart`, `brawl_enemies.dart` the enemy pools by stage (picked by seed, never the same ship twice in a row; after fight 10 the last pool scales by act) and special ships that only events send: the Neo Terran defence platform, and three missable elites, one per stage, each with a once-per-brawl event window and a unique trophy card (`eliteTrophies` in `catalog.dart`): the Last Vote (pirate shakedown, fights 4–5), the Gor champion (duel with a tractor beam, fights 8–10) and the Unmerged foundry (Tern bounty, fights 11–14). Nobody (see `lore/Nobody.md`) can turn up once, any time from fight 9: run for it (100 hull) or kill him before his Boarding Teleporter charges at 40 s, when he boards and the captain is lost (`Board` action). He can't be escaped by the time limit, and his teleporter can never be acquired: unique cards are never salvaged. Humans, bunks, hospitals, Hell shielding and fuel tanks are left out of it.
+- `lib/game_engine/market.dart`: markets (27 offers plus a shipyard) and trading posts (9 offers, supplies and commodities only), commodity prices, and supply shocks (`SupplyShock`): each season (3 turns or fights) a station has a 10% chance each of famine (grain) or drought (water ice), paying 2.5–4× its going rate, and of a bumper harvest (grain) or ice glut (water ice), at 0.25–0.45×. The brawl Buy tab shows the shock at this station; there's no news of other stations, since a brawl captain can't choose where to go.
+- `lib/game_engine/galaxy/`: the generator (`galaxy_generator.dart`, with one try in `galaxy_attempt.dart`, gateways and lanes in `galaxy_wiring.dart`, enforcing the lore map rules and readable layouts), territories and borders.
+- `lib/game_engine/faction.dart`: major and minor factions and starting control.
+- `lib/providers/`: `run_provider.dart` (story run), `brawl_provider.dart` (brawl), `territory_provider.dart` (map territories, built in an isolate).
+- `lib/screens/`: title, galaxy map, deck, market, brawl, gambling and combat replay (the combat screen lays the ships side by side on wide windows and stacked on phones).
+- `lib/components/`: `map/` (galaxy view, event overlay, HUD, system panel, territory layer), `deck/` (the triforce and stats bar), `cards/` (shared card widgets), `brawl/` (the brawl screen's tabs), `combat/` (`battle_effects.dart` paints shots, shields, drones and numbers from the fight record and the replay clock, with the shot primitives in `shot_painting.dart`), `gambling/` (the roulette and 27 tables), `theme.dart`, `dialogs.dart`.
+- `lib/functions/`: `battle_sounds.dart` turns the fight record into timed sound cues that play as the clock passes them; `roulette_motion.dart` is the wheel and ball animation; `three_thirds/` writes numbers in ternary words.
 
 ## Design docs in the vault
 
 - `Game design - map and story.md`: map rules, story beats, HR, Hell, endings, factions, settled lore, open questions.
 - `Combat and economy plan.md`: combat rules and balance numbers, economy, decisions made, build status.
 
-The lore notes (`outline.md`, species, places) are the author's canon. Ask before contradicting them. Spellings in use: Promethius (the colony ship), Orcha Station, Ghor-Dum, Træ Træ Tene, Úlaval, Lady Idun the Giantess (House of the Elephant).
+The lore notes in `lore/` (`outline.md`, species, places) are the author's canon. Ask before contradicting them. Spellings in use: Promethius (the colony ship), Orcha Station, Ghor-Dum, Træ Træ Tene, Úlaval, Lady Idun the Giantess (House of the Elephant).
 
 ## Systems at a glance
 
@@ -95,7 +116,7 @@ The lore notes (`outline.md`, species, places) are the author's canon. Ask befor
   - Story fights map a strength rating to an enemy template, scaled by act (interim ×2 / ×3).
   - Known issue: teleport bombs are overtuned.
 - **Brawl mode.** Station (buy, sell, repair) → departure event → fight → another station, until the ship is lost. Each stage draws its enemy from a pool of ships that trouble different builds; haulers carry `cargo` that is plundered when they're destroyed. The chewer event lets a captain dive into Hell: no shipyard, 25 hull lost a turn, demons (`demons` in `catalog.dart`), Hell cards and Hell Brandy, and the Hell Clock (one per brawl, from the Mourner or the clock event). Leaving Hell shifts the difficulty curve by Hell's clocks.
-- **Gambling.** "LETS GO GAMBLING!" in the brawl shop. Games run in Republic stations (`stationGames` in `brawl.dart`): roulette at the human stations (Orcha, Kepler; humans still count in base ten), 27 everywhere else for now. Roulette: `lib/game/gambling/roulette.dart`, European single zero, stakes 25 or 50 or all in. 27 is the Ál game (`twenty_seven.dart`): take one tile of a triad (one face up, two face down) from a deck of nine 1s, 2s and 3s; bust on one over a multiple of three or past 27; walk away at 9 for 1.5×, reach 27 for 4.5×. The count is shown in ternary words (`lib/three-thirds/`). A Gor game is planned. Randomness goes through `GameRng`; the UI only plays out results.
+- **Gambling.** "LETS GO GAMBLING!" in the brawl shop. Games run in Republic stations (`stationGames` in `brawl.dart`): roulette at the human stations (Orcha, Kepler; humans still count in base ten), 27 everywhere else for now. Roulette: `lib/game_engine/gambling/roulette.dart`, European single zero, stakes 25 or 50 or all in. 27 is the Ál game (`twenty_seven.dart`): take one tile of a triad (one face up, two face down) from a deck of nine 1s, 2s and 3s; bust on one over a multiple of three or past 27; walk away at 9 for 1.5×, reach 27 for 4.5×. The count is shown in ternary words (`lib/functions/three_thirds/`). A Gor game is planned. Randomness goes through `GameRng`; the UI only plays out results.
 - **Card tags.** Cards carry tags (`CardTag` in `equipment.dart`, only Hellish so far) that other cards look for. Hell's own families (`hellFamilies`, never sold) are born Hellish. Tags picked up later are written into the card id (`laser_1#hellish`), and merging keeps them. Hell Brandy sells like any commodity or can be used (Ship tab: tap, Use, tap a glowing card) to tag a card Hellish. The Hell Clock (ship-wide charge boost, every card starts half charged, and every other Hellish card fires at the start of a fight) and the three elite trophies are the uniques in brawl mode. Hell's own cards are deliberately stronger for their price than station cards. Hellfire passes shields and drones but burns its user for a quarter.
 - **Cards.** Kinds: equipment (works in a slot), supplies (work from the hold too), commodities, and mission cargo (can't be sold). The hold starts at 0 and only cargo pods add space. Removing accommodation sends humans away.
 - **HR.** Human count, loyalty and drift are visible as a mood word. The hidden bond changes event odds and unlocks Code Green.
