@@ -223,6 +223,14 @@ class HumansAtLeast extends Condition {
   bool test(RunState s) => s.humans.count >= count;
 }
 
+/// Room in the colony for at least [count] more humans.
+class HousingFree extends Condition {
+  const HousingFree(this.count);
+  final int count;
+  @override
+  bool test(RunState s) => s.stats.housing - s.humans.count >= count;
+}
+
 class LoyaltyBelow extends Condition {
   const LoyaltyBelow(this.loyalty);
   final int loyalty;

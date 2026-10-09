@@ -20,12 +20,20 @@ class GameOver extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Ship lost', style: text.displaySmall),
+                Text(
+                  brawl.retired ? 'Victory' : 'Ship lost',
+                  style: text.displaySmall,
+                ),
                 const SizedBox(height: 8),
                 Text(
-                  'You survived ${brawl.fightsWon} '
-                  '${brawl.fightsWon == 1 ? 'fight' : 'fights'} and died '
-                  'with ${brawl.credits} credits.',
+                  brawl.retired
+                      ? 'You beat Satan and retired on top, after '
+                            '${brawl.fightsWon} fights, with '
+                            '${brawl.credits} credits.'
+                      : '${brawl.endless ? 'You beat Satan, then ' : 'You '}'
+                            'survived ${brawl.fightsWon} '
+                            '${brawl.fightsWon == 1 ? 'fight' : 'fights'} and '
+                            'died with ${brawl.credits} credits.',
                   textAlign: TextAlign.center,
                   style: text.bodyLarge,
                 ),

@@ -42,8 +42,6 @@ const ammoFor = {
 /// Families that only change things outside a fight, or are ammo bought
 /// with their launcher.
 const notForSale = {
-  'bunks',
-  'hospital',
   'barrier',
   'tanks',
   'cargo_pod',
@@ -58,7 +56,7 @@ const uniques = ['hell_clock'];
 /// Every family and unique card the generator can buy.
 final families = [
   for (final f in [...equipmentFamilies, ...hellFamilies])
-    if (!notForSale.contains(f.id)) f.id,
+    if (!notForSale.contains(f.id) && f.kind != CardKind.colony) f.id,
   ...uniques,
 ];
 

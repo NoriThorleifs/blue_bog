@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../combat/catalog.dart';
+import '../deck/loadout.dart';
 import '../rng.dart';
 import 'brawl_events.dart';
 import 'brawl_state.dart';
@@ -74,17 +75,28 @@ void gainCard(
     return;
   }
   if (!force) {
-    lines.add('No room for $name, so you leave it behind.');
+    s.wreckage.add(id);
+    lines.add(wreckageNote([id]));
     return;
   }
-  // No refusing this one: it takes the place of the cheapest card aboard.
-  final cheapest = s.loadout.all.reduce(
-    (a, b) => equipmentById(a).price <= equipmentById(b).price ? a : b,
-  );
-  s.loadout.remove(cheapest);
+  // No refusing this one: it takes the place of the cheapest card aboard
+  // in a spot it fits, though never the pod that opens the hold.
+  int price(CardSpot spot) => equipmentById(s.loadout.at(spot)!).price;
+  final spot = s.loadout.occupiedSpots
+      .where((spot) => spot is! CargoSpot && Loadout.fits(id, spot))
+      .reduce((a, b) => price(a) <= price(b) ? a : b);
+  final cheapest = s.loadout.at(spot)!;
+  s.loadout.takeOut(spot);
   lines.add(
     'There was no room, so ${equipmentById(cheapest).name} is gone and '
     '$name is in its place.',
   );
   s.loadout.add(id);
+}
+
+/// Tells the captain what's waiting in the wreckage for want of room.
+String wreckageNote(List<String> ids) {
+  final names = [for (final id in ids) equipmentById(id).name].join(', ');
+  return 'No room for $names. It waits in the wreckage until you move on: '
+      'jettison something to take it.';
 }

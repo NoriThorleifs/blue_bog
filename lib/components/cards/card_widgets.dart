@@ -11,6 +11,12 @@ Color cardColour(Equipment card) => switch (card.kind) {
   CardKind.commodity => const Color(0xFFD9B98C),
   CardKind.mission => const Color(0xFFFFFFFF),
   CardKind.supplies => const Color(0xFFA7B4C2),
+  CardKind.colony => switch (card) {
+    Equipment(housing: > 0) => const Color(0xFFFFD25A),
+    Equipment(hospital: > 0) => const Color(0xFFFF8FB8),
+    Equipment(crawlspace: > 0) => const Color(0xFF5CE0C8),
+    _ => const Color(0xFF8FE07A),
+  },
   CardKind.equipment => switch (card.action) {
     FireLaser() => const Color(0xFF4DE1FF),
     FireMissile() => const Color(0xFFFFA24D),
@@ -26,8 +32,6 @@ Color cardColour(Equipment card) => switch (card.kind) {
     BuildDrone() => const Color(0xFF5CFF8A),
     null when card.boost?.only == ChargeShields => const Color(0xFF7FA8FF),
     null when card.boost != null => const Color(0xFFFFE066),
-    null when card.berths > 0 => const Color(0xFFFFD25A),
-    null when card.hospital > 0 => const Color(0xFFFF8FB8),
     null when card.hellShielding > 0 => const Color(0xFFB07BFF),
     null => const Color(0xFF9FB2C8),
   },
@@ -206,6 +210,11 @@ class TierMarks extends StatelessWidget {
         Equipment(tier: Tier.unique) => [
           Icon(Icons.auto_awesome, size: 12, color: colour),
         ],
+        // Humans build in squares, not triangles.
+        Equipment(kind: CardKind.colony) => [
+          for (var i = 0; i <= card.tier.index; i++)
+            Icon(Icons.crop_square, size: 10, color: colour),
+        ],
         _ => [
           for (var i = 0; i <= card.tier.index; i++)
             Icon(Icons.change_history, size: 10, color: colour),
@@ -249,6 +258,7 @@ class CardDetails extends StatelessWidget {
       CardKind.supplies => 'Works from a slot or the hold.',
       CardKind.commodity => 'Trade goods. Worth more at some markets.',
       CardKind.mission => 'Cargo you\'ve been paid to deliver. Can\'t be sold.',
+      CardKind.colony => 'Works in the colony grid. Never fights.',
     };
     return Card(
       child: Padding(

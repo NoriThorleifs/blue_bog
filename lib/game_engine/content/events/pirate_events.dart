@@ -8,7 +8,7 @@ final pirateEvents = <GameEvent>[
     id: 'pirate_shakedown',
     title: 'Human pirates',
     condition: const AllOf([
-      HumansAtLeast(1),
+      HumansAtLeast(25),
       AnyOf([AtTag(Tag.frontier), AtTag(Tag.ruins), AtTag(Tag.neutral)]),
     ]),
     once: false,
@@ -35,10 +35,10 @@ final pirateEvents = <GameEvent>[
             effects: [Credits(15), Drift(4)],
           ),
           Outcome(
-            'Your humans talk to them for a long time. Two of them leave '
-            'with the pirates.',
+            'Your humans talk to them for a long time. A few dozen of them '
+            'leave with the pirates.',
             condition: Not(BondAtLeast(40)),
-            effects: [Humans(-2), Loyalty(-4)],
+            effects: [Humans(-30), Loyalty(-4)],
           ),
         ],
       ),
@@ -54,7 +54,7 @@ final pirateEvents = <GameEvent>[
     id: 'pirate_hunt',
     title: 'Human pirates',
     condition: AllOf([
-      Not(HumansAtLeast(1)),
+      Not(HumansAtLeast(25)),
       AnyOf([AtTag(Tag.frontier), AtTag(Tag.ruins), AtTag(Tag.neutral)]),
     ]),
     once: false,

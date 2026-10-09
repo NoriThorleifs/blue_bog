@@ -1,23 +1,23 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../components/cards/card_widgets.dart';
+import '../components/deck/cargo_hold.dart';
+import '../components/deck/colony_grid.dart';
 import '../components/deck/ship_stats_bar.dart';
 import '../components/deck/triforce.dart';
 import '../components/dialogs.dart';
-import '../components/theme.dart';
 import '../game_engine/combat/catalog.dart';
 import '../game_engine/combat/equipment.dart';
 import '../game_engine/deck/loadout.dart';
 import '../game_engine/run_state.dart';
 import '../providers/run_provider.dart';
 
-/// The ship's nine card slots, laid out as a triforce, plus the hold.
+/// The ship's nine card slots, laid out as a triforce, the cargo bay and
+/// hold, and the human colony's grid, docked to the ship.
 ///
-/// Tap a card to pick it up, then tap a slot or hold space to put it there.
-/// Whatever was there swaps places with it.
+/// Tap a card to pick it up, then tap a slot, hold or colony space to put
+/// it there. Whatever was there swaps places with it.
 class DeckScreen extends ConsumerStatefulWidget {
   const DeckScreen({super.key});
 
@@ -40,11 +40,15 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
     }
     setState(() => _selected = null);
     final engine = ref.read(engineProvider);
-    final lost = engine.crewLostWith(
+    if (run.loadout.whyNotMove(selected, spot) case final why?) {
+      return showError(context, why);
+    }
+    final lost = engine.humansLostWith(
       run,
       run.loadout.copy()..move(selected, spot),
     );
-    if (lost > 0 && !await confirmCrewLoss(context, lost, run.humans.count)) {
+    if (lost > 0 &&
+        !await confirmHumansLeave(context, lost, run.humans.count)) {
       return;
     }
     final error = ref.read(runProvider.notifier).arrange(selected, spot);
@@ -56,9 +60,6 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
     final run = ref.watch(runProvider);
     if (run == null) return const Scaffold();
     final selectedId = _selected == null ? null : run.loadout.at(_selected!);
-    final text = Theme.of(context).textTheme;
-    final capacity = run.stats.holdCapacity;
-    final holdSpaces = max(capacity, run.loadout.hold.length);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Ship loadout')),
@@ -79,35 +80,13 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            Text(
-              'Cargo hold (${run.loadout.hold.length}/$capacity)',
-              style: text.titleMedium,
-            ),
-            Text(
-              capacity == 0
-                  ? 'No hold without a cargo pod. Cargo can sit in a slot '
-                        'instead, doing nothing.'
-                  : 'Supplies and commodities belong here. Equipment in the '
-                        'hold does nothing. Three of a card anywhere merge.',
-              style: text.bodySmall?.copyWith(color: Palette.muted),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (var i = 0; i < holdSpaces; i++)
-                  SizedBox(
-                    width: 76,
-                    height: 76,
-                    child: CardTile(
-                      id: run.loadout.at(HoldSpot(i)),
-                      selected: _selected == HoldSpot(i),
-                      dimmed: _inertInHold(run.loadout.at(HoldSpot(i))),
-                      onTap: () => _tap(run, HoldSpot(i)),
-                    ),
-                  ),
-              ],
+            CargoHold(loadout: run.loadout, tile: (spot) => _tile(run, spot)),
+            Center(
+              child: ColonyGrid(
+                humans: run.humans.count,
+                housing: run.stats.housing,
+                tile: (spot) => _tile(run, spot),
+              ),
             ),
             if (selectedId != null) ...[
               const SizedBox(height: 16),
@@ -122,6 +101,20 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
     );
   }
 
+  Widget _tile(RunState run, CardSpot spot) {
+    final id = run.loadout.at(spot);
+    return CardTile(
+      id: id,
+      selected: _selected == spot,
+      dimmed: spot is HoldSpot && _inertInHold(id),
+      onTap: () => _tap(run, spot),
+    );
+  }
+
   bool _inertInHold(String? id) =>
-      id != null && equipmentById(id).kind == CardKind.equipment;
+      id != null &&
+      switch (equipmentById(id).kind) {
+        CardKind.equipment || CardKind.colony => true,
+        _ => false,
+      };
 }

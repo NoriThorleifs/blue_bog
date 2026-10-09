@@ -48,11 +48,34 @@ What's hidden:
 - Every 3 turns with bond ≥ 50: drift ≤ −30 slowly improves the Republic's view of humans (+1 stance). Drift ≥ 30 raises Hellborn awareness.
 - Starting loyalty and drift come from how humans and each species feel about each other: Tern +2/+2, Ál +1/+2, Bhrun +1/0, Unfortunate −1/−1, Gor −2/−1.
 
+## The human colony
+
+Replaced the old crew of 3 to 27 humans. Decided with the author. Step 1 is built, in story and brawl mode (brawl mode is meant to grow story features until it becomes the main game); representatives, petitions, the draft and veterans are still to come.
+
+- **The premise.** The Republic has decided that each species elects one captain to retrofit their ship to host a colony of humans, and the player is one of them. These five ships are the only ones carrying both a Republic species and humans. To a captain, it's like letting a colony of small, numerous, friendly, very capable and armed creatures live in the walls of your home: useful for maintenance, but they are everywhere and always watching. That comparison is for us only: never call the humans ants in game text.
+- **Scale.** Hundreds to thousands of humans, not a handful.
+- **The colony extension.** Its own card spaces, separate from the triforce and never used in combat. On screen it sits detached from the ship and laid out as a square grid, to show how differently humans arrange their spaces. Only human cards fit there: habitats, hospitals, and so on.
+- **Card ideas.** Crawlspace crews (the humans in the walls keep the ship running) make sense. Economy cards pay a small dividend whenever the ship docks at a station: a casino, a shop, a two-sided brothel. Rejected: boarding defence, and anything that changes refits.
+- **No upkeep.** The captain pays no wages and no colony upkeep. A colony that big makes ends meet on its own, and the Republic subsidised the retrofit.
+- **What's built (step 1).** Rules shared by both modes are in `lib/game_engine/colony.dart`.
+  - The colony grid is 3×3 (`Loadout.colonySide`). Colony cards (`CardKind.colony`) fit only there or in the hold, and nothing else fits there. Their tier marks are squares, not triangles.
+  - Cards: Habitat Block (houses 100, ×3 per tier), Clinic (cuts the colony's losses by 10% per level, up to 75%, and slowly raises loyalty), Crawlspace Crews (patch 10 hull a turn), and three economy cards paying per hundred humans on docking at a station: Corner Shop (1 cr), Card Room (a gamble, 0 to 3 cr) and Two-Sided Brothel (2 cr, pricier).
+  - Every species starts with a Habitat Tower (300) from the Republic's retrofit; the Ál also keep their Clinic. Starting populations: Tern 225, Ál and Bhrun 150, Gor and Unfortunate 75.
+  - Each turn (story) or dock (brawl): 1% of the colony is born, and at stations adults sign on into free housing, more where humans live and the better the colony likes the captain. Humans patch 1 hull per 12 of them plus crawlspace crews, never past 75%.
+  - Story content counts humans ×25 of the old numbers. Code Green needs 150 humans; the hidden bond saturates at 900 humans (a Habitat Arcology's worth), so growing the colony earns its trust.
+  - Removing housing asks first, then the homeless humans leave.
+- **The draft.** Once the humans begin taking Neo Terra, a universal draft takes some of the colony's population every turn. Population still grows: children are born aboard and adults sign on to the habitat.
+- **Veterans.** A few turns into the draft, veterans who served their time on Neo Terra start coming back. Events like `the_helmet` (still a rough draft) belong here: soldiers' helmets are locked on until a commanding officer unlocks them on their return, so they can't defect. The point is the inhumane conditions on Neo Terra.
+- **Governance.** The humans pick representatives to speak to the captain. They govern themselves, but the captain has the final say. Petitions are simple and to the point. The colony's internal politics don't matter to gameplay; only three things do: how much they like the captain (loyalty), the cultural shift (drift), and how developed the Hellborn cell is.
+- **No expelling.** The captain can't send part of the colony away, except by selling a habitat.
+- **The Hellborn cell.** Agents are careful never to out themselves to the captain. The other humans are suspicious of them, because to a human something is plainly off: red eyes instead of brown or blue, an unusually high alcohol tolerance. A Hellborn representative may hint at wrong warping, or suggest leaving the pipe in Hell to save time, but carefully, since they can't explain how they know.
+
 ## Hell
 
 - Every gateway jump has a 3% base chance (plus pipe instability and war modifiers, minus ship shielding) of being dragged into Hell inside the pipe.
 - Inside the pipe: ~1 hull damage per turn, events offer ways out. Leaving the pipe ("deep" Hell) costs more hull per turn and pays much better.
 - Escaping drops you at a random gateway. In act 1 only act-1 systems; later, any system in an act already reached.
+- **The headcount** (`hell_headcount`, built): on getting out of Hell, more likely the longer the ship was there, the humans count more of themselves than went in. Hellborn agents teleported aboard. If an agent is already aboard, they wave it off: time passes strangely in Hell, long enough for children to be born and grow up. Otherwise the other humans point out the newcomers' red eyes and their tolerance for brandy. Needs a free berth, so it's rare until the colony replaces berths.
 - **Code Green**: in Hell, with bond ≥ 50 (≥ 60 before the battle of the Bhrun-Gai pipe, so early Code Greens are rare) and ≥ 6 humans, once per run, the humans ask for the comms array. The Hellborn tow you out, heal and pay you, and the story shifts by act: act 1 makes the Gor fleet vanish in the pipe, act 2 leaks wrong warping, act 3 stirs the demons at Kyndari.
 
 ## Endings
@@ -80,6 +103,8 @@ With a random-choice bot over 3000 runs: Yellow 38%, Red 23%, Blue 13%, ship los
 - **Neo Terra's original name** is generated per run. It was a plain Havi agri-world whose gravity (about 1 G) made lifting cargo too expensive and was too heavy for anyone but humans and Consumers to live in comfortably. Story text uses `{sys:neo_terra}` so it shows whatever the planet is called at the time.
 - **The Consumers are modified cockroaches** that the Eldest took from Sol. The humans have always known who visited them, because the Unfortunates' mark is in their cave paintings. Only cockroach events reveal it: a hatchling from a smuggled crate of Consumer eggs, or a Consumer nymph stowing away (act 2+). With a strong enough bond the humans explain, which sets `roach_truth`. That doubles the odds of the Eldest's exposure in act 3 and unlocks its strongest version.
 - **The Kyndari–Sol gateway is usable.** On every arrival the Solar fleet blocks you. You get in if your humans vouch for you (bond ≥ 50), if you used Code Green, or if you win an almost hopeless fight. Otherwise you're sent back. Entering Sol (`sol_entered`) triggers the final code.
+- **Humans at the start of the game** live aboard the Promethius and at Orcha Station, and have built new ships of their own that roam the galaxy. Their industry is growing; what limits them is food and housing. The House of the Elephant is being built in secret. No Republic species lets humans land on its worlds.
+- **Kepler and the name Blue Bog.** Kepler is a high-gravity world orbiting a blue sun, with no intelligent life. An observation platform has watched its evolution for over a thousand years. The humans still aren't allowed to touch down there. To the Republic it is one unimportant blue bog kept for research; the humans are fighting for the right to settle the world they travelled so long to reach.
 
 ## Territories and borders
 
@@ -143,7 +168,7 @@ The galaxy image is generated by `tool/generate_galaxy.py`, a top-down barred sp
 - **Nine slots** in a triforce: three small triangles of three slots each, making one big triangle. Only slotted cards do anything. A **hold** of 9 keeps spares.
 - **Stacking.** One card is one card, two are two cards. Three of the same card, anywhere in slots or hold, **merge** into its upgraded version. Three upgraded copies merge into the **super** version. Super cards don't merge further. A merged card keeps a slot position if one of its copies had one.
 - **Tier values.** Each tier is worth exactly three of the tier below (×1, ×3, ×9). Merging doesn't make the ship stronger by itself; it frees two slots.
-- **Ship stats** are the species' ship class plus every slotted card: hull, damage by type (kinetic, energy, hellfire), human berths, hospital level, Hell shielding (capped at 90%) and fuel capacity. A **hospital** saves one human per level from every loss and slowly raises loyalty. You can't move cards in a way that leaves humans without a berth.
+- **Ship stats** are the species' ship class plus every slotted card: hull, damage by type (kinetic, energy, hellfire), Hell shielding (capped at 90%) and fuel capacity, plus the colony grid's housing, hospital and crawlspace crews (see "The human colony").
 - **Card families:**
 
 | Family | Basic → Upgraded → Super | Per basic card |
@@ -152,8 +177,8 @@ The galaxy image is generated by `tool/generate_galaxy.py`, a top-down barred sp
 | inhaler | Ammo Inhaler → Railing Battery → Rip and Tear Array | +2 kinetic |
 | lance | Lance Emitter → Twin Lances → Tern Choir Lance | +2 energy |
 | brimstone | Brandy Burner → Brimstone Projector → Satan's Last Stand | +2 hellfire |
-| bunks | Bunk Module → Habitat Ring → Spinning Asteroid Habitat | +3 berths |
-| hospital | Sick Bay → Human Hospital → Hospital Ship | +1 hospital |
+| habitat (colony) | Habitat Block → Habitat Tower → Habitat Arcology | houses 100 |
+| hospital (colony) | Clinic → Human Hospital → Hospital Deck | +1 hospital |
 | barrier | Barrier Liner → Pipe Hugger → Demon-Proof Hull | +5% Hell shielding |
 | tanks | Drop Tank → Fuel Bladder → Fuel Rat Special | +3 fuel |
 

@@ -19,7 +19,7 @@ final speciesHomeEvents = <GameEvent>[
     choices: [
       const Choice(
         'Send a human champion',
-        condition: HumansAtLeast(1),
+        condition: HumansAtLeast(25),
         outcomes: [
           Outcome(
             'The human wins. The Gor are furious, then fascinated. You '
@@ -68,7 +68,7 @@ final speciesHomeEvents = <GameEvent>[
         'Let your humans try',
         'The humans move it with food, noise and a great deal of shouting. '
             'The Bhrun are deeply impressed.',
-        condition: const HumansAtLeast(3),
+        condition: const HumansAtLeast(75),
         effects: const [Credits(30), Loyalty(3)],
       ),
     ],
@@ -91,7 +91,7 @@ final speciesHomeEvents = <GameEvent>[
       Choice.simple(
         'Let them scan the humans',
         'The humans are paid too, which helps.',
-        condition: const HumansAtLeast(1),
+        condition: const HumansAtLeast(25),
         effects: const [Credits(35), Loyalty(-2), Drift(-2)],
       ),
       Choice.simple('Decline', 'They are visibly disappointed.'),

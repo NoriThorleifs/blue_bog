@@ -61,9 +61,77 @@ void main() {
       l.add('missile_crate_1');
       expect(l.slots.first, 'missile_crate_1');
       l.add('cargo_pod_1');
+      expect(l.cargo, 'cargo_pod_1');
       expect(l.holdCapacity, 3);
       l.add('goods_ore');
       expect(l.hold, ['goods_ore']);
+    });
+  });
+
+  group('the cargo bay', () {
+    test('only a cargo pod goes there, and only that pod opens the hold', () {
+      final l = Loadout()
+        ..add('cargo_pod_1')
+        ..add('cargo_pod_1');
+      expect(l.cargo, 'cargo_pod_1');
+      expect(l.hold, ['cargo_pod_1'], reason: 'the spare waits in the hold');
+      expect(l.holdCapacity, 3);
+      l.add('laser_1');
+      expect(Loadout.fits('laser_1', const CargoSpot()), isFalse);
+      expect(l.whyNotMove(const SlotSpot(0), const CargoSpot()), isNotNull);
+    });
+
+    test('a third pod merges into the cargo bay, with no slot needed', () {
+      final l = Loadout(slots: List.filled(9, 'plating_1'))
+        ..add('cargo_pod_1')
+        ..add('cargo_pod_1');
+      final log = l.add('cargo_pod_1');
+      expect(log, isNotNull);
+      expect(l.cargo, 'cargo_pod_2');
+      expect(l.holdCapacity, 9);
+    });
+  });
+
+  group('the colony grid', () {
+    test('colony cards go to the colony, and nothing else does', () {
+      final l = Loadout()
+        ..add('habitat_1')
+        ..add('laser_1');
+      expect(l.colony.first, 'habitat_1');
+      expect(l.slots.first, 'laser_1');
+      expect(l.colonyCards.single.housing, 100);
+      expect(l.whyNotMove(const ColonySpot(0), const SlotSpot(1)), isNotNull);
+      expect(l.whyNotMove(const SlotSpot(0), const ColonySpot(1)), isNotNull);
+      expect(l.whyNotMove(const ColonySpot(0), const ColonySpot(4)), isNull);
+    });
+
+    test('colony cards never go into a fight', () {
+      final l = Loadout()
+        ..add('habitat_1')
+        ..add('shop_1');
+      expect(l.forCombat.slots.whereType<String>(), isEmpty);
+    });
+
+    test('docking at a station pays the colony\'s dividends', () {
+      final s = _atOrcha();
+      s.loadout.add('shop_2');
+      final route = engine
+          .routesFrom(s)
+          .firstWhere(
+            (r) => !r.isSublight && s.galaxy[r.to].tags.contains(Tag.station),
+          );
+      final after = engine.travel(s, route.to);
+      expect(after.log.map((e) => e.text), contains(startsWith('The colony')));
+    });
+
+    test('the captain pays no wages', () {
+      final s = _atOrcha()..hull = 500;
+      final after = engine.hold(s.clone()..market = null);
+      final paidToday = after.log.where(
+        (e) => e.turn == s.turn && e.text.contains('payroll'),
+      );
+      expect(paidToday, isEmpty);
+      expect(after.credits, greaterThanOrEqualTo(s.credits));
     });
   });
 
@@ -76,39 +144,32 @@ void main() {
     });
 
     test('equipment in the hold does nothing', () {
-      final l = Loadout(
-        slots: ['cargo_pod_1', ...List.filled(8, null)],
-        hold: ['plating_1'],
-      );
+      final l = Loadout(cargo: 'cargo_pod_1', hold: ['plating_1']);
       expect(ShipStats.of(l).maxHull, 500);
     });
 
-    test('every species starts with berths for its humans and a cargo pod', () {
-      for (final species in Species.values) {
-        final s = engine.newRun(species, seed: 1);
-        expect(s.stats.berths, greaterThanOrEqualTo(s.humans.count));
-        expect(s.stats.holdCapacity, greaterThan(0));
-        expect(s.hull, 500 + s.loadout.slotted.fold(0, (t, e) => t + e.hull));
-      }
-    });
+    test(
+      'every species starts with housing for its humans and a cargo pod',
+      () {
+        for (final species in Species.values) {
+          final s = engine.newRun(species, seed: 1);
+          expect(s.humans.count, greaterThanOrEqualTo(75));
+          expect(s.stats.housing, greaterThanOrEqualTo(s.humans.count));
+          expect(s.stats.holdCapacity, greaterThan(0));
+          expect(s.hull, 500 + s.loadout.slotted.fold(0, (t, e) => t + e.hull));
+        }
+      },
+    );
 
-    test('taking out accommodation sends the humans away', () {
+    test('selling the housing is the only way to send humans away', () {
       final s = _atOrcha();
       final count = s.humans.count;
-      final loadout = s.loadout.copy();
-      for (var i = 0; i < 9; i++) {
-        if (loadout.slots[i]?.startsWith('bunks') ?? false) {
-          loadout.slots[i] = null;
-        }
-      }
-      expect(engine.crewLostWith(s, loadout), count);
-
-      var after = s;
-      for (var i = 0; i < 9; i++) {
-        if (s.loadout.slots[i]?.startsWith('bunks') ?? false) {
-          after = engine.sell(after, SlotSpot(i));
-        }
-      }
+      final habitat = s.loadout.colony.indexWhere(
+        (id) => id?.startsWith('habitat') ?? false,
+      );
+      final loadout = s.loadout.copy()..takeOut(ColonySpot(habitat));
+      expect(engine.humansLostWith(s, loadout), count);
+      final after = engine.sell(s, ColonySpot(habitat));
       expect(after.humans.count, 0);
     });
   });
@@ -184,30 +245,27 @@ void main() {
     });
 
     test(
-      'selling the last pod drops the one crate in the hold into its slot',
+      'selling the last pod drops the crate in the hold into a free slot',
       () {
         final s = _atOrcha();
-        final pod = s.loadout.slots.indexOf('cargo_pod_1');
         expect(s.loadout.hold, ['feedstock_1']);
-        final after = engine.sell(s, SlotSpot(pod));
-        expect(after.loadout.slots[pod], 'feedstock_1');
+        final after = engine.sell(s, const CargoSpot());
+        expect(after.loadout.slots, contains('feedstock_1'));
         expect(after.loadout.hold, isEmpty);
         expect(after.credits, s.credits + 10);
       },
     );
 
-    test(
-      'selling a pod is still refused if more than one card would spill',
-      () {
-        final s = _atOrcha();
-        s.loadout.hold.add('goods_grain');
-        final pod = s.loadout.slots.indexOf('cargo_pod_1');
-        expect(
-          () => engine.sell(s, SlotSpot(pod)),
-          throwsA(isA<IllegalMove>()),
-        );
-      },
-    );
+    test('selling a pod is refused if the hold would spill with no room', () {
+      final s = _atOrcha();
+      for (var i = 0; i < 9; i++) {
+        s.loadout.slots[i] ??= 'plating_1';
+      }
+      expect(
+        () => engine.sell(s, const CargoSpot()),
+        throwsA(isA<IllegalMove>()),
+      );
+    });
 
     test('commodity prices differ between markets but not between visits', () {
       final grain = equipmentById('goods_grain');
@@ -263,7 +321,7 @@ void main() {
       expect(_dismiss(engine.hold(patched)).hull, patched.hull);
     });
 
-    test('empty berths fill up over time', () {
+    test('the colony grows into empty housing', () {
       var s = _atOrcha()
         ..humans = const HumanResources(count: 0, loyalty: 90, drift: 0);
       for (var i = 0; i < 10; i++) {

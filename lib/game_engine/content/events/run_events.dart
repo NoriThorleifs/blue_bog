@@ -16,13 +16,18 @@ final runEvents = <GameEvent>[
         'Humans. They say they flew for six thousand years from a dying sun. '
         'The council at the Center has been arguing about what to do with '
         'them ever since.\n\n'
-        'Meanwhile they live at Orcha Station on temporary permits and sign '
-        'on to any ship that will have them. Yours has a few. They are '
-        'small, dense, friendly and very, very good at math.',
+        'Meanwhile they live aboard the Promethius and at Orcha Station on '
+        'temporary permits, and nobody will let them land. The council\'s '
+        'compromise: each species elects one captain to take a colony of '
+        'humans aboard. Your people elected you.\n\n'
+        'The Republic paid for the retrofit. Hundreds of humans now live in '
+        'the colony extension bolted to your hull, and they get everywhere. '
+        'They are small, dense, friendly, armed and very, very good at math. '
+        'They run their own affairs, but it is your ship, and they know it.',
     choices: [
       Choice.simple(
         'Welcome them properly',
-        'You spend more than you should on a welcome dinner. The humans '
+        'You spend more than you should on a welcome feast. The humans '
             'seem to understand what it cost.',
         effects: const [MaybeAgent(0.25), Credits(-10), Loyalty(8)],
       ),
@@ -87,9 +92,9 @@ final runEvents = <GameEvent>[
         outcomes: [
           // Not a ship battle: a brawl in the corridors.
           Outcome(
-            'You get through. Several humans end up in the airlock and the '
+            'You get through. The ringleaders end up in the airlock and the '
             'rest go back to work. Nobody will forget this.',
-            effects: [Humans(-6), Loyalty(25), Note('Put down a mutiny.')],
+            effects: [Humans(-25), Loyalty(25), Note('Put down a mutiny.')],
           ),
           Outcome(
             'You get through the door. They were waiting on the other side.',
@@ -100,7 +105,7 @@ final runEvents = <GameEvent>[
       Choice.simple(
         'Let them off at the next port',
         'Every human aboard leaves. The ship is very quiet.',
-        effects: const [Humans(-99), Loyalty(50)],
+        effects: const [Humans(-Humans.everyone), Loyalty(50)],
       ),
     ],
   ),

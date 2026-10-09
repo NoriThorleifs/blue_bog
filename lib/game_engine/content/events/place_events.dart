@@ -35,7 +35,7 @@ final placeEvents = <GameEvent>[
   const GameEvent(
     id: 'owie_experiments',
     title: 'Dr. Ái Á á Á á á á',
-    condition: AllOf([AtTag(Tag.station), ActIs(1), HumansAtLeast(2)]),
+    condition: AllOf([AtTag(Tag.station), ActIs(1), HumansAtLeast(50)]),
     text:
         'An Ál scientist who insists you call him Owie is recruiting '
         'human volunteers to measure their durability. He pays well. He is '
@@ -75,7 +75,7 @@ final placeEvents = <GameEvent>[
     condition: const AllOf([
       AtTag(Tag.station),
       AtTag(Tag.neutral),
-      HumansAtLeast(1),
+      HumansAtLeast(25),
     ]),
     text:
         'This neutral station hosts a two-sided brothel: two entrances, '
@@ -105,7 +105,7 @@ final placeEvents = <GameEvent>[
   GameEvent(
     id: 'ternary_dispute',
     title: '729',
-    condition: const AllOf([AtTag(Tag.station), HumansAtLeast(1)]),
+    condition: const AllOf([AtTag(Tag.station), HumansAtLeast(25)]),
     text:
         'Your human quartermaster is screaming at a supplier. "Did I '
         'stutter? I said 729. I don\'t want 730. I won\'t take the last one '
@@ -328,7 +328,7 @@ final placeEvents = <GameEvent>[
             effects: [
               Loyalty(15),
               Drift(10),
-              Humans(3),
+              Humans(30),
               MaybeAgent(0.3),
               AddCounter(Counter.hellbornAwareness, 1),
             ],

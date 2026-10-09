@@ -104,7 +104,7 @@ final stationEvents = <GameEvent>[
   const GameEvent(
     id: 'station_brawl',
     title: 'Dockside brawl',
-    condition: AllOf([AtTag(Tag.station), HumansAtLeast(2)]),
+    condition: AllOf([AtTag(Tag.station), HumansAtLeast(50)]),
     once: false,
     weight: 0.6,
     text:

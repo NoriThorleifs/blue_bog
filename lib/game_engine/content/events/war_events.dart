@@ -46,7 +46,7 @@ final warEvents = <GameEvent>[
     choices: [
       const Choice(
         'Let your humans speak for you',
-        condition: HumansAtLeast(1),
+        condition: HumansAtLeast(25),
         outcomes: [
           Outcome(
             'Your humans talk. The Hellborn listen, and wave you on.',

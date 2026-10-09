@@ -8,6 +8,7 @@ class ShipClass {
     required this.description,
     required this.startingCards,
     this.startingHold = const [],
+    this.startingColony = const ['habitat_2'],
   });
 
   final String name;
@@ -18,6 +19,10 @@ class ShipClass {
 
   /// Card ids in the hold when a run starts.
   final List<String> startingHold;
+
+  /// Card ids in the colony grid when a run starts. The Republic paid for
+  /// every elected captain's retrofit.
+  final List<String> startingColony;
 }
 
 /// The playable species. Humans, Hellborn and Havi are not playable.
@@ -31,18 +36,12 @@ enum Species {
     home: Sys.center,
     humansLikeThem: 2,
     theyLikeHumans: 2,
-    startingHumans: 9,
+    startingHumans: 225,
     startingCredits: 120,
     ship: ShipClass(
       name: 'Relay-class Calculator',
       description: 'Self-repairing nanobot hull. Counts everything in threes.',
-      startingCards: [
-        'laser_1',
-        'laser_1',
-        'shield_1',
-        'bunks_2',
-        'cargo_pod_1',
-      ],
+      startingCards: ['laser_1', 'laser_1', 'shield_1', 'cargo_pod_1'],
       startingHold: [],
     ),
   ),
@@ -55,23 +54,16 @@ enum Species {
     home: Sys.orcha,
     humansLikeThem: 1,
     theyLikeHumans: 2,
-    startingHumans: 6,
+    startingHumans: 150,
     startingCredits: 150,
     ship: ShipClass(
       name: 'Tidecaller Survey Tank',
       description:
           'Mostly water by volume. Excellent sensors, '
           'questionable ethics board.',
-      startingCards: [
-        'laser_1',
-        'laser_1',
-        'fabricator_1',
-        'bunks_1',
-        'bunks_1',
-        'cargo_pod_1',
-        'hospital_1',
-      ],
+      startingCards: ['laser_1', 'laser_1', 'fabricator_1', 'cargo_pod_1'],
       startingHold: ['feedstock_1'],
+      startingColony: ['habitat_2', 'hospital_1'],
     ),
   ),
   bhrun(
@@ -83,7 +75,7 @@ enum Species {
     home: Sys.bhrunGai,
     humansLikeThem: 1,
     theyLikeHumans: 0,
-    startingHumans: 6,
+    startingHumans: 150,
     startingCredits: 90,
     ship: ShipClass(
       name: 'Grazer Bulk Hauler',
@@ -95,8 +87,6 @@ enum Species {
         'missiles_1',
         'plating_1',
         'plating_1',
-        'bunks_1',
-        'bunks_1',
         'cargo_pod_1',
       ],
       startingHold: ['missile_crate_1'],
@@ -111,18 +101,12 @@ enum Species {
     home: Sys.ghorDum,
     humansLikeThem: -2,
     theyLikeHumans: -1,
-    startingHumans: 3,
+    startingHumans: 75,
     startingCredits: 100,
     ship: ShipClass(
       name: 'Warbound Frigate',
       description: 'Was supposed to be demilitarised. Still has the guns.',
-      startingCards: [
-        'missiles_1',
-        'missiles_1',
-        'plating_1',
-        'bunks_1',
-        'cargo_pod_1',
-      ],
+      startingCards: ['missiles_1', 'missiles_1', 'plating_1', 'cargo_pod_1'],
       startingHold: ['missile_crate_1'],
     ),
   ),
@@ -136,7 +120,7 @@ enum Species {
     home: Sys.center,
     humansLikeThem: -1,
     theyLikeHumans: -1,
-    startingHumans: 3,
+    startingHumans: 75,
     startingCredits: 140,
     ship: ShipClass(
       name: 'Quiet Pilgrim',
@@ -147,7 +131,6 @@ enum Species {
         'laser_1',
         'teleporter_1',
         'shield_1',
-        'bunks_1',
         'cargo_pod_1',
         'barrier_1',
       ],
@@ -180,6 +163,8 @@ enum Species {
   /// -2 to 2. How this species feels about humans. Moves the captain's
   /// starting culture drift.
   final int theyLikeHumans;
+
+  /// Humans in the colony when the run starts.
   final int startingHumans;
   final int startingCredits;
   final ShipClass ship;

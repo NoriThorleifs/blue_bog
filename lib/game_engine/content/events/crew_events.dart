@@ -33,20 +33,18 @@ final crewEvents = <GameEvent>[
   ),
   GameEvent(
     id: 'human_recruits',
-    title: 'Humans looking for a berth',
-    condition: const AllOf([AtTag(Tag.humans), NotInHell()]),
+    title: 'Humans looking for a home',
+    condition: const AllOf([AtTag(Tag.humans), NotInHell(), HousingFree(40)]),
     once: false,
     bondWeight: 0.5,
     text:
-        'A handful of humans are asking around the docks for a ship. '
-        'They have heard about you, for better or worse.',
+        'A few families are asking around the docks for room on a ship. '
+        'They have heard about your colony, for better or worse.',
     choices: [
       Choice.simple(
-        'Sign three of them on',
+        'Take them in',
         'They bring their own tools and their own opinions.',
-        condition: const CreditsAtLeast(15),
-        hint: '15 credits',
-        effects: const [Credits(-15), Humans(3), Loyalty(2), MaybeAgent(0.3)],
+        effects: const [Humans(40), Loyalty(2), MaybeAgent(0.3)],
       ),
       Choice.simple('Not today', 'They try the next ship over.'),
     ],
@@ -55,7 +53,7 @@ final crewEvents = <GameEvent>[
     id: 'culture_night',
     title: 'Whose holiday?',
     triggers: {Trigger.hold},
-    condition: HumansAtLeast(1),
+    condition: HumansAtLeast(25),
     once: false,
     weight: 1.5,
     text:
@@ -87,7 +85,7 @@ final crewEvents = <GameEvent>[
     id: 'the_helmet',
     title: 'The old soldier',
     triggers: {Trigger.hold},
-    condition: AllOf([HumansAtLeast(3), HasFlag(Flag.orchaRaid)]),
+    condition: AllOf([HumansAtLeast(75), HasFlag(Flag.orchaRaid)]),
     text:
         'One of the older humans has a helmet that locks at the back and '
         'needs someone else\'s key to remove. "It\'s a safety thing," he '

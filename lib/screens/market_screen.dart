@@ -218,11 +218,7 @@ class _SellTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final engine = ref.read(engineProvider);
-    final spots = <CardSpot>[
-      for (var i = 0; i < Loadout.slotCount; i++)
-        if (run.loadout.slots[i] != null) SlotSpot(i),
-      for (var i = 0; i < run.loadout.hold.length; i++) HoldSpot(i),
-    ];
+    final spots = run.loadout.occupiedSpots.toList();
     if (spots.isEmpty) {
       return const Center(child: Text('You have nothing to sell.'));
     }
@@ -272,8 +268,9 @@ class _SellTab extends ConsumerWidget {
     );
     if (sure != true || !context.mounted) return;
     final without = run.loadout.copy()..takeOut(spot);
-    final lost = engine.crewLostWith(run, without);
-    if (lost > 0 && !await confirmCrewLoss(context, lost, run.humans.count)) {
+    final lost = engine.humansLostWith(run, without);
+    if (lost > 0 &&
+        !await confirmHumansLeave(context, lost, run.humans.count)) {
       return;
     }
     if (!context.mounted) return;

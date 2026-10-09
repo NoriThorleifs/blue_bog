@@ -167,12 +167,12 @@ void main() {
 
     test('Code Green needs Hell and a strong bond with the humans', () {
       final s = inHell(2)
-        ..humans = const HumanResources(count: 18, loyalty: 90, drift: 0);
+        ..humans = const HumanResources(count: 900, loyalty: 90, drift: 0);
       expect(engine.canCodeGreen(s), isTrue);
       expect(engine.codeGreen(s).pending?.eventId, 'green');
 
       final weak = s.clone()
-        ..humans = const HumanResources(count: 18, loyalty: 30, drift: 0);
+        ..humans = const HumanResources(count: 900, loyalty: 30, drift: 0);
       expect(engine.canCodeGreen(weak), isFalse);
 
       final outside = s.clone()..hell = null;
@@ -188,7 +188,7 @@ void main() {
 
     test('a mutiny is queued when loyalty collapses', () {
       final s = _dismiss(engine, engine.newRun(Species.gor, seed: 1)).clone()
-        ..humans = const HumanResources(count: 5, loyalty: 5, drift: 0);
+        ..humans = const HumanResources(count: 125, loyalty: 5, drift: 0);
       expect(engine.hold(s).pending?.eventId, 'mutiny');
     });
 
@@ -198,10 +198,10 @@ void main() {
       expect(engine.hold(s).pending, isNull);
     });
 
-    test('bond saturates at a full crew', () {
-      const small = HumanResources(count: 9, loyalty: 80, drift: 0);
-      const full = HumanResources(count: 18, loyalty: 80, drift: 0);
-      const huge = HumanResources(count: 27, loyalty: 80, drift: 0);
+    test('bond saturates at a full colony', () {
+      const small = HumanResources(count: 450, loyalty: 80, drift: 0);
+      const full = HumanResources(count: 900, loyalty: 80, drift: 0);
+      const huge = HumanResources(count: 1350, loyalty: 80, drift: 0);
       expect(small.bond, 40);
       expect(full.bond, 80);
       expect(huge.bond, 80);
@@ -234,7 +234,7 @@ void main() {
         var wins = 0;
         for (var seed = 0; seed < 300; seed++) {
           final s = _dismiss(eng, eng.newRun(Species.tern, seed: seed)).clone()
-            ..humans = HumanResources(count: 18, loyalty: loyalty, drift: 0)
+            ..humans = HumanResources(count: 900, loyalty: loyalty, drift: 0)
             ..pending = const PendingEvent('coin');
           final after = eng.choose(s, 0);
           if (after.has('h')) wins++;

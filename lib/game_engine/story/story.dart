@@ -14,6 +14,10 @@ enum Trigger {
   /// Sometimes, on arriving at the end of a sublight burn.
   sublight,
 
+  /// Sometimes, on getting out of Hell. The longer the ship was there, the
+  /// likelier.
+  hellExit,
+
   /// Only when queued explicitly by a story beat or another event.
   queued,
 }

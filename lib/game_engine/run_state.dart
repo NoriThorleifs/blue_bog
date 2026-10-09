@@ -20,6 +20,7 @@ class HumanResources {
     required this.drift,
   });
 
+  /// The colony's population.
   final int count;
 
   /// 0 to 100. How much the humans like their captain.
@@ -30,11 +31,11 @@ class HumanResources {
   final int drift;
 
   /// Humans aboard beyond this don't add to [bond].
-  static const fullCrew = 18;
+  static const fullColony = 900;
 
-  /// Hidden. 0 to 100. Loyalty scaled by headcount, saturating at
-  /// [fullCrew].
-  int get bond => (loyalty * min(count, fullCrew) / fullCrew).round();
+  /// Hidden. 0 to 100. Loyalty scaled by population, saturating at
+  /// [fullColony].
+  int get bond => (loyalty * min(count, fullColony) / fullColony).round();
 
   String get mood => switch (loyalty) {
     >= 80 => 'Devoted',

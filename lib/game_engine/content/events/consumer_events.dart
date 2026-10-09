@@ -49,7 +49,7 @@ final consumerEvents = <GameEvent>[
     id: 'roach_hatchling',
     title: 'Something small',
     triggers: const {Trigger.queued},
-    condition: const AllOf([HumansAtLeast(1), NoFlag(Flag.roachTruth)]),
+    condition: const AllOf([HumansAtLeast(25), NoFlag(Flag.roachTruth)]),
     text:
         'One of the hatchlings from the crate escapes into the mess. It is '
         'barely the size of a thumb, brown, flat and very fast. Every human '
@@ -62,7 +62,7 @@ final consumerEvents = <GameEvent>[
     title: 'Something in the hydroponics',
     triggers: const {Trigger.hold},
     condition: const AllOf([
-      HumansAtLeast(3),
+      HumansAtLeast(75),
       ActAtLeast(2),
       NoFlag(Flag.roachTruth),
       CounterAtLeast(Counter.consumerThreat, 1),

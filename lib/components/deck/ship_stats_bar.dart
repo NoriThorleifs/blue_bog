@@ -28,10 +28,8 @@ class ShipStatsBar extends StatelessWidget {
         if (drones > 0) chip(Icons.flight, 'Drones $drones'),
         chip(
           Icons.groups_outlined,
-          'Berths ${run.humans.count}/${stats.berths}',
+          'Colony ${run.humans.count}/${stats.housing}',
         ),
-        if (stats.hospital > 0)
-          chip(Icons.local_hospital_outlined, 'Hospital ${stats.hospital}'),
         if (stats.hellShielding > 0)
           chip(
             Icons.blur_on,

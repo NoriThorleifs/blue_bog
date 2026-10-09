@@ -1,5 +1,6 @@
 import 'dart:math' show min;
 
+import '../colony.dart';
 import '../galaxy/galaxy.dart';
 import '../run_state.dart';
 import '../story/keys.dart';
@@ -13,6 +14,7 @@ extension TurnFlow on EngineTurn {
   void arrive() {
     final firstVisit = s.visited.add(s.location);
     openMarket(s, rng);
+    payDividends();
     s.revealed.add(s.location);
     for (final g in s.galaxy.gatewaysOf(s.location)) {
       if (s.isGatewayActive(g)) s.revealed.add(g.other(s.location));
@@ -48,7 +50,6 @@ extension TurnFlow on EngineTurn {
 
   void endTurn() {
     s.turn++;
-    payCrew();
     quietHumanInfluence();
     if (s.inHell) {
       s.hellTurns++;
@@ -56,7 +57,7 @@ extension TurnFlow on EngineTurn {
       final damage = (base * (1 - s.stats.hellShielding)).ceil();
       apply(Hull(-damage), StringBuffer());
     }
-    patchAndCrew();
+    patchAndGrow();
     runBeats();
     if (s.humans.count > 0 &&
         s.humans.loyalty < 10 &&
@@ -66,47 +67,36 @@ extension TurnFlow on EngineTurn {
     }
   }
 
-  /// Between turns the humans patch the ship, though never past 75% of its
-  /// hull, and empty berths slowly fill: faster where humans live, and the
-  /// better the humans aboard think of you.
-  void patchAndCrew() {
-    final stats = s.stats;
-    final patchTo = (stats.maxHull * 0.75).floor();
-    if (s.hull < patchTo && s.humans.count > 0) {
-      s.hull = min(patchTo, s.hull + 2 * s.humans.count);
-    }
+  /// Between turns the humans patch the ship and the colony grows into
+  /// any free housing. See [Colony].
+  void patchAndGrow() {
+    s.hull = Colony.patched(s.hull, s.humans.count, s.stats);
     if (s.inHell) return;
-    final free = stats.berths - s.humans.count;
-    if (free <= 0) return;
-    final odds =
-        (0.05 + 0.25 * s.humans.loyalty / 100) *
-        (s.here.tags.contains(Tag.humans) ? 1 : 0.33);
-    var joined = 0;
-    for (var i = 0; i < free; i++) {
-      if (rng.chance(odds)) joined++;
-    }
+    final (:born, :joined) = Colony.growth(
+      humans: s.humans.count,
+      housing: s.stats.housing,
+      loyalty: s.humans.loyalty,
+      station: s.here.tags.contains(Tag.station),
+      humanStation: s.here.tags.contains(Tag.humans),
+      rng: rng,
+    );
+    if (born + joined > 0) apply(Humans(born + joined), StringBuffer());
     if (joined > 0) {
-      apply(Humans(joined), StringBuffer());
-      apply(const MaybeAgent(0.15), StringBuffer());
-      log(
-        LogKind.ship,
-        joined == 1 ? 'A human signed on.' : '$joined humans signed on.',
-      );
+      apply(const MaybeAgent(0.05), StringBuffer());
+      log(LogKind.ship, '$joined humans moved into the colony.');
     }
   }
 
-  void payCrew() {
-    final wages = 1 + s.humans.count ~/ 3;
-    if (s.credits >= wages) {
-      s.credits -= wages;
-    } else {
-      s.credits = 0;
-      s.humans = s.humans.copyWith(loyalty: s.humans.loyalty - 5);
-      log(LogKind.ship, 'Could not make payroll. The humans noticed.');
-    }
+  /// The colony's businesses pay out whenever the ship docks at a station.
+  void payDividends() {
+    if (!s.here.tags.contains(Tag.station)) return;
+    final paid = Colony.dividends(s.loadout, s.humans.count, rng);
+    if (paid <= 0) return;
+    s.credits += paid;
+    log(LogKind.ship, 'The colony\'s businesses paid $paid credits.');
   }
 
-  /// The hidden part of HR: a well-bonded crew changes the galaxy a little
+  /// The hidden part of HR: a well-bonded colony changes the galaxy a little
   /// every few turns, in a direction set by whose culture is winning aboard.
   void quietHumanInfluence() {
     if (s.turn % 3 != 0) return;

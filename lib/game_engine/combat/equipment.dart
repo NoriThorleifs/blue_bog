@@ -1,3 +1,5 @@
+import 'dart:math';
+
 /// A label on a card that other cards can look for. The Cursed Orb, say,
 /// wakes every other card tagged Hellish.
 enum CardTag {
@@ -102,6 +104,9 @@ class ChargeShields extends Action {
 /// Hull each drone out repairs per second of a fight.
 const droneRepair = 1;
 
+/// The most a colony's hospitals can cut its losses, in percent.
+const maxHospitalCut = 75;
+
 /// Builds one drone, up to the ship's maximum. Uses one unit of feedstock.
 class BuildDrone extends Action {
   const BuildDrone([this.count = 1]);
@@ -176,6 +181,10 @@ enum CardKind {
 
   /// Something you've been paid to carry somewhere. Can't be sold.
   mission,
+
+  /// Part of the human colony. Works only in the colony grid, never in a
+  /// fight.
+  colony,
 }
 
 /// A card: equipment, supplies or a commodity.
@@ -193,8 +202,11 @@ class Equipment {
     this.maxDrones = 0,
     this.ammo = const {},
     this.boost,
-    this.berths = 0,
+    this.housing = 0,
     this.hospital = 0,
+    this.crawlspace = 0,
+    this.dividend = 0,
+    this.gamble = false,
     this.hellShielding = 0,
     this.fuel = 0,
     this.hold = 0,
@@ -225,11 +237,23 @@ class Equipment {
   final Map<Ammo, int> ammo;
   final ChargeBoost? boost;
 
-  /// Human berths. Accommodation cards: remove them all and the humans go.
-  final int berths;
+  /// Humans the colony has room for. Take housing away and the humans
+  /// without a home leave.
+  final int housing;
 
-  /// Each level saves one human from every loss, and slowly raises loyalty.
+  /// Each level cuts the colony's losses by a tenth, up to
+  /// [maxHospitalCut], and slowly raises loyalty.
   final int hospital;
+
+  /// Hull the humans in the walls patch every turn.
+  final int crawlspace;
+
+  /// Credits per hundred humans aboard, paid on docking at a station.
+  final int dividend;
+
+  /// Whether the [dividend] is a gamble: anywhere from nothing to three
+  /// times as much.
+  final bool gamble;
 
   /// Lowers the odds of falling into Hell and the damage taken there.
   final double hellShielding;
@@ -262,6 +286,9 @@ class Equipment {
 
   bool has(CardTag tag) => tags.contains(tag);
 
+  /// A cargo pod: it goes in the cargo bay slot, and only works there.
+  bool get isCargoBay => hold > 0;
+
   /// This card with [extra] tags as well, under the id [taggedId].
   Equipment withTags(Set<CardTag> extra, String taggedId) => Equipment(
     id: taggedId,
@@ -276,8 +303,11 @@ class Equipment {
     maxDrones: maxDrones,
     ammo: ammo,
     boost: boost,
-    berths: berths,
+    housing: housing,
     hospital: hospital,
+    crawlspace: crawlspace,
+    dividend: dividend,
+    gamble: gamble,
     hellShielding: hellShielding,
     fuel: fuel,
     hold: hold,
@@ -358,8 +388,15 @@ class Equipment {
             '${b.maxDamage != null ? ' of ${b.maxDamage} damage or less' : ''}'
             '${b.scope == BoostScope.triangle ? ' in this triangle' : ''}'
             ' charge ${b.percent}% faster',
-      if (berths != 0) '+$berths human berths',
-      if (hospital != 0) '+$hospital hospital',
+      if (housing != 0) 'Houses $housing humans',
+      if (hospital != 0)
+        'Cuts the colony\'s losses by ${min(hospital * 10, maxHospitalCut)}%',
+      if (crawlspace != 0) 'Patches $crawlspace hull a turn',
+      if (dividend != 0)
+        gamble
+            ? 'Pays 0 to ${dividend * 3} cr per 100 humans on docking at a '
+                  'station'
+            : 'Pays $dividend cr per 100 humans on docking at a station',
       if (hellShielding != 0)
         '+${(hellShielding * 100).round()}% Hell shielding',
       if (fuel != 0) '+$fuel fuel capacity',
@@ -395,8 +432,11 @@ class EquipmentFamily {
     this.boostScope,
     this.boostOnly,
     this.boostMaxDamage,
-    this.berths = 0,
+    this.housing = 0,
     this.hospital = 0,
+    this.crawlspace = 0,
+    this.dividend = 0,
+    this.gamble = false,
     this.hellShielding = 0,
     this.fuel = 0,
     this.hold = 0,
@@ -422,8 +462,11 @@ class EquipmentFamily {
   final BoostScope? boostScope;
   final Type? boostOnly;
   final int? boostMaxDamage;
-  final int berths;
+  final int housing;
   final int hospital;
+  final int crawlspace;
+  final int dividend;
+  final bool gamble;
   final double hellShielding;
   final int fuel;
   final int hold;
@@ -474,8 +517,11 @@ class EquipmentFamily {
             only: boostOnly,
             maxDamage: boostMaxDamage == null ? null : boostMaxDamage! * x,
           ),
-    berths: berths * x,
+    housing: housing * x,
     hospital: hospital * x,
+    crawlspace: crawlspace * x,
+    dividend: dividend * x,
+    gamble: gamble,
     hellShielding: hellShielding * x,
     fuel: fuel * x,
     hold: hold * x,

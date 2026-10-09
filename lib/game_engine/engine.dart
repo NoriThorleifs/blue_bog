@@ -55,7 +55,7 @@ class GameEngine {
   /// Bond needed for Code Green before the battle of the Bhrun-Gai pipe.
   /// Very few captains are that close to their humans so early.
   static const earlyCodeGreenBond = 60;
-  static const codeGreenHumans = 6;
+  static const codeGreenHumans = 150;
 
   /// Credits per unit of fuel at a station. Cheap until markets and
   /// missions give the captain a real income.
@@ -73,6 +73,7 @@ class GameEngine {
     final loadout = Loadout();
     for (final id in [
       ...species.ship.startingCards,
+      ...species.ship.startingColony,
       ...species.ship.startingHold,
     ]) {
       loadout.add(id);
@@ -257,22 +258,28 @@ class GameEngine {
   }
 
   /// Humans who would leave if [loadout] replaced the current one: every
-  /// human without a berth goes.
-  int crewLostWith(RunState s, Loadout loadout) {
-    final berths = ShipStats.of(
+  /// human without a home in the colony goes. Taking away housing is the
+  /// only way a captain can make part of the colony leave.
+  int humansLostWith(RunState s, Loadout loadout) {
+    final housing = ShipStats.of(
       loadout,
       hullUpgrades: s.counter(Counter.hullUpgrades),
-    ).berths;
-    return max(0, s.humans.count - berths);
+    ).housing;
+    return max(0, s.humans.count - housing);
   }
 
-  /// Moves a card between slots and the hold. Doesn't end the turn.
+  /// Moves a card between slots, the hold and the colony grid. Doesn't end
+  /// the turn.
   ///
-  /// Refused if the hold would overflow. Taking out accommodation sends
-  /// home every human left without a berth: check [crewLostWith] first.
+  /// Refused if the hold would overflow, or a card would end up where it
+  /// doesn't fit. Taking out housing sends away every human left without a
+  /// home: check [humansLostWith] first.
   RunState arrange(RunState state, CardSpot from, CardSpot to) {
     if (state.isOver || state.pending != null) {
       throw IllegalMove('Resolve the current event first');
+    }
+    if (state.loadout.whyNotMove(from, to) case final why?) {
+      throw IllegalMove(why);
     }
     final loadout = state.loadout.copy()..move(from, to);
     if (!loadout.holdFits) {
@@ -284,7 +291,7 @@ class GameEngine {
   /// Puts a new loadout on the ship and applies what follows from it.
   void _refit(EngineTurn t, Loadout loadout) {
     final s = t.s;
-    final lost = crewLostWith(s, loadout);
+    final lost = humansLostWith(s, loadout);
     s.loadout = loadout;
     final stats = s.stats;
     s
@@ -293,7 +300,7 @@ class GameEngine {
     if (lost > 0) {
       s.humans = s.humans.copyWith(count: s.humans.count - lost);
       if (s.humans.count == 0) s.flags.remove(Flag.hellbornAgentAboard);
-      t.log(LogKind.ship, '$lost humans left the ship: no berths for them.');
+      t.log(LogKind.ship, '$lost humans left the colony: no homes for them.');
     }
   }
 

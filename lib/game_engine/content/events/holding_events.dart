@@ -118,7 +118,7 @@ final holdingEvents = <GameEvent>[
         'Let your humans run it',
         'They finish in half the time, find three errors in the office\'s '
             'own charts, and are insufferable about it all evening.',
-        condition: const HumansAtLeast(3),
+        condition: const HumansAtLeast(75),
         effects: const [Credits(22), Loyalty(2)],
       ),
     ],
@@ -127,7 +127,7 @@ final holdingEvents = <GameEvent>[
     id: 'hold_card_game',
     title: 'The card game',
     triggers: {Trigger.hold},
-    condition: HumansAtLeast(2),
+    condition: HumansAtLeast(50),
     once: false,
     weight: 0.8,
     text:
@@ -175,8 +175,9 @@ final holdingEvents = <GameEvent>[
             effects: [GrantCard('commodity'), Loyalty(3)],
           ),
           Outcome(
-            'A crew of humans who lost their ship. They ask to sign on.',
-            effects: [Humans(2), MaybeAgent(0.3)],
+            'A crew of humans who lost their ship. They ask to move into '
+            'your colony, and they do.',
+            effects: [Humans(20), MaybeAgent(0.3)],
           ),
           Outcome(
             'It was bait.',

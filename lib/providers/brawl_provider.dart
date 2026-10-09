@@ -45,6 +45,10 @@ class BrawlController extends Notifier<BrawlState?> {
   String? proceed() => _attempt(_engine.proceed);
   String? use(CardSpot from, CardSpot to) =>
       _attempt((s) => _engine.use(s, from, to));
+  String? jettison(CardSpot spot) => _attempt((s) => _engine.jettison(s, spot));
+  String? salvage(int index) => _attempt((s) => _engine.salvage(s, index));
+  String? retire() => _attempt(_engine.retire);
+  String? goEndless() => _attempt(_engine.goEndless);
 
   /// Runs an action the player chose, returning why not if it's refused.
   String? _attempt(BrawlState Function(BrawlState) action) {

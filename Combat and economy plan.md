@@ -13,7 +13,7 @@ Plan for the card combat system, the ship loadout rules and the economy around t
 - **Drones.** A fabricator builds one drone each time it fires, up to a maximum, and each drone uses up material. Each drone intercepts one missile.
 - **Synergy.** Some cards affect the other cards in their own small triangle. Others affect every card on the ship, either constantly or when they fire.
 - **Cargo.** Hold capacity starts at **0** and only cargo cards raise it. Commodities, mission cargo and ammo are all cards. Without hold space, cargo can be put in a slot, where it does nothing but take up the slot.
-- **Humans.** Every species starts with a human accommodation card. Unequipping it means losing the whole human crew. Empty berths fill up over time, faster the better your humans think of you.
+- **Humans.** The humans live in a colony grid of their own, outside the triforce (see "The human colony" in `Game design - map and story.md`). Selling its housing sends the homeless humans away. The colony grows into free housing over time, faster the better your humans think of you.
 - **Shops** exist only at trading hubs. Each one rolls **27** cards every round. Equipment sells for **50%** of its buy value. Commodity prices vary from port to port within a range.
 - **Hull upgrades** at ports add maximum hull permanently, at an exponentially rising price.
 
@@ -59,8 +59,7 @@ Plan for the card combat system, the ship loadout rules and the economy around t
 | Shield generator | 6 s | +30 maximum shield, refills to maximum | Absorbs up to 5 laser DPS. |
 | Drone fabricator | 8 s | +1 maximum drone, builds 1 drone | 1 material per drone. |
 | Hull plating | — | +100 hull | Passive. |
-| Cargo pod | — | +3 hold capacity | Passive. Upgraded +9, super +27. |
-| Bunk module | — | +3 human berths | Passive. Every starter kit has one. |
+| Cargo pod | — | +3 hold capacity | Passive. Upgraded +9, super +27. Only works in the cargo bay, its own slot outside the triforce; spare pods wait in the hold or a slot until they merge. |
 
 - **Upgraded and super cards** keep the same cooldown and have 3× or 9× the effect.
 - **Ammo and materials** are commodity cards. One crate holds 9 shots, used up in combat from the hold or a slot, and restocked at shops.
@@ -103,7 +102,7 @@ Hull upgrades and hull cards scale the player's 500 alongside.
 
 ## Starter kits
 
-Same ship for everyone. Every kit has a bunk module and a cargo pod, 2 damage cards and 1 support card, which leaves 4 slots free.
+Same ship for everyone. Every kit has a cargo pod in the cargo bay, a Habitat Tower in the colony grid, 2 damage cards and 1 support card.
 
 | Species | Kit | Plays as |
 | --- | --- | --- |
@@ -130,10 +129,10 @@ Same ship for everyone. Every kit has a bunk module and a cargo pod, 2 damage ca
   - A typical act 1 turn should net enough for one basic card every 2–3 turns.
   - Trade runs and missions should be clearly better than odd jobs.
 - **Humans.**
-  - Each empty berth has a chance to fill each turn:
-    - 5% + 25% × (loyalty ÷ 100) in human-populated systems.
-    - A third of that anywhere else.
-  - Removing the last accommodation card asks for confirmation, then every human leaves.
+  - 1% of the colony is born each turn. At stations, a share of the free housing fills too:
+    - 5% + 25% × (loyalty ÷ 100) where humans live.
+    - A third of that at other stations.
+  - Removing housing asks for confirmation, then every human without a home leaves.
 
 ## How it gets built
 
@@ -170,7 +169,7 @@ First balance findings:
 ## Decisions made
 
 - **Hull damage carries over between fights.**
-  - Humans patch the ship between turns, but never completely: each turn out of combat, every human repairs 2 hull, up to 75% of maximum hull.
+  - Humans patch the ship between turns (story) or fights (brawl), but never completely: 1 hull per 12 humans, plus crawlspace crews, up to 75% of maximum hull.
   - Full repairs need a berth at a port with a shipyard, at about 1 credit per 5 hull.
 - **Players can't set timers directly.** Equipment changes them instead:
   - triangle cards that make weapons charge a percentage faster
@@ -180,4 +179,12 @@ First balance findings:
 - **Winning lets you scrap the enemy ship:** credits, plus a chance to salvage each of its cards.
 - **Boss fights** that matter to the story have a **tractor beam**. There's no 60-second limit, so you win or you die.
 - **A shop rolls its 27 cards on every visit.** A small fee rerolls it: 5 credits, plus 5 more for each reroll in the same visit.
+
+## The end of a brawl
+
+- **Satan at fight 27.** He comes wherever the captain is, Hell included, with a tractor beam, so there's no escaping at the time limit. His ship is fixed rather than scaled: Hell's own upgraded cards (Teleport Barrage, Brimstone Projector, Tooth Lattice, a Brandy Mist shield, a Behemoth Hide and a Living Hull) and what he scavenged from our dimension (Ion Cannon, Flak Battery, one Teleport Jammer), on 2000 base hull (4160 in all).
+- **The baseline is a good build, not a god build.** The Hell Clock is rare even in a 27-fight brawl, so Satan is tuned without it, using `tool/boss_balance.dart`: five hand-built late archetypes (lasers and shields, missiles and drones, teleport bombs, lance and rail, Hell cards; upgraded cards with a super or two, +400 hull) all win, mostly with 300–650 hull left; random builds win 4% at 1500 credits, 38% at 2500 and 69% at 4000. At 2500 base hull two of the five archetypes lose. A first version, tuned so the author's Hell Clock god run barely won, beat every realistic build.
+- **Winning.** Beating Satan pays The Broken Seal (unique, Hellish: 240 hellfire every 3 s, +300 hull) and wins the brawl. The captain retires on a victory screen, or keeps going for score: every fight past 27 has 1.3× the hull of the one before, on top of the usual scaling, so endless runs always end.
+- **Wreckage and jettisoning.** Salvage, plunder and event cards that don't fit wait in the wreckage until the ship moves on. Any card can be jettisoned for nothing to make room.
+- **Colony dividends** keep scaling with population and tier; the author chose to leave them (a late god run made 672 credits a dock), since the ending now caps the run.
 

@@ -120,21 +120,10 @@ const equipmentFamilies = [
 
   // Ship systems ----------------------------------------------------------
   EquipmentFamily(
-    id: 'bunks',
-    names: ['Bunk Module', 'Habitat Ring', 'Spinning Asteroid Habitat'],
-    berths: 3,
-    price: 20,
-  ),
-  EquipmentFamily(
     id: 'cargo_pod',
     names: ['Cargo Pod', 'Cargo Bay', 'Bulk Hold'],
     hold: 3,
     price: 20,
-  ),
-  EquipmentFamily(
-    id: 'hospital',
-    names: ['Sick Bay', 'Human Hospital', 'Hospital Ship'],
-    hospital: 1,
   ),
   EquipmentFamily(
     id: 'barrier',
@@ -146,6 +135,47 @@ const equipmentFamilies = [
     names: ['Drop Tank', 'Fuel Bladder', 'Fuel Rat Special'],
     fuel: 3,
     price: 20,
+  ),
+
+  // The human colony: works only in the colony grid -----------------------
+  EquipmentFamily(
+    id: 'habitat',
+    names: ['Habitat Block', 'Habitat Tower', 'Habitat Arcology'],
+    kind: CardKind.colony,
+    housing: 100,
+    price: 20,
+  ),
+  EquipmentFamily(
+    id: 'hospital',
+    names: ['Clinic', 'Human Hospital', 'Hospital Deck'],
+    kind: CardKind.colony,
+    hospital: 1,
+  ),
+  EquipmentFamily(
+    id: 'crawlspace',
+    names: ['Crawlspace Crews', 'Maintenance Guild', 'Hull Keepers'],
+    kind: CardKind.colony,
+    crawlspace: 10,
+  ),
+  EquipmentFamily(
+    id: 'shop',
+    names: ['Corner Shop', 'Market Hall', 'Shopping Deck'],
+    kind: CardKind.colony,
+    dividend: 1,
+  ),
+  EquipmentFamily(
+    id: 'casino',
+    names: ['Card Room', 'Casino', 'Grand Casino'],
+    kind: CardKind.colony,
+    dividend: 1,
+    gamble: true,
+  ),
+  EquipmentFamily(
+    id: 'brothel',
+    names: ['Two-Sided Brothel', 'Two-Sided House', 'Two-Sided Palace'],
+    kind: CardKind.colony,
+    dividend: 2,
+    price: 60,
   ),
 
   // Supplies: work from the hold --------------------------------------------
@@ -404,6 +434,22 @@ const eliteTrophies = [
   ),
 ];
 
+/// The trophy for beating Satan at the end of a brawl.
+const satanTrophy = Equipment(
+  id: 'trophy_broken_seal',
+  name: 'The Broken Seal',
+  family: 'trophy_broken_seal',
+  tier: Tier.unique,
+  cooldown: 3,
+  action: Hellfire(240),
+  hull: 300,
+  price: 600,
+  tags: {CardTag.hellish},
+  text:
+      'The seal Satan broke at Kyndari to start the gatecrash, rebuilt into '
+      'a gun. He wants it back.',
+);
+
 /// Nobody's only weapon. Never salvaged: nobody else could use it.
 const boardingTeleporter = Equipment(
   id: 'nobody_boarding_teleporter',
@@ -422,6 +468,7 @@ final equipmentCatalog = <String, Equipment>{
   for (final e in missionCargo) e.id: e,
   for (final e in mournerCards) e.id: e,
   for (final e in eliteTrophies) e.id: e,
+  satanTrophy.id: satanTrophy,
   boardingTeleporter.id: boardingTeleporter,
   for (final family in hellFamilies)
     for (final e in family.tiers) e.id: e,

@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +7,8 @@ import '../../game_engine/combat/equipment.dart';
 import '../../game_engine/deck/loadout.dart';
 import '../../providers/brawl_provider.dart';
 import '../cards/card_widgets.dart';
+import '../deck/cargo_hold.dart';
+import '../deck/colony_grid.dart';
 import '../deck/triforce.dart';
 import '../dialogs.dart';
 import '../theme.dart';
@@ -37,10 +37,8 @@ class _ShipTabState extends ConsumerState<ShipTab> {
     final loadout = widget.brawl.loadout;
     if (using == null) return const {};
     return {
-      for (var i = 0; i < Loadout.slotCount; i++)
-        if (loadout.canUse(using, SlotSpot(i))) SlotSpot(i),
-      for (var i = 0; i < loadout.hold.length; i++)
-        if (loadout.canUse(using, HoldSpot(i))) HoldSpot(i),
+      for (final spot in loadout.occupiedSpots)
+        if (loadout.canUse(using, spot)) spot,
     };
   }
 
@@ -74,6 +72,16 @@ class _ShipTabState extends ConsumerState<ShipTab> {
         : equipmentById(brawl.loadout.at(using)!);
     final targets = _targets(using);
     final drop = using == null ? _drop : null;
+    Widget tile(CardSpot spot) => SpotTile(
+      spot: spot,
+      id: brawl.loadout.at(spot),
+      size: 76,
+      selected: using == spot,
+      glowing: targets.contains(spot),
+      dimmed: spot is HoldSpot && _inertInHold(brawl.loadout.at(spot)),
+      onTap: _tap,
+      onDrop: drop,
+    );
     return PopScope(
       canPop: using == null,
       onPopInvokedWithResult: (didPop, _) {
@@ -113,6 +121,11 @@ class _ShipTabState extends ConsumerState<ShipTab> {
                   if (shield > 0) (Icons.blur_circular, 'Shield $shield'),
                   if (drones > 0) (Icons.flight, 'Drones $drones'),
                   (Icons.inventory_2_outlined, 'Hold $capacity'),
+                  (
+                    Icons.groups_outlined,
+                    'Colony ${brawl.humans.count}/${brawl.stats.housing} · '
+                        '${brawl.humans.mood}',
+                  ),
                 ])
                   Chip(
                     avatar: Icon(icon, size: 16, color: Palette.muted),
@@ -141,30 +154,13 @@ class _ShipTabState extends ConsumerState<ShipTab> {
             ),
           ),
           const SizedBox(height: 20),
-          Text(
-            'Cargo hold (${brawl.loadout.hold.length}/$capacity)',
-            style: text.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (var i = 0; i < max(capacity, brawl.loadout.hold.length); i++)
-                SizedBox.square(
-                  dimension: 76,
-                  child: SpotTile(
-                    spot: HoldSpot(i),
-                    id: brawl.loadout.at(HoldSpot(i)),
-                    size: 76,
-                    selected: using == HoldSpot(i),
-                    glowing: targets.contains(HoldSpot(i)),
-                    dimmed: _inertInHold(brawl.loadout.at(HoldSpot(i))),
-                    onTap: _tap,
-                    onDrop: drop,
-                  ),
-                ),
-            ],
+          CargoHold(loadout: brawl.loadout, tile: tile),
+          Center(
+            child: ColonyGrid(
+              humans: brawl.humans.count,
+              housing: brawl.stats.housing,
+              tile: tile,
+            ),
           ),
         ],
       ),
@@ -172,10 +168,27 @@ class _ShipTabState extends ConsumerState<ShipTab> {
   }
 
   bool _inertInHold(String? id) =>
-      id != null && equipmentById(id).kind == CardKind.equipment;
+      id != null &&
+      switch (equipmentById(id).kind) {
+        CardKind.equipment || CardKind.colony => true,
+        _ => false,
+      };
 
-  void _drop(CardSpot from, CardSpot to) =>
-      reportError(context, ref.read(brawlProvider.notifier).arrange(from, to));
+  Future<void> _drop(CardSpot from, CardSpot to) async {
+    final brawl = widget.brawl;
+    if (brawl.loadout.whyNotMove(from, to) case final why?) {
+      return showError(context, why);
+    }
+    final lost = ref
+        .read(brawlEngineProvider)
+        .humansLostWith(brawl, brawl.loadout.copy()..move(from, to));
+    if (lost > 0 &&
+        !await confirmHumansLeave(context, lost, brawl.humans.count)) {
+      return;
+    }
+    if (!mounted) return;
+    reportError(context, ref.read(brawlProvider.notifier).arrange(from, to));
+  }
 
   void _details(CardSpot spot) {
     final engine = ref.read(brawlEngineProvider);
@@ -211,19 +224,52 @@ class _ShipTabState extends ConsumerState<ShipTab> {
                   OutlinedButton.icon(
                     onPressed: () {
                       Navigator.pop(sheet);
-                      reportError(
-                        context,
-                        ref.read(brawlProvider.notifier).sell(spot),
+                      _takeOff(
+                        spot,
+                        () => ref.read(brawlProvider.notifier).sell(spot),
                       );
                     },
                     icon: const Icon(Icons.sell_outlined),
                     label: Text('Sell for ${engine.sellValue(brawl, id)} cr'),
                   ),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(sheet);
+                    _takeOff(
+                      spot,
+                      () => ref.read(brawlProvider.notifier).jettison(spot),
+                      jettison: true,
+                    );
+                  },
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Jettison'),
+                ),
               ],
             ),
           ),
         );
       },
     );
+  }
+
+  /// Takes the card at [spot] off the ship with [action], asking first if
+  /// humans would lose their homes, or if it would be thrown away.
+  Future<void> _takeOff(
+    CardSpot spot,
+    String? Function() action, {
+    bool jettison = false,
+  }) async {
+    final brawl = widget.brawl;
+    final lost = ref
+        .read(brawlEngineProvider)
+        .humansLostWith(brawl, brawl.loadout.copy()..takeOut(spot));
+    if (lost > 0) {
+      if (!await confirmHumansLeave(context, lost, brawl.humans.count)) return;
+    } else if (jettison) {
+      final name = equipmentById(brawl.loadout.at(spot)!).name;
+      if (!await confirmJettison(context, name)) return;
+    }
+    if (!mounted) return;
+    reportError(context, action());
   }
 }

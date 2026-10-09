@@ -1,5 +1,6 @@
 import 'package:blue_bog/game_engine/brawl/brawl.dart';
 import 'package:blue_bog/game_engine/brawl/brawl_events.dart';
+import 'package:blue_bog/game_engine/brawl/brawl_outcomes.dart';
 import 'package:blue_bog/game_engine/captain/species.dart';
 import 'package:blue_bog/game_engine/combat/catalog.dart';
 import 'package:blue_bog/game_engine/combat/combat.dart';
@@ -66,12 +67,47 @@ void main() {
     }
   });
 
+  group('the human colony', () {
+    test('a brawl starts with the species\' colony aboard', () {
+      for (final species in Species.values) {
+        final s = engine.start(species, seed: 1);
+        expect(s.humans.count, species.startingHumans);
+        expect(s.stats.housing, greaterThanOrEqualTo(s.humans.count));
+        expect(s.loadout.colony, contains('habitat_2'));
+      }
+    });
+
+    test('docking grows the colony and pays its businesses', () {
+      var docks = 0;
+      for (var seed = 0; seed < 20; seed++) {
+        final s = engine.start(Species.tern, seed: seed);
+        s.loadout.add('shop_2');
+        final out = engine.launch(s);
+        final docked = engine.proceed(engine.choose(out, _staysOut(out)));
+        if (docked.lost) continue;
+        docks++;
+        expect(docked.humans.count, greaterThan(s.humans.count));
+        expect(docked.log, contains(startsWith('The colony')));
+      }
+      expect(docks, greaterThan(10));
+    });
+
+    test('selling the housing sends the humans away', () {
+      final s = engine.start(Species.gor, seed: 2);
+      final habitat = s.loadout.colony.indexOf('habitat_2');
+      final after = engine.sell(s, ColonySpot(habitat));
+      expect(after.humans.count, 0);
+      expect(after.log, contains(contains('left the colony')));
+    });
+  });
+
   test('selling the last pod keeps the one crate aboard', () {
     final s = engine.start(Species.al, seed: 4);
-    final pod = s.loadout.slots.indexOf('cargo_pod_1');
+    expect(s.loadout.cargo, 'cargo_pod_1');
     expect(s.loadout.hold, ['feedstock_1']);
-    final after = engine.sell(s, SlotSpot(pod));
-    expect(after.loadout.slots[pod], 'feedstock_1');
+    final after = engine.sell(s, const CargoSpot());
+    expect(after.loadout.cargo, isNull);
+    expect(after.loadout.slots, contains('feedstock_1'));
   });
 
   test('the enemies keep getting harder', () {
@@ -122,7 +158,7 @@ void main() {
     }
   });
 
-  test('every elite fight pays a unique trophy', () {
+  test('every elite fight, and Satan, pays a unique trophy', () {
     final elites = [
       for (final e in brawlEvents)
         for (final c in e.choices)
@@ -130,7 +166,15 @@ void main() {
             for (final f in o.effects.whereType<Fight>())
               if (f.winCards.isNotEmpty) f,
     ];
-    expect(elites, hasLength(3));
+    expect(
+      {for (final f in elites) f.special},
+      {
+        SpecialEnemy.lastVote,
+        SpecialEnemy.gorChampion,
+        SpecialEnemy.unmergedFoundry,
+        SpecialEnemy.satan,
+      },
+    );
     for (final f in elites) {
       expect(f.special, isNotNull);
       for (final id in f.winCards) {
@@ -428,6 +472,121 @@ void main() {
       final firstShot = result.events.firstWhere((e) => e.side == 0);
       // 5 s laser, 30% faster, then half charged: 1.75 s.
       expect(firstShot.time, closeTo(1.8, 0.1));
+    });
+  });
+
+  group('the end', () {
+    String h(String id) => '$id#hellish';
+
+    /// The author's god run, rebuilt: it should beat Satan, barely.
+    BrawlState godRun({int round = brawlFinalFight}) {
+      final s = engine.start(Species.tern, seed: 7).clone()
+        ..round = round
+        ..hullUpgrades = 8
+        ..loadout = Loadout(
+          slots: [
+            h('laser_3'),
+            h('lance_3'),
+            h('rail_3'),
+            h('teleporter_3'),
+            'hell_clock',
+            h('fabricator_3'),
+            h('shield_3'),
+            'plating_3',
+            'plating_3',
+          ],
+          cargo: 'cargo_pod_2',
+          hold: ['teleport_charges_3', 'feedstock_3'],
+        );
+      return s..hull = s.stats.maxHull;
+    }
+
+    test('Satan comes at the final fight, and not before', () {
+      final early = engine.launch(godRun(round: brawlFinalFight - 1));
+      expect(early.event, isNot('satan'));
+      final due = engine.launch(godRun());
+      expect(due.event, 'satan');
+      expect(godRun().nextEnemy.name, 'Satan');
+    });
+
+    test('Satan comes for you in Hell too', () {
+      final s = godRun().clone()
+        ..inHell = true
+        ..event = 'hell_clocks';
+      final stay = s.currentEvent!.choices.indexWhere(
+        (c) => !c.outcomes.any((o) => o.effects.any((e) => e is LeaveHell)),
+      );
+      final next = engine.proceed(engine.choose(s, stay));
+      if (next.lost) return;
+      expect(next.event, 'satan');
+    });
+
+    test('beating Satan wins, then the captain retires or goes on', () {
+      final fought = engine.proceed(engine.choose(engine.launch(godRun()), 0));
+      expect(fought.lost, isFalse);
+      expect(fought.lastCombat!.result.outcome, CombatOutcome.win);
+      expect(fought.awaitingVerdict, isTrue);
+      expect(fought.docked, isFalse);
+      expect(fought.loadout.all, contains('trophy_broken_seal'));
+      expect(() => engine.launch(fought), throwsA(isA<IllegalMove>()));
+
+      final retired = engine.retire(fought);
+      expect(retired.retired, isTrue);
+      expect(retired.docked, isFalse);
+
+      final onward = engine.goEndless(fought);
+      expect(onward.endless, isTrue);
+      expect(onward.docked, isTrue);
+      expect(onward.round, brawlFinalFight + 1);
+      expect(engine.launch(onward).event, isNot('satan'));
+    });
+
+    test('a weak ship that reaches Satan dies there', () {
+      final s = engine.start(Species.gor, seed: 3).clone()
+        ..round = brawlFinalFight;
+      final after = engine.proceed(engine.choose(engine.launch(s), 0));
+      expect(after.lost, isTrue);
+    });
+
+    test('past Satan, every fight gets steeply harder', () {
+      for (var seed = 0; seed < 10; seed++) {
+        expect(
+          brawlEnemy(brawlFinalFight + 10, seed).hull,
+          greaterThan(brawlEnemy(brawlFinalFight, seed).hull * 8),
+        );
+      }
+    });
+  });
+
+  group('the wreckage', () {
+    BrawlState full() {
+      final s = engine.start(Species.tern, seed: 4).clone();
+      for (var i = 0; i < 9; i++) {
+        s.loadout.slots[i] ??= 'plating_1';
+      }
+      while (s.loadout.hold.length < s.loadout.holdCapacity) {
+        s.loadout.hold.add('goods_ore');
+      }
+      return s;
+    }
+
+    test('a card with no room waits in the wreckage', () {
+      final s = full()..event = 'wreck';
+      final lines = <String>[];
+      gainCard(s, 'missiles_1', lines);
+      expect(s.wreckage, ['missiles_1']);
+      expect(lines.single, contains('wreckage'));
+    });
+
+    test('jettison something to take it, before moving on', () {
+      final s = full()..wreckage = ['missiles_1'];
+      expect(() => engine.salvage(s, 0), throwsA(isA<IllegalMove>()));
+      final room = engine.jettison(s, const SlotSpot(8));
+      expect(room.loadout.slots[8], isNull);
+      final taken = engine.salvage(room, 0);
+      expect(taken.wreckage, isEmpty);
+      expect(taken.loadout.all, contains('missiles_1'));
+      expect(engine.launch(s).wreckage, isEmpty, reason: 'left behind');
     });
   });
 }

@@ -7,6 +7,7 @@ import 'dart:math';
 import 'package:blue_bog/game_engine/captain/species.dart';
 import 'package:blue_bog/game_engine/combat/catalog.dart';
 import 'package:blue_bog/game_engine/combat/combat.dart';
+import 'package:blue_bog/game_engine/combat/equipment.dart';
 
 /// Every species' starting ship.
 final starterKits = {
@@ -58,10 +59,9 @@ CombatResult _fight(CombatLoadout kit, EnemyTemplate enemy) => fight(
 /// Basic cards that matter in a fight.
 final _basics = [
   for (final f in equipmentFamilies)
-    if (f.berths == 0 &&
+    if (f.kind != CardKind.colony &&
         f.hold == 0 &&
         f.fuel == 0 &&
-        f.hospital == 0 &&
         f.hellShielding == 0)
       f.tiers.first.id,
 ];

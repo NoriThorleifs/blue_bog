@@ -40,7 +40,11 @@ class SpotTile extends StatelessWidget {
         id: id,
         selected: selected || hovered,
         dimmed: dimmed,
-        onTap: onTap == null || id == null ? null : () => onTap!(spot),
+        // Empty spots take taps only where cards move by tapping, not by
+        // dragging.
+        onTap: onTap == null || (id == null && onDrop != null)
+            ? null
+            : () => onTap!(spot),
       );
       return glowing ? GlowPulse(child: card) : card;
     }
@@ -66,6 +70,14 @@ class SpotTile extends StatelessWidget {
             ),
     );
   }
+}
+
+/// Whether a card does nothing in a combat slot: cargo, or a spare cargo
+/// pod waiting to merge.
+bool _inert(String id) {
+  final card = equipmentById(id);
+  return card.isCargoBay ||
+      !const {CardKind.equipment, CardKind.supplies}.contains(card.kind);
 }
 
 /// Nine slots: three small triangles (top, bottom left, bottom right) that
@@ -134,12 +146,7 @@ class Triforce extends StatelessWidget {
                         id: slots[i],
                         size: tile,
                         selected: selected == SlotSpot(i),
-                        dimmed:
-                            slots[i] != null &&
-                            !const {
-                              CardKind.equipment,
-                              CardKind.supplies,
-                            }.contains(equipmentById(slots[i]!).kind),
+                        dimmed: slots[i] != null && _inert(slots[i]!),
                         onTap: onTap,
                         onDrop: onDrop,
                         glowing: glowing.contains(SlotSpot(i)),

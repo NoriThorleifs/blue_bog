@@ -5,6 +5,7 @@ import '../deck/loadout.dart';
 import '../gambling/roulette.dart';
 import '../gambling/twenty_seven.dart';
 import '../market.dart';
+import '../run_state.dart';
 import 'brawl.dart';
 import 'brawl_enemies.dart';
 import 'brawl_events.dart';
@@ -45,10 +46,9 @@ final stationGames = {
     id: _humanStations.contains(id) ? GamblingGame.roulette : GamblingGame.al,
 };
 
-/// Families left out of brawl mode. Humans are out while we test it, so
-/// no bunks or hospitals; Hell shielding and fuel tanks do nothing without
-/// a map.
-const brawlExcludedFamilies = {'bunks', 'hospital', 'barrier', 'tanks'};
+/// Families left out of brawl mode: Hell shielding and fuel tanks do
+/// nothing without a map.
+const brawlExcludedFamilies = {'barrier', 'tanks'};
 
 final brawlFamilies = [
   for (final f in equipmentFamilies)
@@ -58,11 +58,12 @@ final brawlFamilies = [
 bool _allowed(String id) =>
     !brawlExcludedFamilies.contains(equipmentById(id).family);
 
-/// The cards a species starts a brawl with: its ship's cards and hold,
-/// minus anything left out of brawl mode.
+/// The cards a species starts a brawl with: its ship's cards, colony and
+/// hold, minus anything left out of brawl mode.
 List<String> brawlStartingCards(Species species) => [
   for (final id in [
     ...species.ship.startingCards,
+    ...species.ship.startingColony,
     ...species.ship.startingHold,
   ])
     if (_allowed(id)) id,
@@ -93,10 +94,14 @@ class BrawlState {
     this.lastSpin,
     this.twentySeven,
     this.lost = false,
+    this.humans = const HumanResources(count: 0, loyalty: 50, drift: 0),
+    this.retired = false,
     Set<String>? flags,
     List<String>? log,
+    List<String>? wreckage,
   }) : flags = flags ?? {},
-       log = log ?? [];
+       log = log ?? [],
+       wreckage = wreckage ?? [];
 
   /// Fixes commodity prices at each station for the whole brawl.
   final int seed;
@@ -137,19 +142,46 @@ class BrawlState {
   /// The game of 27 on the table, in progress or just finished.
   TwentySeven? twentySeven;
   bool lost;
+
+  /// The human colony aboard.
+  HumanResources humans;
   Set<String> flags;
 
   /// What happened since the last decision, for the screen.
   List<String> log;
 
+  /// Cards won or found with no room aboard. The captain can jettison
+  /// something to take them, until the ship moves on.
+  List<String> wreckage;
+
+  /// Set when a captain who beat Satan retires: the brawl is won and over.
+  bool retired;
+
+  /// Satan is coming: the brawl has reached [brawlFinalFight] and he
+  /// hasn't been beaten.
+  bool get satanDue => round >= brawlFinalFight && !flags.contains(beatSatan);
+
+  /// Satan has just been beaten, and the captain hasn't yet chosen
+  /// between retiring and going on.
+  bool get awaitingVerdict =>
+      flags.contains(beatSatan) && !flags.contains(wentEndless) && !retired;
+
+  /// Past Satan, fighting on for score.
+  bool get endless => flags.contains(wentEndless);
+
   String get stationName => brawlStations[station]!;
   GamblingGame get gamblingGame => stationGames[station]!;
+
+  /// Whether lots of humans live at this station, so more sign on here.
+  bool get humansLiveHere => _humanStations.contains(station);
   ShipStats get stats => ShipStats.of(loadout, hullUpgrades: hullUpgrades);
-  EnemyTemplate get nextEnemy => brawlEnemy(round, seed);
+  EnemyTemplate get nextEnemy =>
+      satanDue ? SpecialEnemy.satan.template : brawlEnemy(round, seed);
   BrawlEvent? get currentEvent => event == null ? null : brawlEventsById[event];
 
   /// At a station with nothing pending: free to trade and launch.
-  bool get docked => event == null && !inHell && !lost;
+  bool get docked =>
+      event == null && !inHell && !lost && !retired && !awaitingVerdict;
 
   BrawlState clone() => BrawlState(
     seed: seed,
@@ -173,7 +205,10 @@ class BrawlState {
     lastSpin: lastSpin,
     twentySeven: twentySeven,
     lost: lost,
+    humans: humans,
+    retired: retired,
     flags: {...flags},
     log: [...log],
+    wreckage: [...wreckage],
   );
 }

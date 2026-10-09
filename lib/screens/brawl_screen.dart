@@ -8,6 +8,8 @@ import '../components/brawl/brawl_game_over.dart';
 import '../components/brawl/brawl_launch_bar.dart';
 import '../components/brawl/brawl_sell_tab.dart';
 import '../components/brawl/brawl_ship_tab.dart';
+import '../components/brawl/brawl_victory.dart';
+import '../components/brawl/brawl_wreckage.dart';
 import '../components/dialogs.dart';
 import '../components/theme.dart';
 import '../game_engine/brawl/brawl.dart';
@@ -43,7 +45,8 @@ class _BrawlScreenState extends ConsumerState<BrawlScreen> {
   Widget build(BuildContext context) {
     final brawl = _frozen ?? ref.watch(brawlProvider);
     if (brawl == null) return const Scaffold();
-    if (brawl.lost) return GameOver(brawl: brawl);
+    if (brawl.lost || brawl.retired) return GameOver(brawl: brawl);
+    if (brawl.awaitingVerdict) return Victory(brawl: brawl);
     final text = Theme.of(context).textTheme;
     final docked = brawl.docked;
     final hull = 'Hull ${brawl.hull}/${brawl.stats.maxHull}';
@@ -72,7 +75,8 @@ class _BrawlScreenState extends ConsumerState<BrawlScreen> {
               Text(
                 brawl.inHell
                     ? 'Turn ${brawl.hellTurns} · $hull · no shipyard'
-                    : 'Fight ${brawl.round} · $hull',
+                    : 'Fight ${brawl.round}${brawl.endless ? ' · endless' : ''}'
+                          ' · $hull',
                 style: text.labelMedium?.copyWith(color: Palette.muted),
               ),
             ],
@@ -81,6 +85,10 @@ class _BrawlScreenState extends ConsumerState<BrawlScreen> {
             Center(child: Text('${brawl.credits} cr', style: text.titleMedium)),
             PopupMenuButton<void>(
               itemBuilder: (context) => [
+                PopupMenuItem(
+                  onTap: () => context.push('/guide'),
+                  child: const Text('How to play'),
+                ),
                 PopupMenuItem(
                   onTap: () {
                     ref.read(brawlProvider.notifier).abandon();
@@ -109,14 +117,21 @@ class _BrawlScreenState extends ConsumerState<BrawlScreen> {
               )
             : null,
         body: SafeArea(
-          child: TabBarView(
+          child: Column(
             children: [
-              if (docked) ...[
-                BuyTab(brawl: brawl),
-                SellTab(brawl: brawl),
-              ] else
-                EventTab(brawl: brawl, onProceed: _proceed),
-              ShipTab(brawl: brawl),
+              if (brawl.wreckage.isNotEmpty) WreckageBar(brawl: brawl),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    if (docked) ...[
+                      BuyTab(brawl: brawl),
+                      SellTab(brawl: brawl),
+                    ] else
+                      EventTab(brawl: brawl, onProceed: _proceed),
+                    ShipTab(brawl: brawl),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

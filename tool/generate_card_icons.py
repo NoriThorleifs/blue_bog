@@ -31,7 +31,8 @@ TELEPORT = (255, 77, 61)
 SHIELD = (127, 168, 255)
 DRONE = (92, 255, 138)
 BOOST = (255, 224, 102)
-BERTH = (255, 210, 90)
+HABITAT = (255, 210, 90)
+ECONOMY = (143, 224, 122)
 HOSPITAL = (255, 143, 184)
 HELL_SHIELD = (176, 123, 255)
 SYSTEM = (159, 178, 200)
@@ -298,16 +299,6 @@ def quick_fuzes():
 
 # Ship systems ------------------------------------------------------------------
 
-def bunks():
-    i = Icon(BERTH)
-    for y in (0.28, 0.56):
-        rect(i, (0.16, y, 0.84, y + 0.12), f=0.4, width=0.02)
-        rect(i, (0.18, y - 0.05, 0.36, y + 0.02), WHITE, 0.7, 0.012, 0.02)
-    for x in (0.16, 0.84):
-        stroke(i, [(x, 0.18), (x, 0.86)], width=0.035)
-    i.save('bunks')
-
-
 def cargo_pod():
     i = Icon(SYSTEM)
     poly(i, [(0.5, 0.14), (0.86, 0.32), (0.5, 0.50), (0.14, 0.32)], f=0.6)
@@ -322,6 +313,59 @@ def hospital():
              (0.86, 0.62), (0.62, 0.62), (0.62, 0.86), (0.38, 0.86),
              (0.38, 0.62), (0.14, 0.62), (0.14, 0.38), (0.38, 0.38)], f=0.6)
     i.save('hospital')
+
+
+# The human colony: humans build in squares --------------------------------------
+
+def habitat():
+    i = Icon(HABITAT)
+    rect(i, (0.18, 0.14, 0.82, 0.86), f=0.35, width=0.03, r=0.02)
+    for row in range(4):
+        for col in range(3):
+            x = 0.26 + col * 0.18
+            y = 0.22 + row * 0.15
+            rect(i, (x, y, x + 0.12, y + 0.09), WHITE, 0.6, 0.008, 0.01)
+    i.save('habitat')
+
+
+def crawlspace():
+    i = Icon(REPAIR)
+    stroke(i, [(0.14, 0.30), (0.62, 0.30), (0.62, 0.70), (0.86, 0.70)],
+           width=0.07)
+    stroke(i, [(0.38, 0.14), (0.38, 0.86)], width=0.07)
+    for x, y in [(0.38, 0.30), (0.62, 0.70)]:
+        rect(i, (x - 0.07, y - 0.07, x + 0.07, y + 0.07), WHITE, 0.8, 0.012,
+             0.01)
+    i.save('crawlspace')
+
+
+def shop():
+    i = Icon(ECONOMY)
+    rect(i, (0.18, 0.44, 0.82, 0.86), f=0.35, r=0.02)
+    poly(i, [(0.12, 0.44), (0.20, 0.18), (0.80, 0.18), (0.88, 0.44)], f=0.6)
+    for x in (0.30, 0.50, 0.70):
+        stroke(i, [(x, 0.18), (x - 0.02, 0.44)], WHITE, 0.012)
+    rect(i, (0.42, 0.60, 0.58, 0.86), WHITE, 0.7, 0.012, 0.01)
+    i.save('shop')
+
+
+def casino():
+    i = Icon(ECONOMY)
+    rect(i, (0.16, 0.30, 0.58, 0.72), f=0.5, r=0.06)
+    rect(i, (0.44, 0.18, 0.84, 0.58), f=0.35, r=0.06)
+    for x, y in [(0.26, 0.40), (0.48, 0.62), (0.37, 0.51),
+                 (0.54, 0.28), (0.74, 0.48)]:
+        ellipse(i, (x - 0.035, y - 0.035, x + 0.035, y + 0.035), WHITE, 0.9,
+                0.008)
+    i.save('casino')
+
+
+def brothel():
+    i = Icon(ECONOMY)
+    for cx in (0.40, 0.60):
+        ellipse(i, (cx - 0.22, 0.24, cx + 0.22, 0.68), f=0.35)
+    rect(i, (0.36, 0.70, 0.64, 0.84), WHITE, 0.6, 0.012, 0.01)
+    i.save('brothel')
 
 
 def barrier():
@@ -633,16 +677,26 @@ def nobody_boarding_teleporter():
     i.save('nobody_boarding_teleporter')
 
 
+
+def trophy_broken_seal():
+    i = Icon(HELL)
+    arc(i, (0.16, 0.16, 0.84, 0.84), 200, 520, width=0.06)
+    poly(i, [(0.50, 0.30), (0.62, 0.50), (0.50, 0.70), (0.38, 0.50)], f=0.6)
+    stroke(i, [(0.72, 0.18), (0.58, 0.40), (0.68, 0.46), (0.52, 0.66)],
+           WHITE, 0.03)
+    i.save('trophy_broken_seal')
+
 ALL = [laser, missiles, teleporter, shield, fabricator, plating,
        ion, flak, repair, lance, rail, jammer,
-       shield_capacitor, fire_control, capacitors, quick_fuzes, bunks,
-       cargo_pod, hospital, barrier, tanks, missile_crate, teleport_charges,
+       shield_capacitor, fire_control, capacitors, quick_fuzes,
+       cargo_pod, habitat, hospital, crawlspace, shop, casino, brothel, barrier, tanks, missile_crate, teleport_charges,
        feedstock, brimstone, teeth, brandy_mist, metal_flesh, goods_grain,
        goods_ice, goods_ore, goods_chitin, goods_medicine, goods_nanopaste,
        goods_brandy, goods_relics, parcel_sealed, mourner_event_horizon,
        mourner_unfallen_world, mourner_polite_request,
        mourner_grief_engine, hell_clock, trophy_last_vote,
-       trophy_champions_bulwark, trophy_nanoforge, nobody_boarding_teleporter]
+       trophy_champions_bulwark, trophy_nanoforge, trophy_broken_seal,
+       nobody_boarding_teleporter]
 
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)

@@ -216,7 +216,7 @@ final act2Events = <GameEvent>[
     condition: const AllOf([
       HasFlag(Flag.wrongWarping),
       AtTag(Tag.station),
-      HumansAtLeast(3),
+      HumansAtLeast(75),
     ]),
     text:
         'One of your human pilots wants to show you how to hit a gateway '

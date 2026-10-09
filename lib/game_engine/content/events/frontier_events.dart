@@ -117,9 +117,9 @@ final frontierEvents = <GameEvent>[
       ),
       Choice.simple(
         'Let your humans visit',
-        'Your humans come back with news, gossip and two new friends.',
-        condition: const HumansAtLeast(1),
-        effects: const [Loyalty(4), Humans(1), MaybeAgent(0.3)],
+        'Your humans come back with news, gossip and a dozen new friends.',
+        condition: const HumansAtLeast(25),
+        effects: const [Loyalty(4), Humans(12), MaybeAgent(0.3)],
       ),
     ],
   ),

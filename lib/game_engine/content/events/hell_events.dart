@@ -46,6 +46,55 @@ final hellEvents = <GameEvent>[
       ),
     ],
   ),
+  // Hellborn agents teleport aboard while the ship is in Hell. They are
+  // careful never to out themselves to the captain, but the other humans
+  // can see that something is off about them.
+  GameEvent(
+    id: 'hell_headcount',
+    title: 'The headcount',
+    triggers: const {Trigger.hellExit},
+    condition: const AllOf([HumansAtLeast(25), HousingFree(10)]),
+    text:
+        'Clear of the barrier, your humans do a headcount. Then they do '
+        'another. It doesn\'t add up: there are more of them aboard than '
+        'there were when the ship went in. The new faces say they have been '
+        'here all along.',
+    choices: [
+      Choice(
+        'Ask how',
+        outcomes: [
+          Outcome(
+            'Your quiet engineer has an answer ready. Time runs strangely in '
+            'Hell, they say: the ship was in there long enough for a few '
+            'children to be born and grow up. Nobody else remembers any '
+            'births. Nobody argues, either.',
+            condition: HasFlag(Flag.hellbornAgentAboard),
+            effects: [Humans(20), Loyalty(2)],
+          ),
+          Outcome(
+            'Nobody can say. The newcomers insist they were born aboard and '
+            'never left. Your other humans keep their distance, and quietly '
+            'point out what you would never have noticed: the newcomers\' '
+            'eyes are red, not brown or blue, and they drank the galley\'s '
+            'brandy all night without slurring a word.',
+            condition: NoFlag(Flag.hellbornAgentAboard),
+            effects: [
+              Humans(20),
+              SetFlag(Flag.hellbornAgentAboard),
+              AddCounter(Counter.hellbornAwareness, 1),
+            ],
+          ),
+        ],
+      ),
+      Choice.simple(
+        'Make room for them',
+        'More hands are more hands. The newcomers settle in as if they had '
+            'always been aboard, and your humans stop talking about it when '
+            'you walk past.',
+        effects: [Humans(20), SetFlag(Flag.hellbornAgentAboard), Loyalty(1)],
+      ),
+    ],
+  ),
   GameEvent(
     id: 'code_green',
     title: 'Code Green',
@@ -242,7 +291,7 @@ final hellEvents = <GameEvent>[
     id: 'hell_hellborn',
     title: 'Familiar shapes',
     triggers: {Trigger.hell},
-    condition: AllOf([HumansAtLeast(3), NoFlag(Flag.mournerPull)]),
+    condition: AllOf([HumansAtLeast(75), NoFlag(Flag.mournerPull)]),
     text:
         'Ships drift past in the gloom, close enough to see figures at '
         'the windows. They are shaped almost exactly like your crew. Your '

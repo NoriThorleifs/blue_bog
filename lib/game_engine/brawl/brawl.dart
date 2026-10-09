@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../captain/species.dart';
+import '../colony.dart';
 import '../combat/catalog.dart';
 import '../combat/combat.dart';
 import '../combat/equipment.dart';
@@ -10,6 +11,7 @@ import '../gambling/roulette.dart';
 import '../gambling/twenty_seven.dart';
 import '../market.dart';
 import '../rng.dart';
+import '../run_state.dart';
 import 'brawl_enemies.dart';
 import 'brawl_events.dart';
 import 'brawl_outcomes.dart';
@@ -24,7 +26,8 @@ export 'brawl_state.dart';
 /// Something always happens on the way out (see [brawlEvents]), usually
 /// followed by a fight. Surviving brings them to another station, picked
 /// at random, and the loop repeats until the ship is lost. There is no
-/// map, no story, no fuel and no humans.
+/// map, no story and no fuel, but there is a human colony aboard (see
+/// [Colony]): it grows, patches the hull and pays dividends at each dock.
 ///
 /// A captain mad enough can dive into Hell through a demon's bite in the
 /// pipe. Hell has no stations: every turn there brings a Hell event, the
@@ -58,6 +61,11 @@ class BrawlEngine {
       credits: species.startingCredits + startingBonus,
       station: station,
       market: market,
+      humans: HumanResources(
+        count: species.startingHumans,
+        loyalty: 50 + 10 * species.humansLikeThem,
+        drift: 10 * species.theyLikeHumans,
+      ),
     );
   }
 
@@ -115,10 +123,23 @@ class BrawlEngine {
 
   /// Puts a new loadout on the ship, trimming hull to its new maximum.
   void _refit(BrawlState s, Loadout loadout) {
+    final lost = humansLostWith(s, loadout);
     s
       ..loadout = loadout
       ..hull = min(s.hull, s.stats.maxHull);
+    if (lost > 0) {
+      s.humans = s.humans.copyWith(count: s.humans.count - lost);
+      s.log.add('$lost humans left the colony: no homes for them.');
+    }
   }
+
+  /// Humans who would leave if [loadout] replaced the current one: every
+  /// human without a home in the colony.
+  int humansLostWith(BrawlState s, Loadout loadout) => max(
+    0,
+    s.humans.count -
+        ShipStats.of(loadout, hullUpgrades: s.hullUpgrades).housing,
+  );
 
   // Trading and refitting ----------------------------------------------------
 
@@ -134,8 +155,8 @@ class BrawlEngine {
       s
         ..credits -= offer.price
         ..market = s.market.withOffer(offerIndex, offer.bought);
+      s.log = [...merges];
       _refit(s, loadout);
-      s.log = merges;
     });
   }
 
@@ -152,14 +173,17 @@ class BrawlEngine {
     }
     return _step(state, (s, _) {
       s.credits += sellValue(state, id);
-      _refit(s, loadout);
       s.log = [];
+      _refit(s, loadout);
     });
   }
 
   /// Moves a card. Allowed anywhere, Hell included: refitting between
   /// fights is the point.
   BrawlState arrange(BrawlState state, CardSpot from, CardSpot to) {
+    if (state.loadout.whyNotMove(from, to) case final why?) {
+      throw IllegalMove(why);
+    }
     final loadout = state.loadout.copy()..move(from, to);
     if (!loadout.holdFits) {
       throw IllegalMove('The hold can\'t fit everything without that pod');
@@ -317,10 +341,12 @@ class BrawlEngine {
   BrawlState launch(BrawlState state) {
     _requireDocked(state);
     return _step(state, (s, rng) {
-      // Leaving mid-count forfeits the stake on the table.
+      // Leaving mid-count forfeits the stake on the table, and the wreckage
+      // stays behind.
       s
         ..plannedFight = const Fight()
         ..twentySeven = null
+        ..wreckage = []
         ..log = [];
       _pickEvent(s, rng);
     });
@@ -334,7 +360,9 @@ class BrawlEngine {
   }
 
   BrawlState choose(BrawlState state, int index) {
-    if (!canChoose(state, index)) throw IllegalMove('Not now');
+    if (!canChoose(state, index) || state.awaitingVerdict) {
+      throw IllegalMove('Not now');
+    }
     return _step(state, (s, rng) {
       final choice = s.currentEvent!.choices[index];
       final outcome = rng.weighted(choice.outcomes, (o) => o.weight)!;
@@ -359,12 +387,15 @@ class BrawlEngine {
         ..event = null
         ..result = null
         ..plannedFight = null
+        ..wreckage = []
         ..log = [];
       if (s.lost) return;
       if (fight != null) {
         _fight(s, rng, fight);
         if (s.lost) return;
       }
+      // Satan beaten: nothing moves until the captain retires or goes on.
+      if (s.awaitingVerdict) return;
       if (s.inHell) {
         _hellTurn(s, rng);
       } else {
@@ -374,12 +405,19 @@ class BrawlEngine {
   }
 
   void _pickEvent(BrawlState s, GameRng rng) {
-    final event = rng.weighted(
-      brawlEvents.where(
-        (e) => e.hell == s.inHell && (e.condition?.call(s) ?? true),
-      ),
-      (e) => e.weight?.call(s) ?? 1,
-    )!;
+    final event =
+        brawlEvents
+            .where((e) => e.always && (e.condition?.call(s) ?? true))
+            .firstOrNull ??
+        rng.weighted(
+          brawlEvents.where(
+            (e) =>
+                !e.always &&
+                e.hell == s.inHell &&
+                (e.condition?.call(s) ?? true),
+          ),
+          (e) => e.weight?.call(s) ?? 1,
+        )!;
     s
       ..event = event.id
       ..result = null;
@@ -427,6 +465,7 @@ class BrawlEngine {
     ]);
     s.market = _roll(s.station, rng, s.seed, s.round);
     s.log.add('Docked at ${s.stationName}.');
+    _tendColony(s, rng);
     if (supply(s) case final shock?) {
       final good = equipmentById(shock.goodId).name.toLowerCase();
       s.log.add(
@@ -436,6 +475,88 @@ class BrawlEngine {
             : '${shock.label} here. ${s.stationName} is practically giving '
                   '$good away.',
       );
+    }
+  }
+
+  /// Jettisons the card at [spot] into space, for nothing. Allowed anywhere:
+  /// it's how the captain makes room for something better.
+  BrawlState jettison(BrawlState state, CardSpot spot) {
+    final id = state.loadout.at(spot);
+    if (id == null) throw IllegalMove('Nothing there');
+    final loadout = state.loadout.copy()..takeOut(spot);
+    if (!loadout.holdFits) {
+      throw IllegalMove('The hold can\'t fit everything without that pod');
+    }
+    return _step(state, (s, _) {
+      s.log = ['Jettisoned ${equipmentById(id).name}.'];
+      _refit(s, loadout);
+    });
+  }
+
+  /// Takes the card at [index] in the wreckage aboard, if there's room.
+  BrawlState salvage(BrawlState state, int index) {
+    if (index < 0 || index >= state.wreckage.length) {
+      throw IllegalMove('Nothing there');
+    }
+    final id = state.wreckage[index];
+    final loadout = state.loadout.copy();
+    final merges = loadout.add(id);
+    if (merges == null) {
+      throw IllegalMove('No room. Jettison something first.');
+    }
+    return _step(state, (s, _) {
+      s
+        ..wreckage.removeAt(index)
+        ..log = [
+          'Took ${equipmentById(id).name} from the wreckage.',
+          ...merges,
+        ];
+      _refit(s, loadout);
+    });
+  }
+
+  /// Ends a brawl the captain has won, after beating Satan.
+  BrawlState retire(BrawlState state) {
+    if (!state.awaitingVerdict) throw IllegalMove('Not now');
+    return _step(state, (s, _) => s.retired = true);
+  }
+
+  /// Fights on past Satan, for score. Every fight from here on is harder
+  /// than the last.
+  BrawlState goEndless(BrawlState state) {
+    if (!state.awaitingVerdict) throw IllegalMove('Not now');
+    return _step(state, (s, rng) {
+      s.flags.add(wentEndless);
+      if (s.inHell) {
+        _hellTurn(s, rng);
+      } else {
+        _dock(s, rng);
+      }
+    });
+  }
+
+  /// At each dock the humans patch the hull, the colony grows, and its
+  /// businesses pay out. See [Colony].
+  void _tendColony(BrawlState s, GameRng rng) {
+    final before = s.hull;
+    s.hull = Colony.patched(s.hull, s.humans.count, s.stats);
+    if (s.hull > before) {
+      s.log.add('Your humans patched ${s.hull - before} hull.');
+    }
+    final (:born, :joined) = Colony.growth(
+      humans: s.humans.count,
+      housing: s.stats.housing,
+      loyalty: s.humans.loyalty,
+      station: true,
+      humanStation: s.humansLiveHere,
+      rng: rng,
+    );
+    s.humans = s.humans.copyWith(count: s.humans.count + born + joined);
+    if (joined > 0) s.log.add('$joined humans moved into the colony.');
+    final paid = Colony.dividends(s.loadout, s.humans.count, rng);
+    if (paid > 0) {
+      s.credits += paid;
+      s.log.add('The colony\'s businesses paid $paid credits.');
     }
   }
 
@@ -472,7 +593,10 @@ class BrawlEngine {
           if (equipmentById(id).tier == Tier.unique) continue;
           if (!rng.chance(demon ? 0.35 : 0.25)) continue;
           final merges = s.loadout.add(id);
-          if (merges == null) continue;
+          if (merges == null) {
+            s.wreckage.add(id);
+            continue;
+          }
           salvage.add(id);
           s.log
             ..add('Salvaged ${equipmentById(id).name}.')
@@ -482,9 +606,20 @@ class BrawlEngine {
           gainCard(s, id, s.log, force: true);
         }
         for (final id in enemy.cargo) {
-          if (s.loadout.add(id) == null) break;
+          if (s.loadout.add(id) == null) {
+            s.wreckage.add(id);
+            continue;
+          }
           s.log.add('Plundered ${equipmentById(id).name}.');
         }
+        if (plan.special == SpecialEnemy.satan) {
+          s.flags.add(beatSatan);
+          s.log.add(
+            'Satan\'s ship comes apart around him. He crawls back into Hell, '
+            'beaten. Nobody in the Republic will ever believe you.',
+          );
+        }
+        if (s.wreckage.isNotEmpty) s.log.add(wreckageNote(s.wreckage));
       case CombatOutcome.escape:
         s.log.add('Broke away from the ${enemy.name}. No scrap.');
       case CombatOutcome.loss:

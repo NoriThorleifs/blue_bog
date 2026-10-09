@@ -114,6 +114,7 @@ class BrawlEvent {
     required this.text,
     required this.choices,
     this.hell = false,
+    this.always = false,
     this.weight,
     this.condition,
   });
@@ -125,6 +126,10 @@ class BrawlEvent {
 
   /// Met in Hell rather than on the way out of a station.
   final bool hell;
+
+  /// Comes up ahead of anything else, in or out of Hell, whenever its
+  /// [condition] holds.
+  final bool always;
   final double Function(BrawlState)? weight;
   final bool Function(BrawlState)? condition;
 }

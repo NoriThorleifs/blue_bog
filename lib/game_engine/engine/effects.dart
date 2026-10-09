@@ -10,7 +10,9 @@ import '../market.dart';
 import '../run_state.dart';
 import '../story/keys.dart';
 import '../story/rules.dart';
+import '../story/story.dart';
 import 'turn.dart';
+import 'turn_flow.dart';
 import 'world_effects.dart';
 
 /// Applies the effects of events, beats and choices to the run.
@@ -41,12 +43,13 @@ extension Effects on EngineTurn {
           s.ending = Ending.shipDestroyed;
         }
       case Humans(:final amount):
-        // A hospital saves one human per level from every loss.
-        final change = amount < 0 && amount > -99
-            ? min(0, amount + s.stats.hospital)
+        // Hospitals cut every loss short of the whole colony leaving.
+        final cut = min(s.stats.hospital * 10, maxHospitalCut);
+        final change = amount < 0 && amount > -Humans.everyone
+            ? (amount * (100 - cut) / 100).round()
             : amount;
         s.humans = s.humans.copyWith(
-          count: (s.humans.count + change).clamp(0, s.stats.berths),
+          count: (s.humans.count + change).clamp(0, s.stats.housing),
         );
         if (s.humans.count == 0) s.flags.remove(Flag.hellbornAgentAboard);
       case Loyalty(:final amount):
@@ -183,6 +186,7 @@ extension Effects on EngineTurn {
       'Escaped Hell at ${s.nameOf(exit.id)} '
       'after ${s.hellTurns} turns.',
     );
+    trigger(Trigger.hellExit, min(0.75, 0.15 * s.hellTurns));
   }
 
   /// A real fight against an enemy built from the event's strength rating

@@ -38,7 +38,7 @@ final elephantEvents = <GameEvent>[
     triggers: const {Trigger.arrival, Trigger.hold},
     condition: const AllOf([
       AtTag(Tag.station),
-      HumansAtLeast(1),
+      HumansAtLeast(25),
       NoFlag(Flag.elephantFound),
     ]),
     weight: 0.5,
@@ -85,7 +85,7 @@ final elephantEvents = <GameEvent>[
     choices: [
       Choice(
         'Let your humans answer',
-        condition: const HumansAtLeast(1),
+        condition: const HumansAtLeast(25),
         outcomes: [
           Outcome(
             'Your humans mention the Promethius, and that you treat them '
@@ -158,11 +158,10 @@ final elephantEvents = <GameEvent>[
         effects: const [Credits(45)],
       ),
       Choice.simple(
-        'Take on crew',
-        'A few humans who want to see more of the galaxy than one rock.',
-        condition: const CreditsAtLeast(10),
-        hint: '10 credits',
-        effects: const [Credits(-10), Humans(3), MaybeAgent(0.3)],
+        'Take in settlers',
+        'A few dozen humans who want to see more of the galaxy than one '
+            'rock move into your colony.',
+        effects: const [Humans(30), MaybeAgent(0.3)],
       ),
       Choice.simple(
         'Buy salvaged ship parts',

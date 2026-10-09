@@ -14,11 +14,7 @@ class SellTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final engine = ref.read(brawlEngineProvider);
-    final spots = <CardSpot>[
-      for (var i = 0; i < Loadout.slotCount; i++)
-        if (brawl.loadout.slots[i] != null) SlotSpot(i),
-      for (var i = 0; i < brawl.loadout.hold.length; i++) HoldSpot(i),
-    ];
+    final spots = brawl.loadout.occupiedSpots.toList();
     if (spots.isEmpty) {
       return const Center(child: Text('You have nothing to sell.'));
     }
@@ -61,6 +57,15 @@ class SellTab extends ConsumerWidget {
       ),
     );
     if (sure != true || !context.mounted) return;
+    final lost = engine.humansLostWith(
+      brawl,
+      brawl.loadout.copy()..takeOut(spot),
+    );
+    if (lost > 0 &&
+        !await confirmHumansLeave(context, lost, brawl.humans.count)) {
+      return;
+    }
+    if (!context.mounted) return;
     reportError(context, ref.read(brawlProvider.notifier).sell(spot));
   }
 }

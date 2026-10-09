@@ -197,6 +197,51 @@ void main() {
       expect(gifts.toSet(), hasLength(2));
     });
 
+    test('getting out of Hell can turn up more humans than went in', () {
+      final engine = GameEngine(storyContent);
+      var counted = 0;
+      for (var seed = 0; seed < 40; seed++) {
+        final s = engine.newRun(Species.tern, seed: seed).clone()
+          ..pending = const PendingEvent('hell_breach')
+          ..hell = HellZone.pipe
+          ..hellTurns = 5
+          ..humans = const HumanResources(count: 100, loyalty: 50, drift: 0);
+        final burn = engine
+            .choicesFor(s)
+            .indexWhere((c) => c.label.startsWith('Burn straight back'));
+        final out = engine.choose(s, burn);
+        if (out.inHell) continue;
+        final next = engine.acknowledge(out);
+        if (next.pending?.eventId == 'hell_headcount') counted++;
+      }
+      expect(counted, greaterThan(0));
+    });
+
+    test(
+      'the newcomers from Hell are Hellborn, and an agent covers for them',
+      () {
+        final engine = GameEngine(storyContent);
+        final s = engine.newRun(Species.tern, seed: 5).clone()
+          ..pending = const PendingEvent('hell_headcount')
+          ..humans = const HumanResources(count: 100, loyalty: 50, drift: 0);
+        final ask = engine
+            .choicesFor(s)
+            .indexWhere((c) => c.label == 'Ask how');
+
+        final noticed = engine.choose(s, ask);
+        expect(noticed.humans.count, 120);
+        expect(noticed.has(Flag.hellbornAgentAboard), isTrue);
+        expect(noticed.pending!.result, contains('red'));
+
+        final covered = engine.choose(
+          s.clone()..flags.add(Flag.hellbornAgentAboard),
+          ask,
+        );
+        expect(covered.humans.count, 120);
+        expect(covered.pending!.result, contains('born and grow up'));
+      },
+    );
+
     test('losing every human loses any agent among them', () {
       final engine = GameEngine(storyContent);
       final s = engine.newRun(Species.tern, seed: 3).clone()
@@ -225,7 +270,7 @@ void main() {
             'laser_3',
             'shield_3',
             'plating_3',
-            'bunks_1',
+            null,
             'laser_3',
             null,
             null,
@@ -263,7 +308,7 @@ void main() {
           ..pending = null
           ..credits = 0
           ..fuel = 0
-          ..humans = const HumanResources(count: 3, loyalty: 50, drift: 0);
+          ..humans = const HumanResources(count: 100, loyalty: 50, drift: 0);
         base.revealed.addAll(base.galaxy.systems.keys);
         for (final id in base.galaxy.systems.keys) {
           final s = base.clone()..location = id;

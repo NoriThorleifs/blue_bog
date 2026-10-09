@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import '../combat/catalog.dart';
 import '../rng.dart';
 
@@ -154,6 +156,14 @@ final brawlPools = <List<EnemyTemplate>>[
   ],
 ];
 
+/// The fight at which Satan comes for the captain. Beating him wins the
+/// brawl; after it, the fights go on for score and get steeply harder.
+const brawlFinalFight = 27;
+
+/// How much tougher every fight past [brawlFinalFight] gets than the one
+/// before, on top of the usual scaling.
+const endlessGrowth = 1.3;
+
 /// Which pool each of the first fights draws from. After these, every
 /// fight draws from the last pool, scaled up by act every four fights.
 const _schedule = [0, 1, 2, 2, 3, 3, 4, 4, 5, 5];
@@ -184,7 +194,15 @@ EnemyTemplate brawlEnemy(int round, int seed) {
     ];
     last = GameRng(seed ^ (r * 0x9E3779B1)).pick(pool);
   }
-  return last!.forAct(brawlAct(round));
+  final enemy = last!.forAct(brawlAct(round));
+  if (round <= brawlFinalFight) return enemy;
+  final growth = pow(endlessGrowth, round - brawlFinalFight);
+  return EnemyTemplate(
+    enemy.name,
+    (enemy.hull * growth).round(),
+    enemy.loadout,
+    cargo: enemy.cargo,
+  );
 }
 
 /// Ships met only when an event sends the captain to them.
@@ -308,14 +326,45 @@ enum SpecialEnemy {
         hold: ['feedstock_3'],
       ),
     ),
+  ),
+
+  /// The end of a brawl: the demon lord himself, at fight
+  /// [brawlFinalFight], wherever the captain is. Hell's own weapons and
+  /// what he scavenged from our dimension during the gatecrash. Not scaled:
+  /// tuned with `tool/boss_balance.dart` so a well-built ship of any style
+  /// wins without the rare Hell Clock, though not by much.
+  satan(
+    EnemyTemplate(
+      'Satan',
+      2000,
+      CombatLoadout(
+        [
+          'teleporter_2',
+          'brimstone_2',
+          'teeth_2',
+          'jammer_1',
+          'ion_2',
+          'flak_2',
+          'brandy_mist_1',
+          'metal_flesh_3',
+          'metal_flesh_2',
+        ],
+        hold: ['teleport_charges_2'],
+      ),
+    ),
+    scaled: false,
   );
 
-  const SpecialEnemy(this.template, {this.actsAhead = 0});
+  const SpecialEnemy(this.template, {this.actsAhead = 0, this.scaled = true});
   final EnemyTemplate template;
 
   /// How many acts ahead of the usual enemy this ship is scaled.
   final int actsAhead;
 
+  /// Whether this ship grows with the brawl at all.
+  final bool scaled;
+
   /// This ship at fight [round].
-  EnemyTemplate at(int round) => template.forAct(brawlAct(round) + actsAhead);
+  EnemyTemplate at(int round) =>
+      scaled ? template.forAct(brawlAct(round) + actsAhead) : template;
 }

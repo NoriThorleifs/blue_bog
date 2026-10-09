@@ -244,7 +244,7 @@ final storyBeatEvents = <GameEvent>[
     choices: [
       Choice(
         'Let your humans talk to them',
-        condition: const HumansAtLeast(1),
+        condition: const HumansAtLeast(25),
         outcomes: [
           Outcome(
             'Your humans speak for a long time, mostly about you. The fleet '

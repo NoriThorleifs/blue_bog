@@ -105,7 +105,18 @@ class _TitleScreenState extends ConsumerState<TitleScreen> {
                     textAlign: TextAlign.center,
                     style: text.bodyLarge?.copyWith(color: Palette.muted),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.push('/guide'),
+                      style: OutlinedButton.styleFrom(
+                        alignment: Alignment.center,
+                      ),
+                      icon: const Icon(Icons.menu_book_outlined),
+                      label: const Text('How to play'),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   Text('Choose your captain', style: text.titleLarge),
                   const SizedBox(height: 12),
                   LayoutBuilder(
