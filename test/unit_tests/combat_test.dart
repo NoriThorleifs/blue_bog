@@ -239,4 +239,91 @@ void main() {
   test('every captain has at least 500 hull', () {
     expect(Combatant(name: 'x', loadout: CombatLoadout.of([])).maxHull, 500);
   });
+
+  group('ion, flak, repair, lances and jammers', () {
+    List<CombatEvent> by(CombatResult r, int side, CombatEventKind kind) => [
+      for (final e in r.events)
+        if (e.side == side && e.kind == kind) e,
+    ];
+
+    test(
+      'an ion blast strips shields, and a third of the rest gets through',
+      () {
+        // At 4 s there's no shield yet: 45 / 3 = 15. At 8 s the shield (30)
+        // takes 30 and 15 / 3 = 5 gets through.
+        final r = fight(ship(['ion_1']), target(['shield_1']));
+        final hits = by(r, 0, CombatEventKind.ionHit);
+        expect(hits[0].value, 15);
+        expect(hits[1].value, 5);
+      },
+    );
+
+    test('flak shoots down drones, and bursts on the hull without them', () {
+      final r = fight(
+        ship(['flak_1']),
+        target(['fabricator_1'], hold: ['feedstock_1']),
+      );
+      expect(by(r, 0, CombatEventKind.flakShrapnel).first.time, 4);
+      expect(by(r, 0, CombatEventKind.flakHit).first.time, 8);
+    });
+
+    test('a repair bay patches hull, but not past the maximum', () {
+      final r = fight(
+        Combatant(
+          name: 'me',
+          loadout: CombatLoadout.of(['repair_1']),
+          hull: 450,
+        ),
+        target([]),
+      );
+      expect(by(r, 0, CombatEventKind.repaired).map((e) => e.value), [30, 20]);
+      expect(r.hull, 500);
+    });
+
+    test('a lance hits harder with every shot', () {
+      final r = fight(ship(['lance_1']), target([]));
+      expect(by(r, 0, CombatEventKind.laserHit).take(3).map((e) => e.value), [
+        10,
+        15,
+        20,
+      ]);
+    });
+
+    test('a rail slug lands in full on bare hull', () {
+      final r = fight(ship(['rail_1']), target([]));
+      final hits = by(r, 0, CombatEventKind.railHit);
+      expect(hits.first.time, 9);
+      expect(hits.first.value, 100);
+    });
+
+    test('any shield at all deflects a rail slug, and keeps its charge', () {
+      // The shield charges at 6 s, before the slug arrives at 9 s.
+      final r = fight(ship(['rail_1']), target(['shield_1']));
+      expect(by(r, 0, CombatEventKind.railHit), isEmpty);
+      expect(by(r, 0, CombatEventKind.railDeflected), isNotEmpty);
+      expect(r.at(9).shield[1], 30);
+    });
+
+    test('an ion cannon strips the shield so the slug gets through', () {
+      // Ion fires at 8 s and takes the shield to 0 just before the slug.
+      final r = fight(ship(['rail_1', 'ion_1']), target(['shield_1']));
+      expect(by(r, 0, CombatEventKind.railHit).first.time, 9);
+    });
+
+    test('a jammer stops teleport bombs, but not Nobody', () {
+      final r = fight(
+        ship(['teleporter_1', 'teleport_charges_1']),
+        target(['jammer_1']),
+      );
+      expect(by(r, 0, CombatEventKind.teleportJammed), isNotEmpty);
+      expect(by(r, 0, CombatEventKind.teleportHit), isEmpty);
+      final boarded = fight(
+        ship(['jammer_3', 'jammer_3']),
+        ship(['nobody_boarding_teleporter']),
+        tractorBeam: true,
+      );
+      expect(boarded.outcome, CombatOutcome.loss);
+      expect(boarded.seconds, 40);
+    });
+  });
 }

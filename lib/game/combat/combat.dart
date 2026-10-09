@@ -55,6 +55,29 @@ enum CombatEventKind {
   shieldsCharged,
   droneBuilt,
   outOfAmmo,
+
+  /// A boarder came aboard, and the ship is lost.
+  boarded,
+
+  /// Value is the hull damage that got past the shields.
+  ionHit,
+
+  /// Value is the drones shot down.
+  flakHit,
+
+  /// Value is the shrapnel damage to the hull.
+  flakShrapnel,
+
+  /// Value is the hull repaired.
+  repaired,
+  jamsReady,
+  teleportJammed,
+
+  /// Value is the damage.
+  railHit,
+
+  /// Value is the damage the shields turned away.
+  railDeflected,
 }
 
 /// A finished fight, kept so the combat screen can replay it.
@@ -210,7 +233,7 @@ CombatResult fight(Combatant a, Combatant b, {bool tractorBeam = false}) {
 }
 
 int _order(_Side side, int slot) => switch (side.gear[slot]!.action) {
-  ChargeShields() || BuildDrone() => 0,
+  ChargeShields() || BuildDrone() || JamTeleports() => 0,
   _ => 1,
 };
 
@@ -225,6 +248,12 @@ class _Side {
     final all = gear.whereType<Equipment>();
     maxShield = all.fold(0, (t, e) => t + e.maxShield);
     maxDrones = all.fold(0, (t, e) => t + e.maxDrones);
+    maxJams = all.fold(
+      0,
+      (t, e) =>
+          t +
+          (e.action is JamTeleports ? (e.action! as JamTeleports).count : 0),
+    );
     // Supplies count from the hold too; everything else only from a slot.
     final held = c.loadout.hold
         .map(equipmentById)
@@ -260,6 +289,11 @@ class _Side {
   final int maxHull;
   int shield = 0;
   int drones = 0;
+  int jams = 0;
+  late final int maxJams;
+
+  /// Shots fired from each slot this fight, for lances.
+  final shots = List.filled(9, 0);
   late final int maxShield;
   late final int maxDrones;
   final ammo = <Ammo, int>{};
@@ -345,12 +379,62 @@ class _Side {
         if (!_use(Ammo.teleportCharges)) {
           return note(CombatEventKind.outOfAmmo);
         }
+        if (enemy.jams > 0) {
+          enemy.jams--;
+          return note(CombatEventKind.teleportJammed, damage);
+        }
         enemy.hull -= damage;
         note(CombatEventKind.teleportHit, damage);
+      case IonBlast(:final damage):
+        final stripped = min(enemy.shield, damage);
+        enemy.shield -= stripped;
+        final through = (damage - stripped) ~/ 3;
+        enemy.hull -= through;
+        note(CombatEventKind.ionHit, through);
+      case Flak(:final count, :final shrapnel):
+        final downed = min(enemy.drones, count);
+        enemy.drones -= downed;
+        if (downed > 0) note(CombatEventKind.flakHit, downed);
+        if (downed < count) {
+          final burst = (count - downed) * shrapnel;
+          final absorbed = min(enemy.shield, burst);
+          enemy.shield -= absorbed;
+          enemy.hull -= burst - absorbed;
+          note(CombatEventKind.flakShrapnel, burst - absorbed);
+        }
+      case RailShot(:final damage):
+        if (enemy.shield > 0) {
+          return note(CombatEventKind.railDeflected, damage);
+        }
+        enemy.hull -= damage;
+        note(CombatEventKind.railHit, damage);
+      case Repair(:final amount):
+        final patched = min(amount, maxHull - hull);
+        if (patched <= 0) return;
+        hull += patched;
+        note(CombatEventKind.repaired, patched);
+      case LanceShot(:final damage, :final ramp):
+        final hit = damage + ramp * shots[slot]++;
+        final absorbed = min(enemy.shield, hit);
+        enemy.shield -= absorbed;
+        enemy.hull -= hit - absorbed;
+        note(
+          absorbed == hit
+              ? CombatEventKind.laserAbsorbed
+              : CombatEventKind.laserHit,
+          hit - absorbed,
+        );
+      case JamTeleports():
+        if (jams >= maxJams) return;
+        jams = maxJams;
+        note(CombatEventKind.jamsReady, jams);
       case Hellfire(:final damage, :final recoil):
         enemy.hull -= damage;
         hull -= recoil;
         note(CombatEventKind.hellfireHit, damage);
+      case Board():
+        enemy.hull = 0;
+        note(CombatEventKind.boarded);
       case ChargeShields():
         shield = maxShield;
         note(CombatEventKind.shieldsCharged, shield);

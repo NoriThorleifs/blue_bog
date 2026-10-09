@@ -10,6 +10,7 @@ import '../../game/brawl/brawl.dart';
 import '../../game/combat/catalog.dart';
 import '../../game/combat/equipment.dart';
 import '../../game/deck/loadout.dart';
+import '../../game/market.dart';
 import '../cards/card_widgets.dart';
 import '../deck/deck_screen.dart' show SpotTile, Triforce, showError;
 
@@ -201,11 +202,7 @@ class _EventTab extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final result = brawl.result;
     final plan = brawl.plannedFight;
-    final enemy = plan == null
-        ? null
-        : plan.demon != null
-        ? engine.demonFor(brawl, plan.demon!)
-        : brawlEnemy(brawl.round + plan.roundsAhead);
+    final enemy = plan == null ? null : engine.enemyFor(brawl, plan);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -268,6 +265,43 @@ class _EventTab extends ConsumerWidget {
   }
 }
 
+/// A famine, drought or glut at this station, while it lasts.
+class _SupplyShock extends ConsumerWidget {
+  const _SupplyShock({required this.brawl});
+  final BrawlState brawl;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final shock = ref.read(brawlEngineProvider).supply(brawl);
+    if (shock == null) return const SizedBox.shrink();
+    final name = equipmentById(shock.goodId).name;
+    final good = name.toLowerCase();
+    final until = (brawl.round ~/ supplySeason + 1) * supplySeason;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        color: Color.lerp(
+          Palette.panel,
+          shock.shortage ? Palette.sublight : Palette.codeGreen,
+          0.2,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            shock.shortage
+                ? '${shock.label} at ${brawl.stationName}. They pay several '
+                      'times the going rate for $good until fight $until.'
+                : '${shock.label} at ${brawl.stationName}. $name goes for a '
+                      'fraction of the going rate until fight $until: cheap '
+                      'to buy, next to worthless to sell.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _BuyTab extends ConsumerWidget {
   const _BuyTab({required this.brawl});
   final BrawlState brawl;
@@ -319,6 +353,7 @@ class _BuyTab extends ConsumerWidget {
           label: Text('LETS GO GAMBLING! · ${brawl.gamblingGame.label}'),
         ),
         const SizedBox(height: 12),
+        _SupplyShock(brawl: brawl),
         Row(
           children: [
             Expanded(

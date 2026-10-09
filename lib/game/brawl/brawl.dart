@@ -3,13 +3,17 @@ import 'dart:math';
 import '../captain/species.dart';
 import '../combat/catalog.dart';
 import '../combat/combat.dart';
+import '../combat/equipment.dart';
 import '../deck/loadout.dart';
 import '../engine.dart' show IllegalMove;
 import '../gambling/roulette.dart';
 import '../gambling/twenty_seven.dart';
 import '../market.dart';
 import '../rng.dart';
+import 'brawl_enemies.dart';
 import 'brawl_events.dart';
+
+export 'brawl_enemies.dart';
 
 /// Brawl mode: a test of the game with nothing but combat and commerce.
 ///
@@ -82,18 +86,6 @@ List<String> brawlStartingCards(Species species) => [
   ])
     if (_allowed(id)) id,
 ];
-
-/// Act 1 enemy tiers by fight number, then the dreadnought, scaled up by
-/// act every four fights after that.
-const _schedule = [0, 1, 2, 2, 3, 3, 4, 4, 5, 5];
-
-/// The enemy waiting at the end of fight [round].
-EnemyTemplate brawlEnemy(int round) {
-  final i = round - 1;
-  if (i < _schedule.length) return act1Enemies[_schedule[i]];
-  final act = 2 + (i - _schedule.length) ~/ 4;
-  return act1Enemies.last.forAct(act);
-}
 
 /// A brawl in progress. Like [RunState], the engine works on a [clone] and
 /// never mutates a state it was handed.
@@ -172,7 +164,7 @@ class BrawlState {
   String get stationName => brawlStations[station]!;
   GamblingGame get gamblingGame => stationGames[station]!;
   ShipStats get stats => ShipStats.of(loadout, hullUpgrades: hullUpgrades);
-  EnemyTemplate get nextEnemy => brawlEnemy(round);
+  EnemyTemplate get nextEnemy => brawlEnemy(round, seed);
   BrawlEvent? get currentEvent => event == null ? null : brawlEventsById[event];
 
   /// At a station with nothing pending: free to trade and launch.
@@ -222,7 +214,7 @@ class BrawlEngine {
     }
     final rng = GameRng(seed ^ 0xB4A71);
     final station = rng.pick(brawlStations.keys.toList());
-    final market = _roll(station, rng, seed);
+    final market = _roll(station, rng, seed, 1);
     return BrawlState(
       seed: seed,
       species: species,
@@ -235,15 +227,30 @@ class BrawlEngine {
     );
   }
 
-  Market _roll(String station, GameRng rng, int seed, {int rerolls = 0}) =>
-      Market.roll(station, rng, seed, rerolls: rerolls, stock: brawlFamilies);
+  Market _roll(
+    String station,
+    GameRng rng,
+    int seed,
+    int round, {
+    int rerolls = 0,
+  }) => Market.roll(
+    station,
+    rng,
+    seed,
+    rerolls: rerolls,
+    stock: brawlFamilies,
+    time: round,
+  );
+
+  /// The supply shock at the station right now, if any.
+  SupplyShock? supply(BrawlState s) => supplyAt(s.station, s.seed, s.round);
 
   /// What a card usually costs across every brawl station.
   int median(BrawlState s, String id) =>
       medianPrice(equipmentById(id), brawlStations.keys, s.seed);
 
   int sellValue(BrawlState s, String id) =>
-      sellPrice(equipmentById(id), s.station, s.seed);
+      sellPrice(equipmentById(id), s.station, s.seed, time: s.round);
 
   /// A demon from [demons], tougher the further along the brawl is and the
   /// longer the ship has been in Hell.
@@ -251,6 +258,13 @@ class BrawlEngine {
     final level = s.round + s.hellTurns;
     return demons[index].forAct(1 + (level - 1) ~/ 5);
   }
+
+  /// The ship [plan] sends against the captain.
+  EnemyTemplate enemyFor(BrawlState s, Fight plan) => switch (plan) {
+    Fight(:final demon?) => demonFor(s, demon),
+    Fight(:final special?) => special.at(s.round),
+    _ => brawlEnemy(s.round + plan.roundsAhead, s.seed),
+  };
 
   BrawlState _step(BrawlState state, void Function(BrawlState, GameRng) f) {
     if (state.lost) throw IllegalMove('Your ship is lost');
@@ -342,7 +356,13 @@ class BrawlEngine {
     return _step(state, (s, rng) {
       s
         ..credits -= price
-        ..market = _roll(s.station, rng, s.seed, rerolls: s.market.rerolls + 1);
+        ..market = _roll(
+          s.station,
+          rng,
+          s.seed,
+          s.round,
+          rerolls: s.market.rerolls + 1,
+        );
     });
   }
 
@@ -571,8 +591,18 @@ class BrawlEngine {
       for (final id in brawlStations.keys)
         if (id != s.station) id,
     ]);
-    s.market = _roll(s.station, rng, s.seed);
+    s.market = _roll(s.station, rng, s.seed, s.round);
     s.log.add('Docked at ${s.stationName}.');
+    if (supply(s) case final shock?) {
+      final good = equipmentById(shock.goodId).name.toLowerCase();
+      s.log.add(
+        shock.shortage
+            ? '${shock.label} here. ${s.stationName} will pay a fortune for '
+                  '$good.'
+            : '${shock.label} here. ${s.stationName} is practically giving '
+                  '$good away.',
+      );
+    }
   }
 
   void _apply(
@@ -662,9 +692,7 @@ class BrawlEngine {
   /// the time limit pays nothing. Losing ends the brawl.
   void _fight(BrawlState s, GameRng rng, Fight plan) {
     final demon = plan.demon != null;
-    final enemy = demon
-        ? demonFor(s, plan.demon!)
-        : brawlEnemy(s.round + plan.roundsAhead);
+    final enemy = enemyFor(s, plan);
     final player = Combatant(
       name: 'you',
       loadout: s.loadout.forCombat,
@@ -690,6 +718,7 @@ class BrawlEngine {
           '${plan.winCredits > 0 ? ', plus ${plan.winCredits} cr for the job' : ''}.',
         );
         for (final id in enemy.loadout.slots.whereType<String>()) {
+          if (equipmentById(id).tier == Tier.unique) continue;
           if (!rng.chance(demon ? 0.35 : 0.25)) continue;
           final merges = s.loadout.add(id);
           if (merges == null) continue;
@@ -697,6 +726,13 @@ class BrawlEngine {
           s.log
             ..add('Salvaged ${equipmentById(id).name}.')
             ..addAll(merges);
+        }
+        for (final id in plan.winCards) {
+          _gain(s, id, s.log, force: true);
+        }
+        for (final id in enemy.cargo) {
+          if (s.loadout.add(id) == null) break;
+          s.log.add('Plundered ${equipmentById(id).name}.');
         }
       case CombatOutcome.escape:
         s.log.add('Broke away from the ${enemy.name}. No scrap.');

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'app/brawl_controller.dart';
 import 'app/run_controller.dart';
+import 'app/sound.dart';
 import 'app/theme.dart';
 import 'presentation/brawl/brawl_screen.dart';
 import 'presentation/combat/combat_screen.dart';
@@ -13,7 +14,11 @@ import 'presentation/map/galaxy_map_screen.dart';
 import 'presentation/market/market_screen.dart';
 import 'presentation/title_screen.dart';
 
-void main() => runApp(const ProviderScope(child: BlueBogApp()));
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SoundBoard.instance.init();
+  runApp(const ProviderScope(child: BlueBogApp()));
+}
 
 final routerProvider = Provider(
   (ref) => GoRouter(

@@ -54,6 +54,46 @@ const equipmentFamilies = [
     boostOnly: ChargeShields,
   ),
 
+  EquipmentFamily(
+    id: 'ion',
+    names: ['Ion Cannon', 'Ion Driver', 'Storm Engine'],
+    cooldown: 4,
+    action: IonBlast(45),
+  ),
+  EquipmentFamily(
+    id: 'flak',
+    names: ['Flak Battery', 'Flak Curtain', 'Sky Shredder'],
+    cooldown: 4,
+    action: Flak(1),
+  ),
+  EquipmentFamily(
+    id: 'repair',
+    names: ['Repair Bay', 'Nanite Welders', 'Phoenix Foundry'],
+    cooldown: 8,
+    action: Repair(30),
+    price: 35,
+  ),
+  EquipmentFamily(
+    id: 'lance',
+    names: ['Plasma Lance', 'Plasma Spear', 'Sunspear'],
+    cooldown: 6,
+    action: LanceShot(10, 5),
+  ),
+  EquipmentFamily(
+    id: 'rail',
+    names: ['Rail Cannon', 'Rail Driver', 'Mass Accelerator'],
+    cooldown: 9,
+    action: RailShot(100),
+    price: 45,
+  ),
+  EquipmentFamily(
+    id: 'jammer',
+    names: ['Teleport Jammer', 'Phase Anchor', 'Null Lattice'],
+    cooldown: 6,
+    action: JamTeleports(1),
+    price: 20,
+  ),
+
   // Synergy ---------------------------------------------------------------
   EquipmentFamily(
     id: 'fire_control',
@@ -177,7 +217,8 @@ const commodities = [
     family: 'goods_grain',
     tier: Tier.basic,
     kind: CardKind.commodity,
-    price: 10,
+    price: 15,
+    text: 'Cheap, until somewhere runs out of it.',
   ),
   Equipment(
     id: 'goods_ice',
@@ -185,7 +226,8 @@ const commodities = [
     family: 'goods_ice',
     tier: Tier.basic,
     kind: CardKind.commodity,
-    price: 8,
+    price: 12,
+    text: 'Worth its weight in credits wherever the taps have run dry.',
   ),
   Equipment(
     id: 'goods_ore',
@@ -319,12 +361,66 @@ const mournerCards = [
   ),
 ];
 
+/// Trophies taken from the elites that only events send against a brawl
+/// captain, one elite for each stage of the game.
+const eliteTrophies = [
+  Equipment(
+    id: 'trophy_last_vote',
+    name: 'The Last Vote\'s Battery',
+    family: 'trophy_last_vote',
+    tier: Tier.unique,
+    cooldown: 3,
+    action: FireMissile(45),
+    ammo: {Ammo.missiles: 12},
+    price: 150,
+    text: 'Fires twice as fast as a Missile Rack and brings its own missiles.',
+  ),
+  Equipment(
+    id: 'trophy_champions_bulwark',
+    name: 'Champion\'s Bulwark',
+    family: 'trophy_champions_bulwark',
+    tier: Tier.unique,
+    cooldown: 6,
+    action: ChargeShields(),
+    maxShield: 75,
+    hull: 200,
+    price: 250,
+    text: 'A Gor duelling shield, and the armour plate it hangs from.',
+  ),
+  Equipment(
+    id: 'trophy_nanoforge',
+    name: 'Unmerged Nanoforge',
+    family: 'trophy_nanoforge',
+    tier: Tier.unique,
+    cooldown: 6,
+    action: BuildDrone(3),
+    maxDrones: 6,
+    ammo: {Ammo.droneFeedstock: 18},
+    price: 400,
+    text:
+        'Tern nanobots that no longer answer to anyone. They build, and feed themselves.',
+  ),
+];
+
+/// Nobody's only weapon. Never salvaged: nobody else could use it.
+const boardingTeleporter = Equipment(
+  id: 'nobody_boarding_teleporter',
+  name: 'Boarding Teleporter',
+  family: 'nobody_boarding_teleporter',
+  tier: Tier.unique,
+  cooldown: 40,
+  action: Board(),
+  text: 'It takes a long time to charge. It only has to carry one man.',
+);
+
 final equipmentCatalog = <String, Equipment>{
   for (final family in equipmentFamilies)
     for (final e in family.tiers) e.id: e,
   for (final e in commodities) e.id: e,
   for (final e in missionCargo) e.id: e,
   for (final e in mournerCards) e.id: e,
+  for (final e in eliteTrophies) e.id: e,
+  boardingTeleporter.id: boardingTeleporter,
   for (final family in hellFamilies)
     for (final e in family.tiers) e.id: e,
 };
@@ -389,10 +485,18 @@ class CombatLoadout {
 
 /// An enemy ship: its hull before equipment, and its loadout.
 class EnemyTemplate {
-  const EnemyTemplate(this.name, this.hull, this.loadout);
+  const EnemyTemplate(
+    this.name,
+    this.hull,
+    this.loadout, {
+    this.cargo = const [],
+  });
   final String name;
   final int hull;
   final CombatLoadout loadout;
+
+  /// Commodities aboard, taken as plunder if the ship is destroyed.
+  final List<String> cargo;
 
   /// The same ship in a later act.
   ///
@@ -400,7 +504,9 @@ class EnemyTemplate {
   /// income: act 2 doubles the hull, act 3 triples it and moves every card
   /// up a tier. The plan's target is ×3 per act.
   EnemyTemplate forAct(int act, {String? name}) {
-    if (act <= 1) return EnemyTemplate(name ?? this.name, hull, loadout);
+    if (act <= 1) {
+      return EnemyTemplate(name ?? this.name, hull, loadout, cargo: cargo);
+    }
     final tiersUp = act >= 3 ? 1 : 0;
     String up(String id) {
       final e = equipmentById(id);
@@ -416,6 +522,7 @@ class EnemyTemplate {
         [for (final id in loadout.slots) id == null ? null : up(id)],
         hold: [for (final id in loadout.hold) up(id)],
       ),
+      cargo: cargo,
     );
   }
 }

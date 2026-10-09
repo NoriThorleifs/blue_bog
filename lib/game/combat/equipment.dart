@@ -44,6 +44,56 @@ class Hellfire extends Action {
   int get recoil => damage ~/ 4;
 }
 
+/// Strips up to [damage] from the enemy's shields. Whatever the shields
+/// don't take hits the hull at a third.
+class IonBlast extends Action {
+  const IonBlast(this.damage);
+  final int damage;
+}
+
+/// Shoots down up to [count] enemy drones. Rounds with no drone to hit
+/// burst against the hull for [shrapnel] each, which shields block.
+class Flak extends Action {
+  const Flak(this.count, {this.shrapnel = 10});
+  final int count;
+  final int shrapnel;
+}
+
+/// Patches [amount] of the ship's own hull, up to its maximum.
+class Repair extends Action {
+  const Repair(this.amount);
+  final int amount;
+}
+
+/// A laser that hits [ramp] harder with every shot it has fired this
+/// fight. Blocked by shields.
+class LanceShot extends Action {
+  const LanceShot(this.damage, this.ramp);
+  final int damage;
+  final int ramp;
+}
+
+/// Readies the ship's teleport jammers: each jam stops one incoming
+/// teleport bomb. Like shields, it refills to the ship's maximum, which
+/// is [count] from every jammer aboard.
+class JamTeleports extends Action {
+  const JamTeleports(this.count);
+  final int count;
+}
+
+/// A rail slug: massive damage, but any charge at all in the enemy's
+/// shields deflects it entirely, leaving the shields untouched.
+class RailShot extends Action {
+  const RailShot(this.damage);
+  final int damage;
+}
+
+/// Teleports a boarder onto the enemy ship. Nothing stops it, and
+/// nothing aboard survives it: the enemy is lost outright.
+class Board extends Action {
+  const Board();
+}
+
 /// Refills shields to the ship's maximum.
 class ChargeShields extends Action {
   const ChargeShields();
@@ -254,7 +304,10 @@ class Equipment {
     FireLaser(:final damage) ||
     FireMissile(:final damage) ||
     TeleportBomb(:final damage) ||
-    Hellfire(:final damage) => damage,
+    Hellfire(:final damage) ||
+    IonBlast(:final damage) ||
+    LanceShot(:final damage) ||
+    RailShot(:final damage) => damage,
     _ => null,
   };
 
@@ -272,6 +325,22 @@ class Equipment {
         ChargeShields() => 'Charges shields$every',
         BuildDrone(count: 1) => 'Builds a drone$every',
         BuildDrone(:final count) => 'Builds $count drones$every',
+        Board() => 'Boards the enemy$every. Nobody aboard survives it',
+        IonBlast(:final damage) =>
+          'Ion blast$every: strips $damage shield. Leftover hits the hull '
+              'at a third',
+        Flak(count: 1, :final shrapnel) =>
+          'Flak$every: shoots down a drone, or $shrapnel shrapnel damage',
+        Flak(:final count, :final shrapnel) =>
+          'Flak$every: shoots down $count drones, each miss $shrapnel '
+              'shrapnel damage',
+        Repair(:final amount) => 'Repairs $amount hull$every',
+        RailShot(:final damage) =>
+          'Rail slug: $damage damage$every. Any shield at all deflects it',
+        LanceShot(:final damage, :final ramp) =>
+          'Lance: $damage damage$every, $ramp more each shot',
+        JamTeleports(count: 1) => 'Readies a teleport jam$every',
+        JamTeleports(:final count) => 'Readies $count teleport jams$every',
         null => '',
       },
       if (hull != 0) '+$hull hull',
@@ -382,6 +451,15 @@ class EquipmentFamily {
       TeleportBomb(:final damage) => TeleportBomb(damage * x),
       Hellfire(:final damage) => Hellfire(damage * x),
       BuildDrone(:final count) => BuildDrone(count * x),
+      IonBlast(:final damage) => IonBlast(damage * x),
+      Flak(:final count, :final shrapnel) => Flak(
+        count * x,
+        shrapnel: shrapnel,
+      ),
+      Repair(:final amount) => Repair(amount * x),
+      RailShot(:final damage) => RailShot(damage * x),
+      LanceShot(:final damage, :final ramp) => LanceShot(damage * x, ramp * x),
+      JamTeleports(:final count) => JamTeleports(count * x),
       final other => other,
     },
     hull: hull * x,

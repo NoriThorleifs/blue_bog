@@ -297,7 +297,7 @@ class Triforce extends StatelessWidget {
           (box.maxWidth - tile) * sqrt(3) / 2,
         );
         final inset = Offset(tile / 2, tile / 2);
-        final centres = [for (final c in _slotCentres(inner)) c + inset];
+        final centres = slotCentres(box.maxWidth);
         return SizedBox(
           width: box.maxWidth,
           height: inner.height + tile,
@@ -346,6 +346,16 @@ class Triforce extends StatelessWidget {
   }
 
   /// Each small triangle holds three slots, one near each of its corners.
+  /// Where each slot's centre sits in a triforce [width] wide, so effects
+  /// can be drawn over it.
+  static List<Offset> slotCentres(double width) {
+    final tile = width * 0.145;
+    final inner = Size(width - tile, (width - tile) * sqrt(3) / 2);
+    return [
+      for (final c in _slotCentres(inner)) c + Offset(tile / 2, tile / 2),
+    ];
+  }
+
   static List<Offset> _slotCentres(Size size) => [
     for (final triangle in _smallTriangles(size)) ...[
       for (final corner in triangle)

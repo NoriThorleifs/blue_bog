@@ -39,6 +39,12 @@ SUPPLY = (167, 180, 194)
 GOODS = (217, 185, 140)
 HELL = (255, 61, 127)
 WHITE = (240, 240, 250)
+ION = (180, 140, 255)
+FLAK = (230, 195, 106)
+REPAIR = (92, 224, 200)
+LANCE = (157, 240, 255)
+JAM = (255, 143, 128)
+RAIL = (220, 228, 240)
 
 
 def p(x, y):
@@ -191,6 +197,72 @@ def shield_capacitor():
     poly(i, [(0.5, 0.32), (0.62, 0.37), (0.60, 0.55), (0.5, 0.70),
              (0.40, 0.55), (0.38, 0.37)], SHIELD, 0.6, 0.02)
     i.save('shield_capacitor')
+
+
+def ion():
+    """A coil throwing a forked bolt."""
+    i = Icon(ION)
+    rect(i, (0.12, 0.40, 0.42, 0.62), f=0.4)
+    for x in (0.18, 0.26, 0.34):
+        stroke(i, [(x, 0.36), (x, 0.66)], width=0.015)
+    stroke(i, [(0.44, 0.51), (0.60, 0.40), (0.66, 0.52), (0.88, 0.30)],
+           WHITE, 0.025)
+    stroke(i, [(0.66, 0.52), (0.86, 0.66)], WHITE, 0.02)
+    i.save('ion')
+
+
+def flak():
+    """Bursts of flak, one with a drone falling out of it."""
+    i = Icon(FLAK)
+    for cx, cy, r in ((0.32, 0.34, 0.14), (0.66, 0.30, 0.11), (0.58, 0.62, 0.16)):
+        poly(i, star(cx, cy, r, r * 0.45, 8), f=0.5, width=0.015)
+    ellipse(i, (0.18, 0.70, 0.34, 0.76), DRONE, 0.3, 0.015)
+    stroke(i, [(0.20, 0.82), (0.30, 0.88)], DRONE, 0.012)
+    i.save('flak')
+
+
+def repair():
+    """A wrench over a patched plate."""
+    i = Icon(REPAIR)
+    rect(i, (0.16, 0.56, 0.84, 0.84), SYSTEM, 0.35)
+    stroke(i, [(0.30, 0.70), (0.70, 0.70)], REPAIR, 0.03)
+    stroke(i, [(0.30, 0.48), (0.66, 0.16)], width=0.06)
+    ellipse(i, (0.58, 0.08, 0.80, 0.30), f=0.0, width=0.05)
+    ellipse(i, (0.20, 0.42, 0.34, 0.56), f=0.6, width=0.02)
+    i.save('repair')
+
+
+def lance():
+    """A spear of light that widens along its length."""
+    i = Icon(LANCE)
+    poly(i, [(0.12, 0.78), (0.20, 0.86), (0.88, 0.18), (0.82, 0.12)], f=0.4)
+    poly(i, [(0.30, 0.72), (0.36, 0.78), (0.88, 0.18)], WHITE, 0.9, 0.01)
+    for k, r in enumerate((0.03, 0.045, 0.06)):
+        cx, cy = 0.30 + k * 0.18, 0.70 - k * 0.18
+        ellipse(i, (cx - r, cy - r, cx + r, cy + r), WHITE, 0.9, 0.01)
+    i.save('lance')
+
+
+def rail():
+    """Two long rails with a slug between them, and its streak."""
+    i = Icon(RAIL)
+    rect(i, (0.10, 0.30, 0.66, 0.40), f=0.4, r=0.02)
+    rect(i, (0.10, 0.60, 0.66, 0.70), f=0.4, r=0.02)
+    for x in (0.2, 0.34, 0.48):
+        stroke(i, [(x, 0.40), (x, 0.60)], LASER, 0.012)
+    rect(i, (0.52, 0.45, 0.66, 0.55), WHITE, 0.9, r=0.02, width=0.01)
+    stroke(i, [(0.68, 0.50), (0.94, 0.50)], WHITE, 0.03)
+    i.save('rail')
+
+
+def jammer():
+    """A teleport ring with a bar across it."""
+    i = Icon(JAM)
+    for r, w in ((0.34, 0.02), (0.24, 0.025)):
+        arc(i, (0.5 - r, 0.5 - r, 0.5 + r, 0.5 + r), 0, 360, width=w)
+    ellipse(i, (0.42, 0.42, 0.58, 0.58), TELEPORT, 0.6)
+    stroke(i, [(0.20, 0.80), (0.80, 0.20)], WHITE, 0.05)
+    i.save('jammer')
 
 
 # Synergy -----------------------------------------------------------------------
@@ -510,14 +582,67 @@ def hell_clock():
     i.save('hell_clock')
 
 
+# Elite trophies -----------------------------------------------------------------
+
+def trophy_last_vote():
+    """Two missiles with speed lines: fast, and bringing its own ammo."""
+    i = Icon(MISSILE)
+    for cx in (0.40, 0.62):
+        poly(i, [(cx, 0.16), (cx + 0.06, 0.30), (cx + 0.06, 0.66),
+                 (cx - 0.06, 0.66), (cx - 0.06, 0.30)])
+        poly(i, [(cx - 0.035, 0.68), (cx, 0.84), (cx + 0.035, 0.68)],
+             (255, 230, 120), 0.9, 0.01)
+    for x, y in ((0.22, 0.50), (0.80, 0.50), (0.51, 0.74)):
+        stroke(i, [(x, y), (x, y + 0.16)], WHITE, 0.015)
+    i.save('trophy_last_vote')
+
+
+def trophy_champions_bulwark():
+    """A duelling shield hung on armour plate."""
+    i = Icon(SHIELD)
+    rect(i, (0.14, 0.52, 0.86, 0.80), SYSTEM, 0.4)
+    poly(i, [(0.5, 0.12), (0.76, 0.22), (0.72, 0.50), (0.5, 0.74),
+             (0.28, 0.50), (0.24, 0.22)])
+    stroke(i, [(0.34, 0.30), (0.5, 0.46), (0.66, 0.30)], WHITE, 0.025)
+    stroke(i, [(0.38, 0.44), (0.5, 0.56), (0.62, 0.44)], WHITE, 0.025)
+    i.save('trophy_champions_bulwark')
+
+
+def trophy_nanoforge():
+    """A hexagonal forge with drones swarming out of it."""
+    i = Icon(DRONE)
+    poly(i, ngon(0.5, 0.5, 0.20, 6, 0), f=0.5)
+    ellipse(i, (0.45, 0.45, 0.55, 0.55), WHITE, 0.9, 0.01)
+    for k in range(6):
+        a = math.radians(k * 60 + 30)
+        cx, cy = 0.5 + 0.34 * math.cos(a), 0.5 + 0.34 * math.sin(a)
+        ellipse(i, (cx - 0.05, cy - 0.03, cx + 0.05, cy + 0.03), f=0.3,
+                width=0.015)
+    i.save('trophy_nanoforge')
+
+
+def nobody_boarding_teleporter():
+    """A teleport ring sized for one man, with the man in it."""
+    i = Icon(TELEPORT)
+    ellipse(i, (0.18, 0.70, 0.82, 0.88), f=0.35)
+    for r, w in ((0.36, 0.015), (0.28, 0.02)):
+        arc(i, (0.5 - r, 0.5 - r, 0.5 + r, 0.5 + r), 200, 340, width=w)
+    ellipse(i, (0.43, 0.20, 0.57, 0.34), WHITE, 0.9, 0.01)
+    poly(i, [(0.38, 0.38), (0.62, 0.38), (0.58, 0.60), (0.56, 0.78),
+             (0.44, 0.78), (0.42, 0.60)], WHITE, 0.85, 0.01)
+    i.save('nobody_boarding_teleporter')
+
+
 ALL = [laser, missiles, teleporter, shield, fabricator, plating,
+       ion, flak, repair, lance, rail, jammer,
        shield_capacitor, fire_control, capacitors, quick_fuzes, bunks,
        cargo_pod, hospital, barrier, tanks, missile_crate, teleport_charges,
        feedstock, brimstone, teeth, brandy_mist, metal_flesh, goods_grain,
        goods_ice, goods_ore, goods_chitin, goods_medicine, goods_nanopaste,
        goods_brandy, goods_relics, parcel_sealed, mourner_event_horizon,
        mourner_unfallen_world, mourner_polite_request,
-       mourner_grief_engine, hell_clock]
+       mourner_grief_engine, hell_clock, trophy_last_vote,
+       trophy_champions_bulwark, trophy_nanoforge, nobody_boarding_teleporter]
 
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)

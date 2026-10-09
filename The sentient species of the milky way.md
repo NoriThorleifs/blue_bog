@@ -51,6 +51,7 @@ Notable characters:
 - Odin the Hellacious
 - Yidun the Giantess
 - General Grönigen
+- [Nobody](Nobody.md)
 
 Hellborn:
 Demonic, Patient, Scheming.

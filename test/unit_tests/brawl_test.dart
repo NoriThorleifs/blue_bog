@@ -75,12 +75,173 @@ void main() {
   });
 
   test('the enemies keep getting harder', () {
-    var last = 0;
-    for (var r = 1; r <= 20; r++) {
-      final hull = brawlEnemy(r).hull;
-      expect(hull, greaterThanOrEqualTo(last));
-      last = hull;
+    for (var seed = 0; seed < 20; seed++) {
+      expect(
+        brawlEnemy(20, seed).hull,
+        greaterThan(brawlEnemy(1, seed).hull * 5),
+      );
     }
+  });
+
+  test('the same ship never comes up twice in a row', () {
+    for (var seed = 0; seed < 50; seed++) {
+      for (var r = 2; r <= 20; r++) {
+        expect(brawlEnemy(r, seed).name, isNot(brawlEnemy(r - 1, seed).name));
+      }
+    }
+  });
+
+  test('late brawls meet more than the dreadnought', () {
+    final names = {
+      for (var seed = 0; seed < 20; seed++)
+        for (var r = 11; r <= 30; r++) brawlEnemy(r, seed).name,
+    };
+    expect(names.length, brawlPools.last.length);
+  });
+
+  test('elites come up once, and only in their window', () {
+    final s = engine.start(Species.gor, seed: 1);
+    bool open(String id) => brawlEventsById[id]!.condition!(s);
+    for (final (id, from, to) in [
+      ('shakedown', 4, 5),
+      ('gor_duel', 8, 10),
+      ('unmerged_foundry', 11, 14),
+    ]) {
+      s
+        ..flags.clear()
+        ..round = from - 1;
+      expect(open(id), isFalse);
+      s.round = from;
+      expect(open(id), isTrue);
+      s.round = to + 1;
+      expect(open(id), isFalse);
+      s
+        ..round = to
+        ..flags.add(id);
+      expect(open(id), isFalse);
+    }
+  });
+
+  test('every elite fight pays a unique trophy', () {
+    final elites = [
+      for (final e in brawlEvents)
+        for (final c in e.choices)
+          for (final o in c.outcomes)
+            for (final f in o.effects.whereType<Fight>())
+              if (f.winCards.isNotEmpty) f,
+    ];
+    expect(elites, hasLength(3));
+    for (final f in elites) {
+      expect(f.special, isNotNull);
+      for (final id in f.winCards) {
+        expect(equipmentById(id).tier, Tier.unique);
+      }
+    }
+  });
+
+  test('Nobody boards at 40 seconds, and the captain is lost', () {
+    final r = fight(
+      Combatant(name: 'you', loadout: CombatLoadout.of(['shield_3'])),
+      Combatant(name: 'Nobody', loadout: SpecialEnemy.nobody.template.loadout),
+      tractorBeam: true,
+    );
+    expect(r.outcome, CombatOutcome.loss);
+    expect(r.seconds, 40);
+    expect(r.events.last.kind, CombatEventKind.boarded);
+  });
+
+  test('beating Nobody pays well, but his teleporter stays his', () {
+    const id = 'nobody_boarding_teleporter';
+    var wins = 0;
+    for (var seed = 0; seed < 40; seed++) {
+      final s = engine.start(Species.tern, seed: seed)
+        ..round = 9
+        ..event = 'nobody'
+        ..loadout = (Loadout()
+          ..add('teleporter_3')
+          ..add('teleport_charges_3'));
+      final after = engine.proceed(engine.choose(s, 1));
+      if (after.lost) continue;
+      wins++;
+      expect(after.loadout.all, isNot(contains(id)));
+      expect(after.flags, contains('nobody'));
+    }
+    expect(wins, greaterThan(0));
+  });
+
+  test('no event, shop or pool can hand out the boarding teleporter', () {
+    const id = 'nobody_boarding_teleporter';
+    for (final e in brawlEvents) {
+      for (final c in e.choices) {
+        for (final o in c.outcomes) {
+          for (final effect in o.effects) {
+            final ids = switch (effect) {
+              GainCards(:final ids) => ids,
+              GainRandom(:final pool) => pool,
+              Fight(:final winCards) => winCards,
+              _ => const <String>[],
+            };
+            expect(ids, isNot(contains(id)), reason: e.id);
+          }
+        }
+      }
+    }
+    expect([
+      for (final f in [...equipmentFamilies, ...hellFamilies])
+        for (final t in f.tiers) t.id,
+    ], isNot(contains(id)));
+  });
+
+  test('a shortage multiplies the price, a glut divides it', () {
+    final seen = <SupplyShock>{};
+    for (final id in brawlStations.keys) {
+      for (var round = 1; round <= 60; round++) {
+        final shock = supplyAt(id, 7, round);
+        for (final goodId in ['goods_grain', 'goods_ice']) {
+          final good = equipmentById(goodId);
+          final usual = commodityPrice(good, id, 7);
+          final now = commodityPrice(good, id, 7, time: round);
+          if (shock?.goodId != goodId) {
+            expect(now, usual);
+          } else if (shock!.shortage) {
+            expect(now, greaterThanOrEqualTo((usual * 2.4).floor()));
+          } else {
+            expect(now, lessThanOrEqualTo((usual * 0.46).ceil()));
+          }
+        }
+        if (shock != null) seen.add(shock);
+      }
+    }
+    expect(seen, SupplyShock.values.toSet());
+  });
+
+  test('supply shocks last a season, then move on', () {
+    final seasons = [
+      for (var round = 0; round < 90; round += supplySeason)
+        supplyAt('orcha', 3, round),
+    ];
+    expect(seasons.toSet().length, greaterThan(1));
+    for (var round = 0; round < 60; round++) {
+      expect(
+        supplyAt('orcha', 3, round),
+        supplyAt('orcha', 3, round - round % supplySeason),
+      );
+    }
+  });
+
+  test('the galactic median ignores supply shocks', () {
+    final grain = equipmentById('goods_grain');
+    final median = medianPrice(grain, brawlStations.keys, 7);
+    final prices = [
+      for (final id in brawlStations.keys) commodityPrice(grain, id, 7),
+    ]..sort();
+    expect(median, inInclusiveRange(prices.first, prices.last));
+  });
+
+  test('a hauler\'s cargo is plundered when it is destroyed', () {
+    final hauler = brawlPools[1].firstWhere((e) => e.cargo.isNotEmpty);
+    expect(hauler.cargo, isNotEmpty);
+    expect(hauler.forAct(3).cargo, hauler.cargo);
   });
 
   test('salvage merged after a fight leaves the replay as it was', () {

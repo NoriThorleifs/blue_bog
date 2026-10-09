@@ -328,8 +328,9 @@ class _TwentySevenScreenState extends ConsumerState<TwentySevenScreen>
                     ),
                     onPressed: brawl.credits <= 0
                         ? null
-                        : () =>
-                              _report(controller.dealTwentySeven(brawl.credits)),
+                        : () => _report(
+                            controller.dealTwentySeven(brawl.credits),
+                          ),
                     child: const Text(
                       'Count it all!',
                       style: TextStyle(fontWeight: FontWeight.w800),

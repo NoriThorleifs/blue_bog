@@ -14,7 +14,13 @@ Color cardColour(Equipment card) => switch (card.kind) {
   CardKind.equipment => switch (card.action) {
     FireLaser() => const Color(0xFF4DE1FF),
     FireMissile() => const Color(0xFFFFA24D),
-    TeleportBomb() => const Color(0xFFFF4D3D),
+    TeleportBomb() || Board() => const Color(0xFFFF4D3D),
+    IonBlast() => const Color(0xFFB48CFF),
+    Flak() => const Color(0xFFE6C36A),
+    Repair() => const Color(0xFF5CE0C8),
+    LanceShot() => const Color(0xFF9DF0FF),
+    JamTeleports() => const Color(0xFFFF8F80),
+    RailShot() => const Color(0xFFDCE4F0),
     Hellfire() => hellishRed,
     ChargeShields() => const Color(0xFF7FA8FF),
     BuildDrone() => const Color(0xFF5CFF8A),
@@ -127,7 +133,9 @@ class CardTile extends StatelessWidget {
     fit: BoxFit.scaleDown,
     alignment: Alignment.bottomCenter,
     child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 80),
+      // Laid out this wide, then shrunk to fit: narrow enough that names
+      // stay readable in a phone's combat triforce.
+      constraints: const BoxConstraints(maxWidth: 64),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -349,6 +349,7 @@ class GameEngine {
             rng,
             s.galaxy.seed,
             tradingPost: !tags.contains(Tag.market),
+            time: s.turn,
           )
         : null;
   }
@@ -376,7 +377,7 @@ class GameEngine {
   }
 
   int sellValue(RunState s, String cardId) =>
-      sellPrice(equipmentById(cardId), s.location, s.galaxy.seed);
+      sellPrice(equipmentById(cardId), s.location, s.galaxy.seed, time: s.turn);
 
   RunState sell(RunState state, CardSpot spot) {
     if (!_atMarket(state)) throw IllegalMove('No market');
@@ -412,6 +413,7 @@ class GameEngine {
           t.s.galaxy.seed,
           rerolls: market.rerolls + 1,
           tradingPost: market.tradingPost,
+          time: t.s.turn,
         );
     });
   }
@@ -794,8 +796,12 @@ class GameEngine {
             if (equipmentById(id).kind == CardKind.commodity) id,
         ];
         if (goods.isEmpty) break;
-        int value(String id) =>
-            commodityPrice(equipmentById(id), s.location, s.galaxy.seed);
+        int value(String id) => commodityPrice(
+          equipmentById(id),
+          s.location,
+          s.galaxy.seed,
+          time: s.turn,
+        );
         goods.sort((a, b) => value(b).compareTo(value(a)));
         final price = (value(goods.first) * markup).round();
         s.loadout.remove(goods.first);
