@@ -119,6 +119,28 @@ List<Widget> guideWorld() => [
         'Selling housing is the only way to make humans leave: the ones '
             'without a home go.',
       ]),
+      const GuideText(
+        'Between a fight and the next dock you are in transit, and now and '
+        'then the colony needs its captain: a petition from its '
+        'representatives, news from the other elected captains, veterans '
+        'coming home. The humans govern themselves, but it is your ship and '
+        'you have the final say. How you answer moves how much they like '
+        'you. A colony that likes you grows faster; one that stops liking '
+        'you altogether stops patching your hull.',
+      ),
+      const GuideText(
+        'Look after them and they look after you. A Content colony now and '
+        'then builds you a copy of one of your cards, patches your hull past '
+        'the usual limit or takes up a collection. A Devoted one loads your '
+        'launchers, sends a boarding party ahead to hole your next enemy, or '
+        'reinforces your hull for good. Their mood shows on the Ship tab.',
+      ),
+      const GuideText(
+        'Once the humans go to war for Neo Terra, a universal draft takes a '
+        'few of your humans at every dock. Children are still born aboard and '
+        'new humans still move in, and after a while the veterans start '
+        'coming home.',
+      ),
     ],
   ),
   const GuideSection(

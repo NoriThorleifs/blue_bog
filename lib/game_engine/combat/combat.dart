@@ -159,8 +159,10 @@ List<double?> cooldownSeconds(CombatLoadout loadout) {
 /// Fights last at most this long, unless a tractor beam holds both ships.
 const combatTimeLimit = 60.0;
 
-/// Cooldowns can't be cut below this fraction, or below one second.
-const minCooldownFraction = 0.5;
+/// No card fires more often than this, in seconds, however many charge
+/// boosts stack on it. Boosts add up with no other cap, so a teleport bomb
+/// with enough of them fires every second, for as long as its charges last.
+const minCooldown = 1.0;
 
 /// Simulates a fight between [a] and [b]. Deterministic: the same ships
 /// always fight the same way.
@@ -316,10 +318,7 @@ class _Side {
       }
       cut += boost.percent;
     }
-    final seconds = max(
-      max(1.0, base * minCooldownFraction),
-      base * (100 - cut) / 100,
-    );
+    final seconds = max(minCooldown, base * (100 - cut) / 100);
     return (seconds * 10).round();
   }
 

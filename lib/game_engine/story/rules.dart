@@ -1,3 +1,4 @@
+import '../colony.dart';
 import '../faction.dart';
 import '../run_state.dart';
 import 'conditions.dart';
@@ -38,7 +39,7 @@ class Humans extends Effect {
   final int amount;
 
   /// A loss this big empties the colony, whatever its hospitals do.
-  static const everyone = 1000000;
+  static const everyone = Colony.everyone;
 }
 
 class Loyalty extends Effect {

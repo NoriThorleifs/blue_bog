@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'combat/equipment.dart';
 import 'deck/loadout.dart';
 import 'rng.dart';
 
@@ -19,6 +20,20 @@ abstract final class Colony {
     final patch = humans ~/ humansPerHull + stats.crawlspace;
     return hull < cap && patch > 0 ? min(cap, hull + patch) : hull;
   }
+
+  /// The colony after [amount] humans join (or leave, if negative): capped
+  /// by housing, with hospitals cutting every loss short of [everyone]
+  /// leaving.
+  static int changed(int humans, int amount, ShipStats stats) {
+    final cut = min(stats.hospital * 10, maxHospitalCut);
+    final change = amount < 0 && amount > -everyone
+        ? (amount * (100 - cut) / 100).round()
+        : amount;
+    return (humans + change).clamp(0, stats.housing);
+  }
+
+  /// A loss this big empties the colony, whatever its hospitals do.
+  static const everyone = 1000000;
 
   /// How many humans move into the colony's free housing: children born
   /// aboard wherever the ship is, and at a [station], adults signing on,

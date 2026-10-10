@@ -96,10 +96,13 @@ class BrawlState {
     this.lost = false,
     this.humans = const HumanResources(count: 0, loyalty: 50, drift: 0),
     this.retired = false,
+    this.inTransit = false,
     Set<String>? flags,
+    Map<String, int>? counters,
     List<String>? log,
     List<String>? wreckage,
   }) : flags = flags ?? {},
+       counters = counters ?? {},
        log = log ?? [],
        wreckage = wreckage ?? [];
 
@@ -157,6 +160,21 @@ class BrawlState {
   /// Set when a captain who beat Satan retires: the brawl is won and over.
   bool retired;
 
+  /// Between a fight and the next dock, with an event in front of the
+  /// captain.
+  bool inTransit;
+
+  /// Story numbers, like the size of the Hellborn cell in the colony.
+  Map<String, int> counters;
+
+  int counter(String key) => counters[key] ?? 0;
+
+  /// Hellborn agents hidden in the colony. They never out themselves.
+  int get hellbornCell => counter(hellbornCellKey);
+
+  /// The universal draft for Neo Terra is on.
+  bool get drafted => flags.contains(draftOn);
+
   /// Satan is coming: the brawl has reached [brawlFinalFight] and he
   /// hasn't been beaten.
   bool get satanDue => round >= brawlFinalFight && !flags.contains(beatSatan);
@@ -207,7 +225,9 @@ class BrawlState {
     lost: lost,
     humans: humans,
     retired: retired,
+    inTransit: inTransit,
     flags: {...flags},
+    counters: {...counters},
     log: [...log],
     wreckage: [...wreckage],
   );

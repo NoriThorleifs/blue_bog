@@ -56,8 +56,9 @@ List<Widget> guideBasics() => [
       const GuideText(
         'Where a card sits matters: boosters like Fire Control only speed up '
         'the cards in their own small triangle. A few, like the Capacitor '
-        'Bank, help the whole ship. Nothing can make a card fire more than '
-        'twice as fast.',
+        'Bank, help the whole ship. Boosts stack, and the only limit is that '
+        'no card fires more than once a second. Ammunition runs out faster '
+        'that way.',
       ),
       const GuideCardRow([
         ('fire_control_1', 'Speeds up its triangle'),

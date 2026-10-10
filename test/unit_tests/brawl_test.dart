@@ -8,6 +8,8 @@ import 'package:blue_bog/game_engine/combat/equipment.dart';
 import 'package:blue_bog/game_engine/deck/loadout.dart';
 import 'package:blue_bog/game_engine/engine.dart' show IllegalMove;
 import 'package:blue_bog/game_engine/market.dart';
+import 'package:blue_bog/game_engine/rng.dart';
+import 'package:blue_bog/game_engine/run_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const engine = BrawlEngine();
@@ -59,7 +61,7 @@ void main() {
       expect(() => engine.buy(out, 0), throwsA(isA<IllegalMove>()));
       final chosen = engine.choose(out, _staysOut(out));
       expect(chosen.result, isNotNull);
-      final docked = engine.proceed(chosen);
+      final docked = _landed(engine.proceed(chosen));
       expect(docked.docked, isTrue);
       expect(docked.round, 2);
       expect(docked.station, isNot(s.station));
@@ -83,7 +85,9 @@ void main() {
         final s = engine.start(Species.tern, seed: seed);
         s.loadout.add('shop_2');
         final out = engine.launch(s);
-        final docked = engine.proceed(engine.choose(out, _staysOut(out)));
+        final docked = _landed(
+          engine.proceed(engine.choose(out, _staysOut(out))),
+        );
         if (docked.lost) continue;
         docks++;
         expect(docked.humans.count, greaterThan(s.humans.count));
@@ -325,7 +329,7 @@ void main() {
     test('the Mourner always gives the Hell Clock, and lets you go', () {
       for (var choice = 0; choice < 3; choice++) {
         var s = inHell('hell_mourner')..hull = 50;
-        s = engine.proceed(engine.choose(s, choice));
+        s = _landed(engine.proceed(engine.choose(s, choice)));
         expect(s.lost, isFalse);
         expect(s.loadout.all, contains('hell_clock'));
         expect(s.inHell, isFalse);
@@ -475,6 +479,185 @@ void main() {
     });
   });
 
+  group('in transit', () {
+    /// Fights once from [s], choosing the first option that stays out of
+    /// Hell, and returns the state just after the fight.
+    BrawlState afterFight(BrawlState s) {
+      final out = engine.launch(s);
+      return engine.proceed(engine.choose(out, _staysOut(out)));
+    }
+
+    test('something happens in transit after some fights, not all', () {
+      var transits = 0, docks = 0;
+      for (var seed = 0; seed < 60; seed++) {
+        final s = afterFight(engine.start(Species.tern, seed: seed));
+        if (s.lost) continue;
+        if (s.inTransit) {
+          transits++;
+          expect(s.currentEvent!.aftermath, isTrue);
+          expect(s.docked, isFalse);
+          final docked = engine.proceed(engine.choose(s, 0));
+          expect(docked.docked, isTrue, reason: 'one event, then the dock');
+        } else {
+          docks++;
+          expect(s.docked, isTrue);
+        }
+      }
+      expect(transits, greaterThan(5));
+      expect(docks, greaterThan(transits));
+    });
+
+    test('the war for Neo Terra starts the draft at fight 5', () {
+      final s = engine.start(Species.tern, seed: 2).clone()..round = 5;
+      final war = afterFight(s);
+      if (war.lost) return;
+      expect(war.event, 'neo_terra_war');
+      final docked = engine.proceed(engine.choose(war, 0));
+      expect(docked.drafted, isTrue);
+      expect(docked.log, contains(contains('left for the front')));
+    });
+
+    test('veterans come home after a tour, helmets and all', () {
+      final s = engine.start(Species.tern, seed: 2).clone()
+        ..round = 9
+        ..flags.add(draftOn)
+        ..counters[draftRoundKey] = 5;
+      final veterans = brawlEventsById['veterans_home']!;
+      expect(veterans.condition!(s), isTrue);
+      final helmet = brawlEventsById['the_helmet']!;
+      expect(helmet.condition!(s), isFalse);
+      expect(helmet.condition!(s..flags.add('veterans_home')), isTrue);
+    });
+
+    test('leaving Hell after a while can bring Hellborn aboard', () {
+      final s = engine.start(Species.tern, seed: 2).clone()
+        ..leavingHell = true
+        ..hellTurns = 3
+        ..humans = const HumanResources(count: 100, loyalty: 50, drift: 0);
+      final headcount = brawlEventsById['hell_headcount']!;
+      expect(headcount.condition!(s), isTrue);
+      final lines = <String>[];
+      for (final e in headcount.choices.first.outcomes.single.effects) {
+        applyBrawlEffect(s, GameRng(1), e, lines);
+      }
+      expect(s.humans.count, 120);
+      expect(s.hellbornCell, 1);
+    });
+
+    test('a wrong warp skips the trouble, or drops you in Hell', () {
+      var skipped = 0, hell = 0;
+      for (var seed = 0; seed < 40; seed++) {
+        final s = engine.start(Species.tern, seed: seed).clone()
+          ..flags.add('wrong_warp');
+        final out = engine.launch(s);
+        expect(out.event, 'wrong_warp');
+        final after = engine.choose(out, 0);
+        expect(after.flags, isNot(contains('wrong_warp')));
+        if (after.inHell) {
+          hell++;
+        } else {
+          skipped++;
+          expect(after.plannedFight, isNull);
+        }
+      }
+      expect(skipped, greaterThan(hell));
+      expect(hell, greaterThan(0));
+    });
+
+    test('a colony on strike stops patching the hull', () {
+      final s = engine.start(Species.tern, seed: 2).clone()
+        ..hull = 200
+        ..humans = const HumanResources(count: 200, loyalty: 10, drift: 0)
+        ..flags.add(colonyStrike);
+      final out = engine.launch(s);
+      final docked = engine.proceed(engine.choose(out, _staysOut(out)));
+      if (docked.lost || docked.inTransit) return;
+      expect(docked.log, isNot(contains(contains('patched'))));
+    });
+  });
+
+  group('colony gifts', () {
+    BrawlState colony(int loyalty, {int round = 6}) =>
+        engine.start(Species.tern, seed: 3).clone()
+          ..round = round
+          ..humans = HumanResources(count: 250, loyalty: loyalty, drift: 0);
+    final gifts = [
+      for (final e in brawlEvents)
+        if (e.id.startsWith('gift_')) e,
+    ];
+
+    test('only a happy colony gives gifts', () {
+      for (final gift in gifts) {
+        expect(gift.condition!(colony(40)), isFalse, reason: gift.id);
+      }
+      final content = colony(65)..hull = 300;
+      expect(gifts.where((g) => g.condition!(content)), isNotEmpty);
+      final devoted = colony(90)..hull = 300;
+      expect(
+        gifts.where((g) => g.condition!(devoted)).length,
+        greaterThan(gifts.where((g) => g.condition!(content)).length),
+      );
+    });
+
+    test('at most one gift every three fights', () {
+      final s = colony(90)..counters['colony_gift'] = 5;
+      expect(gifts.where((g) => g.condition!(s)), isEmpty);
+      s.round = 8;
+      expect(gifts.where((g) => g.condition!(s)), isNotEmpty);
+    });
+
+    List<String> apply(BrawlState s, BrawlEffect effect) {
+      final lines = <String>[];
+      applyBrawlEffect(s, GameRng(1), effect, lines);
+      return lines;
+    }
+
+    test('spare parts copy a card in the triforce', () {
+      final s = colony(70);
+      final before = s.loadout.copiesOf('shield_1');
+      apply(s, const GainCopy());
+      final lasers = s.loadout.all.where((id) => id.startsWith('laser'));
+      expect(
+        lasers.contains('laser_2') || s.loadout.copiesOf('shield_1') > before,
+        isTrue,
+      );
+    });
+
+    test('ammunition matches a launcher and its tier', () {
+      final s = colony(90)..loadout.slots[5] = 'missiles_2';
+      s.loadout.hold.clear();
+      apply(s, const GainAmmo());
+      expect(s.loadout.all, contains('missile_crate_2'));
+    });
+
+    test('shipwrights add a hull upgrade for good', () {
+      final s = colony(90);
+      final max = s.stats.maxHull;
+      apply(s, const HullUpgrade());
+      expect(s.stats.maxHull, max + ShipStats.hullPerUpgrade);
+    });
+
+    test('a boarding party holes the next enemy before the fight', () {
+      var fights = 0;
+      for (var seed = 0; seed < 20; seed++) {
+        final s = colony(90)
+          ..rngState = seed
+          ..flags.add(boardingParty);
+        final out = engine.launch(s);
+        final fought = engine.proceed(engine.choose(out, _staysOut(out)));
+        final record = fought.lastCombat;
+        if (record == null) continue;
+        fights++;
+        expect(fought.flags, isNot(contains(boardingParty)));
+        expect(
+          record.result.snapshots.first.hull[1],
+          (record.enemyMaxHull * boardedHull).round(),
+        );
+      }
+      expect(fights, greaterThan(0));
+    });
+  });
+
   group('the end', () {
     String h(String id) => '$id#hellish';
 
@@ -606,4 +789,12 @@ int _staysOut(BrawlState s) {
           !choices[i].outcomes.any((o) => o.effects.any((e) => e is EnterHell)))
         i,
   ].first;
+}
+
+/// Passes through anything that happens in transit, to the dock.
+BrawlState _landed(BrawlState s) {
+  while (s.inTransit && !s.lost) {
+    s = engine.proceed(engine.choose(s, _staysOut(s)));
+  }
+  return s;
 }

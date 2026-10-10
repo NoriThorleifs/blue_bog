@@ -44,6 +44,17 @@ class BrawlEngine {
   /// Hull Hell's sea eats every turn.
   static const hellCorrosion = 25;
 
+  /// The chance that something happens in transit, between a fight and the
+  /// next dock, unless an event is due anyway.
+  static const aftermathChance = 0.4;
+
+  /// The share of the colony each dock sends to Neo Terra once the draft
+  /// is on.
+  static const draftShare = 0.03;
+
+  /// Loyalty at which a striking colony goes back to patching the hull.
+  static const strikeOver = 40;
+
   BrawlState start(Species species, {required int seed}) {
     final loadout = Loadout();
     for (final id in brawlStartingCards(species)) {
@@ -383,12 +394,15 @@ class BrawlEngine {
     if (state.result == null) throw IllegalMove('Choose first');
     return _step(state, (s, rng) {
       final fight = s.plannedFight;
+      final wasInTransit = s.inTransit;
       s
         ..event = null
         ..result = null
         ..plannedFight = null
-        ..wreckage = []
+        ..inTransit = false
         ..log = [];
+      // What was left in a wreck stays reachable until the ship docks.
+      if (!wasInTransit) s.wreckage = [];
       if (s.lost) return;
       if (fight != null) {
         _fight(s, rng, fight);
@@ -396,6 +410,12 @@ class BrawlEngine {
       }
       // Satan beaten: nothing moves until the captain retires or goes on.
       if (s.awaitingVerdict) return;
+      if (!wasInTransit &&
+          !s.inHell &&
+          (fight != null || s.leavingHell) &&
+          _pickAftermath(s, rng)) {
+        return;
+      }
       if (s.inHell) {
         _hellTurn(s, rng);
       } else {
@@ -404,18 +424,32 @@ class BrawlEngine {
     });
   }
 
-  void _pickEvent(BrawlState s, GameRng rng) {
+  /// Maybe puts something in front of the captain in transit, between a
+  /// fight and the next dock. Returns whether it did.
+  bool _pickAftermath(BrawlState s, GameRng rng) {
+    bool fits(BrawlEvent e) => e.aftermath && (e.condition?.call(s) ?? true);
     final event =
-        brawlEvents
-            .where((e) => e.always && (e.condition?.call(s) ?? true))
-            .firstOrNull ??
+        brawlEvents.where((e) => e.always && fits(e)).firstOrNull ??
+        (rng.chance(aftermathChance)
+            ? rng.weighted(
+                brawlEvents.where((e) => !e.always && fits(e)),
+                (e) => e.weight?.call(s) ?? 1,
+              )
+            : null);
+    if (event == null) return false;
+    s
+      ..event = event.id
+      ..result = null
+      ..inTransit = true;
+    return true;
+  }
+
+  void _pickEvent(BrawlState s, GameRng rng) {
+    bool fits(BrawlEvent e) => !e.aftermath && (e.condition?.call(s) ?? true);
+    final event =
+        brawlEvents.where((e) => e.always && fits(e)).firstOrNull ??
         rng.weighted(
-          brawlEvents.where(
-            (e) =>
-                !e.always &&
-                e.hell == s.inHell &&
-                (e.condition?.call(s) ?? true),
-          ),
+          brawlEvents.where((e) => !e.always && e.hell == s.inHell && fits(e)),
           (e) => e.weight?.call(s) ?? 1,
         )!;
     s
@@ -515,6 +549,10 @@ class BrawlEngine {
     });
   }
 
+  /// Forgets what happened since the last decision, once the captain has
+  /// read it.
+  BrawlState clearLog(BrawlState state) => _step(state, (s, _) => s.log = []);
+
   /// Ends a brawl the captain has won, after beating Satan.
   BrawlState retire(BrawlState state) {
     if (!state.awaitingVerdict) throw IllegalMove('Not now');
@@ -538,10 +576,21 @@ class BrawlEngine {
   /// At each dock the humans patch the hull, the colony grows, and its
   /// businesses pay out. See [Colony].
   void _tendColony(BrawlState s, GameRng rng) {
+    if (s.flags.contains(colonyStrike) && s.humans.loyalty >= strikeOver) {
+      s.flags.remove(colonyStrike);
+      s.log.add('The colony is patching the hull again.');
+    }
     final before = s.hull;
-    s.hull = Colony.patched(s.hull, s.humans.count, s.stats);
+    if (!s.flags.contains(colonyStrike)) {
+      s.hull = Colony.patched(s.hull, s.humans.count, s.stats);
+    }
     if (s.hull > before) {
       s.log.add('Your humans patched ${s.hull - before} hull.');
+    }
+    if (s.drafted && s.humans.count > 0) {
+      final called = max(1, (s.humans.count * draftShare).round());
+      s.humans = s.humans.copyWith(count: s.humans.count - called);
+      s.log.add('$called humans left for the front on Neo Terra.');
     }
     final (:born, :joined) = Colony.growth(
       humans: s.humans.count,
@@ -571,11 +620,26 @@ class BrawlEngine {
       baseHull: baseHull + s.hullUpgrades * ShipStats.hullPerUpgrade,
       hull: s.hull,
     );
-    final foe = Combatant(
+    final boarded = s.flags.remove(boardingParty);
+    final full = Combatant(
       name: enemy.name,
       loadout: enemy.loadout,
       baseHull: enemy.hull,
     );
+    final foe = boarded
+        ? Combatant(
+            name: enemy.name,
+            loadout: enemy.loadout,
+            baseHull: enemy.hull,
+            hull: (full.maxHull * boardedHull).round(),
+          )
+        : full;
+    if (boarded) {
+      s.log.add(
+        'Your humans\' boarding party got there first: the ${enemy.name} '
+        'starts the fight already holed.',
+      );
+    }
     final result = fight(player, foe, tractorBeam: plan.tractorBeam);
     s.hull = result.hull;
     final salvage = <String>[];

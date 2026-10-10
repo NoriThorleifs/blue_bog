@@ -23,6 +23,37 @@ class BrawlLog extends StatelessWidget {
   );
 }
 
+/// Shows what happened since the captain last decided anything, in a
+/// dialog they dismiss, so it doesn't sit over the shop.
+Future<void> showBrawlLog(
+  BuildContext context,
+  String title,
+  List<String> lines,
+) => showDialog<void>(
+  context: context,
+  builder: (context) => AlertDialog(
+    title: Text(title),
+    content: SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final line in lines)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(line),
+            ),
+        ],
+      ),
+    ),
+    actions: [
+      FilledButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('OK'),
+      ),
+    ],
+  ),
+);
+
 class LaunchBar extends StatelessWidget {
   const LaunchBar({super.key, required this.brawl, required this.onLaunch});
   final BrawlState brawl;
@@ -41,10 +72,6 @@ class LaunchBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (brawl.log.isNotEmpty) ...[
-                BrawlLog(brawl.log),
-                const SizedBox(height: 8),
-              ],
               FilledButton.icon(
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(52),

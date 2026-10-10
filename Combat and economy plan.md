@@ -46,7 +46,7 @@ Plan for the card combat system, the ship loadout rules and the economy around t
    | Hull stacking | everything, slowly |
 6. **Timers stay readable.**
    - Cooldowns come from a small set: 3, 4, 5, 6, 8, 12, 18 and 24 s.
-   - Speed buffs can't push a cooldown below 50% of its base, or below 1 s.
+   - Speed buffs stack with no percentage cap; the only floor is 1 s (the author lifted the old 50% cap so spam builds, like teleport bombs every second, are possible).
    - A full minute is roughly 6–20 activations per card, enough for setups to matter without becoming noise.
 
 ## Starting numbers (basic tier)

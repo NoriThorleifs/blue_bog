@@ -34,6 +34,27 @@ class GainRandom extends BrawlEffect {
   final int count;
 }
 
+/// Another copy of a random card in the triforce, toward a merge.
+class GainCopy extends BrawlEffect {
+  const GainCopy();
+}
+
+/// Ammunition for a random launcher in the triforce, at its tier.
+class GainAmmo extends BrawlEffect {
+  const GainAmmo();
+}
+
+/// A permanent hull upgrade, as if bought at a shipyard.
+class HullUpgrade extends BrawlEffect {
+  const HullUpgrade();
+}
+
+/// Notes the current fight under [key] in the brawl's counters.
+class MarkRound extends BrawlEffect {
+  const MarkRound(this.key);
+  final String key;
+}
+
 /// Loses a random card from the hold.
 class LoseCargo extends BrawlEffect {
   const LoseCargo();
@@ -91,6 +112,33 @@ class SetFlag extends BrawlEffect {
   final String flag;
 }
 
+class ClearFlag extends BrawlEffect {
+  const ClearFlag(this.flag);
+  final String flag;
+}
+
+/// The colony grows or shrinks (hospitals cut losses), and its feelings
+/// about the captain shift: [loyalty] toward them, [drift] toward human
+/// ways if positive.
+class ColonyChange extends BrawlEffect {
+  const ColonyChange({this.humans = 0, this.loyalty = 0, this.drift = 0});
+  final int humans;
+  final int loyalty;
+  final int drift;
+}
+
+/// Hellborn agents join (or leave) the colony's hidden cell.
+class CellChange extends BrawlEffect {
+  const CellChange(this.amount);
+  final int amount;
+}
+
+/// The universal draft for the war on Neo Terra starts: from now on every
+/// dock sends some of the colony to the front.
+class StartDraft extends BrawlEffect {
+  const StartDraft();
+}
+
 class Outcome {
   const Outcome(this.text, {this.weight = 1, this.effects = const []});
   final String text;
@@ -114,6 +162,7 @@ class BrawlEvent {
     required this.text,
     required this.choices,
     this.hell = false,
+    this.aftermath = false,
     this.always = false,
     this.weight,
     this.condition,
@@ -127,8 +176,13 @@ class BrawlEvent {
   /// Met in Hell rather than on the way out of a station.
   final bool hell;
 
-  /// Comes up ahead of anything else, in or out of Hell, whenever its
-  /// [condition] holds.
+  /// Comes up in transit, after a fight and before the next dock, rather
+  /// than on the way out of a station. Only sometimes: see
+  /// [BrawlEngine.aftermathChance].
+  final bool aftermath;
+
+  /// Comes up ahead of anything else in its phase whenever its [condition]
+  /// holds.
   final bool always;
   final double Function(BrawlState)? weight;
   final bool Function(BrawlState)? condition;

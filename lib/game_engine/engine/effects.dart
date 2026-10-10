@@ -11,6 +11,7 @@ import '../run_state.dart';
 import '../story/keys.dart';
 import '../story/rules.dart';
 import '../story/story.dart';
+import '../colony.dart';
 import 'turn.dart';
 import 'turn_flow.dart';
 import 'world_effects.dart';
@@ -43,13 +44,8 @@ extension Effects on EngineTurn {
           s.ending = Ending.shipDestroyed;
         }
       case Humans(:final amount):
-        // Hospitals cut every loss short of the whole colony leaving.
-        final cut = min(s.stats.hospital * 10, maxHospitalCut);
-        final change = amount < 0 && amount > -Humans.everyone
-            ? (amount * (100 - cut) / 100).round()
-            : amount;
         s.humans = s.humans.copyWith(
-          count: (s.humans.count + change).clamp(0, s.stats.housing),
+          count: Colony.changed(s.humans.count, amount, s.stats),
         );
         if (s.humans.count == 0) s.flags.remove(Flag.hellbornAgentAboard);
       case Loyalty(:final amount):

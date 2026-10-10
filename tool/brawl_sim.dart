@@ -60,6 +60,10 @@ BrawlState play(Species species, int seed, {required bool diver}) {
       s = engine.launch(shop(s));
       continue;
     }
+    if (s.awaitingVerdict) {
+      s = engine.goEndless(s);
+      continue;
+    }
     if (s.result != null) {
       s = engine.proceed(s);
       continue;

@@ -186,21 +186,29 @@ void main() {
     expect(shots.first.value, 45);
   });
 
-  test('charge boosts cannot cut a cooldown below half', () {
-    // Three fire controls in one triangle would be 45% each.
+  double firstShot(List<String?> topTriangle) {
     final r = fight(
       Combatant(
         name: 'me',
-        loadout: CombatLoadout([
-          'laser_1', 'fire_control_3', 'fire_control_3', //
-          ...List.filled(6, null),
-        ]),
+        loadout: CombatLoadout([...topTriangle, ...List.filled(6, null)]),
         baseHull: 100000,
       ),
       target([]),
     );
-    final first = r.events.firstWhere((e) => e.side == 0);
-    expect(first.time, 2.5);
+    return r.events.firstWhere((e) => e.side == 0).time;
+  }
+
+  test('charge boosts stack past half a cooldown', () {
+    // Two Targeting Suites at 30% each: a 5 s laser fires every 2 s.
+    expect(firstShot(['laser_1', 'fire_control_2', 'fire_control_2']), 2.0);
+  });
+
+  test('but no card fires more than once a second', () {
+    // Two Ternary Fire Directors at 45% each would leave half a second.
+    expect(
+      firstShot(['laser_1', 'fire_control_3', 'fire_control_3']),
+      minCooldown,
+    );
   });
 
   test('weapons without ammo do nothing', () {

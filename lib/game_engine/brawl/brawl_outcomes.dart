@@ -1,6 +1,8 @@
 import 'dart:math';
 
+import '../colony.dart';
 import '../combat/catalog.dart';
+import '../combat/equipment.dart';
 import '../deck/loadout.dart';
 import '../rng.dart';
 import 'brawl_events.dart';
@@ -57,6 +59,53 @@ void applyBrawlEffect(
         ..leavingHell = true;
     case SetFlag(:final flag):
       s.flags.add(flag);
+    case ClearFlag(:final flag):
+      s.flags.remove(flag);
+    case ColonyChange(:final humans, :final loyalty, :final drift):
+      final before = s.humans.count;
+      s.humans = s.humans.copyWith(
+        count: Colony.changed(before, humans, s.stats),
+        loyalty: s.humans.loyalty + loyalty,
+        drift: s.humans.drift + drift,
+      );
+      final moved = s.humans.count - before;
+      if (moved > 0) lines.add('$moved humans joined the colony.');
+      if (moved < 0) lines.add('${-moved} humans left the colony.');
+    case GainCopy():
+      final cards = [
+        for (final id in s.loadout.slots.whereType<String>())
+          if (equipmentById(id) case final e
+              when e.merges && e.kind == CardKind.equipment)
+            baseId(id),
+      ];
+      if (cards.isEmpty) {
+        lines.add('There was nothing aboard worth copying.');
+      } else {
+        gainCard(s, rng.pick(cards), lines);
+      }
+    case GainAmmo():
+      final ammo = [
+        for (final id in s.loadout.slots.whereType<String>())
+          if (_ammoFor[equipmentById(id).family] case final family?)
+            '${family}_${equipmentById(id).tier.index + 1}',
+      ];
+      if (ammo.isEmpty) {
+        lines.add('There was nothing aboard to load.');
+      } else {
+        gainCard(s, rng.pick(ammo), lines);
+      }
+    case HullUpgrade():
+      s
+        ..hullUpgrades += 1
+        ..hull += ShipStats.hullPerUpgrade;
+      lines.add('+${ShipStats.hullPerUpgrade} maximum hull, for good.');
+    case MarkRound(:final key):
+      s.counters[key] = s.round;
+    case CellChange(:final amount):
+      s.counters[hellbornCellKey] = max(0, s.hellbornCell + amount);
+    case StartDraft():
+      s.flags.add(draftOn);
+      s.counters[draftRoundKey] = s.round;
   }
 }
 
@@ -100,3 +149,10 @@ String wreckageNote(List<String> ids) {
   return 'No room for $names. It waits in the wreckage until you move on: '
       'jettison something to take it.';
 }
+
+/// The supplies each launcher family fires, for [GainAmmo].
+const _ammoFor = {
+  'missiles': 'missile_crate',
+  'teleporter': 'teleport_charges',
+  'fabricator': 'feedstock',
+};

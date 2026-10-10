@@ -41,12 +41,30 @@ class _BrawlScreenState extends ConsumerState<BrawlScreen> {
     if (mounted) setState(() => _frozen = null);
   }
 
+  /// Whether the log dialog is open, so it opens once per batch of news.
+  bool _showingLog = false;
+
+  /// Pops up whatever happened since the last decision, once the captain
+  /// is docked and can read it, then forgets it.
+  void _showLog(BrawlState brawl) {
+    if (_showingLog || !brawl.docked || brawl.log.isEmpty) return;
+    _showingLog = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await showBrawlLog(context, brawl.stationName, brawl.log);
+      if (!mounted) return;
+      ref.read(brawlProvider.notifier).clearLog();
+      _showingLog = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final brawl = _frozen ?? ref.watch(brawlProvider);
     if (brawl == null) return const Scaffold();
     if (brawl.lost || brawl.retired) return GameOver(brawl: brawl);
     if (brawl.awaitingVerdict) return Victory(brawl: brawl);
+    if (_frozen == null) _showLog(brawl);
     final text = Theme.of(context).textTheme;
     final docked = brawl.docked;
     final hull = 'Hull ${brawl.hull}/${brawl.stats.maxHull}';
@@ -70,6 +88,8 @@ class _BrawlScreenState extends ConsumerState<BrawlScreen> {
                     ? 'Hell'
                     : docked
                     ? brawl.stationName
+                    : brawl.inTransit
+                    ? 'In transit'
                     : 'Leaving ${brawl.stationName}',
               ),
               Text(
