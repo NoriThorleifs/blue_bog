@@ -5,11 +5,11 @@ These beings have dominated the galaxy for more than a millennia. These beings o
 notable characters:
 - [The Overseer](The-Overseer.md)
 - [The Mourner](The-Mourner.md)
-- Shining Head
+- [Shining Head](Shining-head.md)
 
 Unfortunates:
 Mechanical, Mysterious, Sneaky.
-These machine beings originate in the Kyndari system. Nobody knows what happened to the biological beings that made them, people aren't sure if it was the Havi who made them or if they made modifications to the machines to uplift them. The Unfortunates are constantly shrouded in mystery. They are said to have assisted in building the gateways and posses the technology to create new gates, but they adamantly refuse to admit how much they know.
+These machine beings originate in the Kyndari system. Nobody knows what happened to the biological beings that made them, people aren't sure if it was the Havi who made them or if they made modifications to the machines to uplift them. The Unfortunates are constantly shrouded in mystery. They are said to have assisted in building the gateways and posses the technology to create new gates, but they adamantly refuse to admit how much they know. Since the gatecrash they are a shadow of their former selves: cloistered, arrogant and bitter. They have lost their connection to the Havi, and all they have left is the Overseer, who pays them less attention than they'd like and doesn't want to touch the gateways.
 notable characters:
 - The Eldest
 
@@ -19,7 +19,7 @@ These mechanical beings were made by the Havi to optimize their empire. The main
 The Tern are more powerful than the Unfortunates in every way, but they are extremely expensive to produce. The Tern bodies are composed of nanobots that are capable of self replication if they have access to the right materials.
 They have very little concept of self identity and will form a hivemind with other Terns that are within radio range. They can also merge or split their bodies depending on what their situation requires, but will usually keep themselves in a size akin to the average size of the minor species.
 Notable characters:
-- Tjí-Li-La-Jay A.K.A Mister Jay
+- [Tjí-Li-La-Jay A.K.A Mister Jay](Mister%20Jay.md)
 
 Gor:
 Pride, Honor, Aggression.

@@ -336,7 +336,7 @@ enum SpecialEnemy {
   satan(
     EnemyTemplate(
       'Satan',
-      2000,
+      3500,
       CombatLoadout(
         [
           'teleporter_2',
@@ -345,7 +345,7 @@ enum SpecialEnemy {
           'jammer_1',
           'ion_2',
           'flak_2',
-          'brandy_mist_1',
+          'brimstone_2',
           'metal_flesh_3',
           'metal_flesh_2',
         ],

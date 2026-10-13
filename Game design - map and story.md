@@ -15,7 +15,7 @@ From there the outline plays out as **story beats**, checked at the end of every
 | 1 | War for Neo Terra | Can succeed, stall ratification or bog down. Success grants the planet |
 | 1 | Gor–Bhrun war, battle in the pipe | +25% Hell risk on that pipe during the war. Code Green makes the Gor fleet vanish |
 | 1 | Consumers invade Bhrun-Gai | The Direction Remover |
-| 1→2 | Center–Træ Træ Tene gateway restored | Starts act 2 |
+| 1→2 | Three plans for the dead gateway, then the Center–Træ Træ Tene gateway restored | Starts act 2. The plans reach the captain wherever they are; the gate opens by the route they back (see below) |
 | 2 | Wrong warping | Raises Hell risk in every pipe |
 | 2 | Training broadcast → Overseer suspects | A Tern captain with a good bond can be the one who notices ([[lore/The revelation|The revelation]]) |
 | 2 | Overseer goes to Neo Terra | Shining-head dies, the Overseer is lost to the Mourner. More gateway restorations follow |
@@ -59,7 +59,7 @@ Replaced the old crew of 3 to 27 humans. Decided with the author. Step 1 is buil
 - **No upkeep.** The captain pays no wages and no colony upkeep. A colony that big makes ends meet on its own, and the Republic subsidised the retrofit.
 - **What's built (step 1).** Rules shared by both modes are in `lib/game_engine/colony.dart`.
   - The colony grid is 3×3 (`Loadout.colonySide`). Colony cards (`CardKind.colony`) fit only there or in the hold, and nothing else fits there. Their tier marks are squares, not triangles.
-  - Cards: Habitat Block (houses 100, ×3 per tier), Clinic (cuts the colony's losses by 10% per level, up to 75%, and slowly raises loyalty), Crawlspace Crews (patch 10 hull a turn), and three economy cards paying per hundred humans on docking at a station: Corner Shop (1 cr), Card Room (a gamble, 0 to 3 cr) and Two-Sided Brothel (2 cr, pricier).
+  - Cards (×3 per tier, with merge perks: sign-ons, loyalty, a higher patch cap or flat income; see "Merging and perks" in `Combat and economy plan.md`): Habitat Block (houses 100), Clinic (cuts the colony's losses by 10% per level, up to 75%, and slowly raises loyalty), Crawlspace Crews (patch 10 hull a turn), and three economy cards paying per hundred humans on docking at a station: Corner Shop (1 cr), Card Room (a gamble, 0 to 3 cr) and Two-Sided Brothel (2 cr, pricier).
   - Every species starts with a Habitat Tower (300) from the Republic's retrofit; the Ál also keep their Clinic. Starting populations: Tern 225, Ál and Bhrun 150, Gor and Unfortunate 75.
   - Each turn (story) or dock (brawl): 1% of the colony is born, and at stations adults sign on into free housing, more where humans live and the better the colony likes the captain. Humans patch 1 hull per 12 of them plus crawlspace crews, never past 75%.
   - Story content counts humans ×25 of the old numbers. Code Green needs 150 humans; the hidden bond saturates at 900 humans (a Habitat Arcology's worth), so growing the colony earns its trust.
@@ -100,14 +100,18 @@ With a random-choice bot over 3000 runs: Yellow 38%, Red 23%, Blue 13%, ship los
 - **Spellings**: notes and prompt disagree. I used *Orcha Station* (note title; the prompt says Ocha, the outline Ochra), *Ghor-Dum* (prompt; species note says Gor-Dhum), *Træ Træ Tene* (map notes; prompt says tre-tre-trene), *Úlaval* (prompt and species note; map notes say Úlavan).
 - The Center ↔ Orcha gateway is fixed, because [[lore/Orcha|Orcha]] says the station is the junction on the Center–Gor route.
 - The "big bois" homeworld invaded by Consumers is assumed to be Bhrun-Gai.
-- Who restores the Træ Træ Tene gateway is not in the outline. I wrote it as a Tern crew pushed through by a council rattled by the humans, with the Unfortunates "consulting" and the Overseer's veto failing.
+- **The way into act 2** has three routes, and every one ends with the Center–Træ Træ Tene gateway open (the author wants several ways in, one result). A *Three plans for the dead gateway* beat reaches the captain wherever they are (in Hell, it waits for their next arrival), and the captain can back one:
+  - **The council's crew** (1 influence): the council outvotes the Overseer for once and sends a Tern repair crew. Tern discontent +1, Republic stance +2.
+  - **The coffin** (30 cr and humans aboard): the author's draft in [[lore/Mister Jay|Mister Jay]]. Mister Jay and the humans send a tiny ship on a wrong warp to Træ Træ Tene; the Tern there open their side at a moment counted out from a pulsar. The pilot dies. The Hellborn's help stays secret, though the captain's humans hint at it. Human power +1, Republic stance −4, Hellborn awareness +1, and the public wrong-warping beat in act 2 then says the humans stopped hiding it.
+  - **The Unfortunates** (an Unfortunate captain, or 2 influence): they wake the gate themselves and deny it. Tern discontent +1. This route is a draft, not in the lore yet.
+  - **Stay out of it:** the galaxy decides, the council most often, the coffin likelier the more bonded the humans aboard are, the Unfortunates least often. With random-choice bots, act 2 still starts around turn 22.
 - Code Green is once per run.
 - Playable species' starting homes: Tern and Unfortunates at the Center, Ál at Orcha, Bhrun at Bhrun-Gai, Gor at Ghor-Dum.
 - Combat is a placeholder roll (firepower, hull and humans aboard vs. enemy strength) until the deck builder exists. Holding position at a station gives a few credits and repairs as a stand-in for markets and missions.
 
 ## Lore settled since the first draft
 
-- **The Havi civil war** was fought between Havi who wanted to live forever by uploading their minds (like Shining-head) and those who kept their bodies (like the Overseer). That's why the Overseer reacts so fast to humans hearing voices on their radios: it has to kill Shining-head before Shining-head can brainwash the humans or teach them the history the Havi want buried. The training-broadcast beat hints at this.
+- **The Havi civil war** was fought between Havi who wanted to live forever by uploading their minds (like Shining-head) and those who kept their bodies (like the Overseer). That's why the Overseer reacts so fast to humans hearing voices on their radios: they have to kill Shining-head before Shining-head can brainwash the humans or teach them the history the Havi want buried. The training-broadcast beat hints at this.
 - **Neo Terra's original name** is generated per run. It was a plain Havi agri-world whose gravity (about 1 G) made lifting cargo too expensive and was too heavy for anyone but humans and Consumers to live in comfortably. Story text uses `{sys:neo_terra}` so it shows whatever the planet is called at the time.
 - **The Consumers are modified cockroaches** that the Eldest took from Sol. The humans have always known who visited them, because the Unfortunates' mark is in their cave paintings. Only cockroach events reveal it: a hatchling from a smuggled crate of Consumer eggs, or a Consumer nymph stowing away (act 2+). With a strong enough bond the humans explain, which sets `roach_truth`. That doubles the odds of the Eldest's exposure in act 3 and unlocks its strongest version.
 - **The Kyndari–Sol gateway is usable.** On every arrival the Solar fleet blocks you. You get in if your humans vouch for you (bond ≥ 50), if you used Code Green, or if you win an almost hopeless fight. Otherwise you're sent back. Entering Sol (`sol_entered`) triggers the final code.
@@ -145,7 +149,7 @@ The galaxy image is generated by `tool/generate_galaxy.py`, a top-down barred sp
 | The Fuel Rats | minor | the guild | none |
 | Human pirates | minor | whoever won the last vote | none |
 
-**Tern discontent** comes from the Overseer being what it always was: the weakest of the Havi, put in charge of a tourist station as a joke job, and only ruling the Republic because it was the last one left after the gatecrash. It goes up when that weakness shows:
+**Tern discontent** comes from the Overseer being what they always were: the weakest of the Havi, put in charge of a tourist station as a joke job, and only ruling the Republic because they were the last one left after the gatecrash. Discontent goes up when that weakness shows:
 - tolerating the Kepler landing: +1
 - legalising the settlement: +2
 - failing to protect the Bhrun: +1
@@ -161,8 +165,8 @@ The galaxy image is generated by `tool/generate_galaxy.py`, a top-down barred sp
 
 ## Shining-head, the Overseer and the Mourner
 
-- **Shining-head** can only be killed by destroying his complex 10 km under Neo Terra's capital. Either the Overseer does it on its trip to Neo Terra, or the captain does: while docked at Neo Terra, once the voice is known about, the colonists ask for your guns. Killing him dissolves the Uploaded back into the colonists.
-- **The Overseer** can only be killed by the Mourner. On the Neo Terra trip the human leader delivers it to the Mourner's domain. If the Uploaded hold Neo Terra and Shining-head lives, the Overseer won't fight through human guards. It comes home humiliated, and alive.
+- **Shining-head** can only be killed by destroying its complex 10 km under Neo Terra's capital. Either the Overseer does it on their trip to Neo Terra, or the captain does: while docked at Neo Terra, once the voice is known about, the colonists ask for your guns. Killing it dissolves the Uploaded back into the colonists.
+- **The Overseer** can only be killed by the Mourner. On the Neo Terra trip the human leader delivers them to the Mourner's domain. If the Uploaded hold Neo Terra and Shining-head lives, the Overseer won't fight through human guards. They come home humiliated, and alive.
 - **The Mourner** is a feared run-ender. Deep in Hell from act 2, rarely (about 9% of random runs), the ship gets caught by its black hole. Burning, pleading or demanding just drags you in, and about 83% of encounters end the run. The only reliable way out is asking politely, and the captain only knows that if:
   - a **secret Hellborn agent** is aboard and outs themselves to save their own life. That counts as Code Green whatever your bond. Or
   - the captain has been through it before.
@@ -175,7 +179,7 @@ The galaxy image is generated by `tool/generate_galaxy.py`, a top-down barred sp
 
 - **Nine slots** in a triforce: three small triangles of three slots each, making one big triangle. Only slotted cards do anything. A **hold** of 9 keeps spares.
 - **Stacking.** One card is one card, two are two cards. Three of the same card, anywhere in slots or hold, **merge** into its upgraded version. Three upgraded copies merge into the **super** version. Super cards don't merge further. A merged card keeps a slot position if one of its copies had one.
-- **Tier values.** Each tier is worth exactly three of the tier below (×1, ×3, ×9). Merging doesn't make the ship stronger by itself; it frees two slots.
+- **Tier values.** A merged card is stronger than the three it replaced: ×1, ×4, ×16 numbers for most cards (×1, ×3, ×9 for colony cards, cargo pods, teleporters and supplies), plus perks of its own family, so it frees two slots *and* adds power. Shops sell only basic cards. See "Merging and perks" in `Combat and economy plan.md`.
 - **Ship stats** are the species' ship class plus every slotted card: hull, damage by type (kinetic, energy, hellfire), Hell shielding (capped at 90%) and fuel capacity, plus the colony grid's housing, hospital and crawlspace crews (see "The human colony").
 - **Card families:**
 

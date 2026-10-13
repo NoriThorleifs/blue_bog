@@ -28,6 +28,7 @@ extension TurnFlow on EngineTurn {
     bool eligible(GameEvent e) =>
         e.triggers.contains(trigger) &&
         !(e.once && s.seenEvents.contains(e.id)) &&
+        !s.eventQueue.contains(e.id) &&
         (e.condition?.test(s) ?? true);
     final guard = content.events.where((e) => e.always && eligible(e));
     if (guard.isNotEmpty) {
@@ -36,13 +37,7 @@ extension TurnFlow on EngineTurn {
     }
     if (s.eventQueue.isNotEmpty || !rng.chance(chance)) return;
     final pick = rng.weighted(
-      content.events.where(
-        (e) =>
-            !e.always &&
-            e.triggers.contains(trigger) &&
-            !(e.once && s.seenEvents.contains(e.id)) &&
-            (e.condition?.test(s) ?? true),
-      ),
+      content.events.where((e) => !e.always && eligible(e)),
       (e) => eventWeight(s, e.weight, e.bondWeight),
     );
     if (pick != null) s.eventQueue.add(pick.id);
@@ -79,6 +74,7 @@ extension TurnFlow on EngineTurn {
       station: s.here.tags.contains(Tag.station),
       humanStation: s.here.tags.contains(Tag.humans),
       rng: rng,
+      signOn: s.stats.signOn,
     );
     if (born + joined > 0) apply(Humans(born + joined), StringBuffer());
     if (joined > 0) {
@@ -90,6 +86,9 @@ extension TurnFlow on EngineTurn {
   /// The colony's businesses pay out whenever the ship docks at a station.
   void payDividends() {
     if (!s.here.tags.contains(Tag.station)) return;
+    if (s.stats.morale > 0 && s.humans.count > 0) {
+      s.humans = s.humans.copyWith(loyalty: s.humans.loyalty + s.stats.morale);
+    }
     final paid = Colony.dividends(s.loadout, s.humans.count, rng);
     if (paid <= 0) return;
     s.credits += paid;

@@ -599,9 +599,13 @@ class BrawlEngine {
       station: true,
       humanStation: s.humansLiveHere,
       rng: rng,
+      signOn: s.stats.signOn,
     );
     s.humans = s.humans.copyWith(count: s.humans.count + born + joined);
     if (joined > 0) s.log.add('$joined humans moved into the colony.');
+    if (s.stats.morale > 0 && s.humans.count > 0) {
+      s.humans = s.humans.copyWith(loyalty: s.humans.loyalty + s.stats.morale);
+    }
     final paid = Colony.dividends(s.loadout, s.humans.count, rng);
     if (paid > 0) {
       s.credits += paid;
@@ -642,6 +646,7 @@ class BrawlEngine {
     }
     final result = fight(player, foe, tractorBeam: plan.tractorBeam);
     s.hull = result.hull;
+    s.log.addAll(s.loadout.keepGrowth(result.shots));
     final salvage = <String>[];
     var scrap = 0;
     switch (result.outcome) {

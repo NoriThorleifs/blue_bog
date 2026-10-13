@@ -227,13 +227,13 @@ class _FitTriforce extends StatelessWidget {
   final List<String?> slots;
   final Widget Function(int slot) overlay;
 
-  /// Height over width of a [Triforce], tiles included.
-  static const _aspect = 0.855 * 0.8660 + 0.145;
-
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, box) {
-      final width = min(min(box.maxWidth, box.maxHeight / _aspect), 600.0);
+      final width = min(
+        min(box.maxWidth, box.maxHeight / TriforceGeometry.aspect),
+        600.0,
+      );
       return Center(
         child: SizedBox(
           key: triforceKey,
@@ -268,8 +268,10 @@ class _Charge extends StatelessWidget {
       children: [
         if (flash)
           Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
+            decoration: ShapeDecoration(
+              shape: id == null
+                  ? CardShape.triangle.border()
+                  : CardShape.of(equipmentById(id!)).border(),
               color: Colors.white.withValues(alpha: 0.35),
             ),
           ),

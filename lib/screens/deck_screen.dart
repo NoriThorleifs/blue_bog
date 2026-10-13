@@ -107,6 +107,7 @@ class _DeckScreenState extends ConsumerState<DeckScreen> {
       id: id,
       selected: _selected == spot,
       dimmed: spot is HoldSpot && _inertInHold(id),
+      emptyShape: CardShape.forSpot(spot),
       onTap: () => _tap(run, spot),
     );
   }

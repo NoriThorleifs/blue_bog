@@ -59,6 +59,7 @@ dev_dependencies:
   build_runner: any
   json_serializable: any
   mockito: any
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -106,3 +107,22 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# The app icon, made by tool/generate_icon_concepts.py. After regenerating
+# it, write every platform's sizes with `dart run flutter_launcher_icons`.
+flutter_launcher_icons:
+  image_path: assets/icon/app_icon_ai_generated.png
+  android: true
+  adaptive_icon_background: assets/icon/app_icon_background_ai_generated.png
+  adaptive_icon_foreground: assets/icon/app_icon_foreground_ai_generated.png
+  ios: true
+  remove_alpha_ios: true
+  web:
+    generate: true
+    background_color: "#05070D"
+    theme_color: "#05070D"
+  windows:
+    generate: true
+    icon_size: 256
+  macos:
+    generate: true

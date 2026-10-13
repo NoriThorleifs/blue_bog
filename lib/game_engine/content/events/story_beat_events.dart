@@ -317,4 +317,63 @@ final storyBeatEvents = <GameEvent>[
       ),
     ],
   ),
+  // The way into act 2: the news of the three plans for the Center's dead
+  // gateway reaches the captain wherever they are. In Hell it waits for the
+  // next arrival. Whichever plan they back is how the gate opens.
+  GameEvent(
+    id: 'trae_plans',
+    title: 'Three plans for the dead gateway',
+    triggers: const {Trigger.queued, Trigger.arrival},
+    always: true,
+    condition: const AllOf([
+      HasFlag(Flag.traePlans),
+      NoFlag(Flag.traeGateRestored),
+      NotInHell(),
+    ]),
+    text:
+        'Everyone on the comms is talking about the Center\'s fourth '
+        'gateway, dead since the gatecrash. The council wants a Tern crew '
+        'sent to fix it, and the Overseer will veto it, as always. Your '
+        'humans have heard something else: a Tern called Mister Jay has a '
+        'plan of his own, and he needs a ship\'s help. And the Unfortunates, '
+        'who know more about gateways than they admit, have gone very '
+        'quiet.',
+    choices: [
+      Choice.simple(
+        'Speak for the council\'s repair crew',
+        'You add your voice to the call for a vote. The Overseer\'s '
+            'delegates take note of your name.',
+        condition: const CounterAtLeast(Counter.influence, 1),
+        hint: '1 influence',
+        effects: const [
+          SetFlag(Flag.traeByCouncil),
+          AddCounter(Counter.influence, -1),
+        ],
+      ),
+      Choice.simple(
+        'Help Mister Jay and the humans',
+        'Mister Jay meets you in your own mess, among your humans. He needs '
+            'pulsar timings and a few parts no human shop sells. He calls '
+            'the ship they are building "the coffin". Nobody laughs.',
+        condition: const AllOf([HumansAtLeast(50), CreditsAtLeast(30)]),
+        hint: '30 cr, and humans aboard',
+        effects: const [SetFlag(Flag.traeByCoffin), Credits(-30), Loyalty(10)],
+      ),
+      Choice.simple(
+        'Ask the Unfortunates what they really know',
+        'They hear you out, deny everything, and end the call. Something in '
+            'the way they deny it makes you think you have been heard.',
+        condition: AnyOf([
+          const IsSpecies(Species.unfortunate),
+          const CounterAtLeast(Counter.influence, 2),
+        ]),
+        hint: 'an Unfortunate, or 2 influence',
+        effects: const [SetFlag(Flag.traeByUnfortunates)],
+      ),
+      Choice.simple(
+        'Stay out of it',
+        'It\'s not your gateway. Whatever happens will happen without you.',
+      ),
+    ],
+  ),
 ];

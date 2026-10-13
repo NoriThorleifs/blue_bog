@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_print
 // Headless bot brawls, to check the difficulty curve and the economy.
 //
-//   dart run tool/brawl_sim.dart [runs]
+//   dart run tool/brawl_sim.dart [runs] [plain]
 import 'dart:math';
 
 import 'package:blue_bog/game_engine/brawl/brawl.dart';
@@ -11,11 +11,17 @@ import 'package:blue_bog/game_engine/combat/catalog.dart';
 import 'package:blue_bog/game_engine/combat/equipment.dart';
 import 'package:blue_bog/game_engine/deck/loadout.dart';
 import 'package:blue_bog/game_engine/engine.dart' show IllegalMove;
+import 'package:blue_bog/game_engine/market.dart';
 
 const engine = BrawlEngine();
 
+/// Whether the bots hunt for copies to merge, rerolling while it's cheap.
+/// Shops only sell basic cards, so merging is how a ship grows.
+var hunt = true;
+
 /// Sells cargo worth more here than usual, repairs, buys commodities that
-/// are cheap here, then spends what's left on weapons and defences.
+/// are cheap here, then spends what's left on weapons and defences: copies
+/// of cards aboard first, rerolling while rerolls are cheap to find them.
 BrawlState shop(BrawlState s) {
   BrawlState attempt(BrawlState Function() f) {
     try {
@@ -34,6 +40,20 @@ BrawlState shop(BrawlState s) {
     }
   }
   if (engine.repairCost(s) != null) s = attempt(() => engine.repair(s));
+  if (hunt) {
+    for (var rolls = 0; ; rolls++) {
+      for (final (i, offer) in s.market.offers.indexed) {
+        final card = equipmentById(offer.cardId);
+        if (offer.sold || s.credits - offer.price < 30) continue;
+        if (card.kind == CardKind.equipment &&
+            s.loadout.copiesOf(offer.cardId) > 0) {
+          s = attempt(() => engine.buy(s, i));
+        }
+      }
+      if (s.market.rerollPrice > Market.rerollBase || s.credits < 80) break;
+      s = attempt(() => engine.reroll(s));
+    }
+  }
   for (final (i, offer) in s.market.offers.indexed) {
     final card = equipmentById(offer.cardId);
     if (offer.sold || s.credits - offer.price < 30) continue;
@@ -85,6 +105,8 @@ BrawlState play(Species species, int seed, {required bool diver}) {
 
 void main(List<String> args) {
   final runs = args.isEmpty ? 500 : int.parse(args.first);
+  // `plain` as a second argument: bots that buy whatever is on offer.
+  hunt = !args.contains('plain');
   for (final diver in [false, true]) {
     print(diver ? '\nDivers (into Hell at every chance):' : 'Careful bots:');
     for (final species in Species.values) {

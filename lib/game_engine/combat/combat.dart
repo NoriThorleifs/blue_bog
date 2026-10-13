@@ -126,6 +126,7 @@ class CombatResult {
     required this.enemyHull,
     required this.events,
     this.snapshots = const [],
+    this.shots = const [],
   });
 
   /// From the first combatant's point of view.
@@ -137,6 +138,10 @@ class CombatResult {
 
   /// State after every moment something happened, starting at 0 s.
   final List<CombatSnapshot> snapshots;
+
+  /// How many times the first combatant's card in each slot fired, for
+  /// cards that grow with every shot (see [Veteran]).
+  final List<int> shots;
 
   /// The latest state at or before [time].
   CombatSnapshot at(double time) {
@@ -205,17 +210,16 @@ CombatResult fight(Combatant a, Combatant b, {bool tractorBeam = false}) {
     for (final (s, slot) in firing) {
       sides[s].fire(slot, sides[1 - s], tick / 10, s, events);
     }
-    // Drones patch the hull a little every second.
-    var repaired = false;
+    // Every second, drones and living hulls patch the hull a little, and
+    // regenerating shields recover.
+    var mended = false;
     if (tick % 10 == 0) {
       for (final side in sides) {
-        if (side.drones > 0 && side.hull > 0 && side.hull < side.maxHull) {
-          side.hull = min(side.maxHull, side.hull + side.drones * droneRepair);
-          repaired = true;
-        }
+        if (side.hull <= 0) continue;
+        mended = side.mend() || mended;
       }
     }
-    if (firing.isNotEmpty || repaired) snapshots.add(snap(tick / 10));
+    if (firing.isNotEmpty || mended) snapshots.add(snap(tick / 10));
     if (sides[0].hull <= 0 || sides[1].hull <= 0) break;
     if (tick > 100000) break;
   }
@@ -231,6 +235,7 @@ CombatResult fight(Combatant a, Combatant b, {bool tractorBeam = false}) {
     enemyHull: max(0, sides[1].hull),
     events: events,
     snapshots: [...snapshots, snap(tick / 10)],
+    shots: [...sides[0].shots],
   );
 }
 
@@ -263,7 +268,28 @@ class _Side {
     for (final e in [...all, ...held]) {
       e.ammo.forEach((k, v) => ammo[k] = (ammo[k] ?? 0) + v);
     }
+    // Supplies' perks work from the hold as well as a slot.
+    final perks = [
+      for (final e in [...all, ...held]) ...e.perks,
+    ];
+    int total<T extends Perk>(int Function(T) f) =>
+        perks.whereType<T>().fold(0, (t, p) => t + f(p));
+    armour = total<Armour>((p) => p.amount);
+    shieldRegen = total<ShieldRegen>((p) => p.perSecond);
+    hullRegen = total<HullRegen>((p) => p.perSecond);
+    droneRate = droneRepair + total<DronePatch>((p) => p.extra);
+    reflector = [
+      for (var i = 0; i < 9; i++)
+        if (gear[i]?.perk<Reflect>() != null) i,
+    ].firstOrNull;
+    if (perks.any((p) => p is StartShielded)) shield = maxShield;
+    drones = min(maxDrones, total<StartDrones>((p) => p.count));
+    shipBoosts = [
+      for (final p in perks)
+        if (p is DamageBoost && p.scope == BoostScope.ship) p,
+    ];
     cooldowns = [for (var i = 0; i < 9; i++) _cooldownTicks(i)];
+    boosts = [for (var i = 0; i < 9; i++) _damageBoost(i)];
     final headStart = all.fold(0.0, (t, e) => max(t, e.headStart));
     timers = [
       for (final c in cooldowns)
@@ -294,13 +320,32 @@ class _Side {
   int jams = 0;
   late final int maxJams;
 
-  /// Shots fired from each slot this fight, for lances.
+  /// Shots fired from each slot this fight, for lances and every card
+  /// that grows with each shot.
   final shots = List.filled(9, 0);
   late final int maxShield;
   late final int maxDrones;
   final ammo = <Ammo, int>{};
   late final List<int?> cooldowns;
   late final List<int?> timers;
+
+  /// Taken off every hit on the hull, down to half. See [Armour].
+  late final int armour;
+  late final int shieldRegen;
+  late final int hullRegen;
+
+  /// Hull each drone out repairs a second.
+  late final int droneRate;
+
+  /// The slot of a jammer that sends jammed bombs back, if any.
+  late final int? reflector;
+
+  /// How much harder, in percent, each slot's weapon hits for the cards
+  /// around it. See [DamageBoost].
+  late final List<int> boosts;
+
+  /// Damage boosts that reach every weapon aboard.
+  late final List<DamageBoost> shipBoosts;
 
   /// Cooldown in ticks after every charge boost that reaches this slot.
   int? _cooldownTicks(int slot) {
@@ -320,6 +365,65 @@ class _Side {
     }
     final seconds = max(minCooldown, base * (100 - cut) / 100);
     return (seconds * 10).round();
+  }
+
+  /// The damage boost from the other cards in [slot]'s triangle, and from
+  /// ship-wide boosts.
+  int _damageBoost(int slot) {
+    final e = gear[slot];
+    if (e == null || e.damage == null) return 0;
+    bool fits(DamageBoost p) =>
+        p.only == null || e.action.runtimeType == p.only;
+    var boost = 0;
+    for (var j = slot ~/ 3 * 3; j < slot ~/ 3 * 3 + 3; j++) {
+      if (j == slot) continue;
+      for (final p in gear[j]?.perks ?? const <Perk>[]) {
+        if (p is DamageBoost && p.scope == BoostScope.triangle && fits(p)) {
+          boost += p.percent;
+        }
+      }
+    }
+    for (final p in shipBoosts) {
+      if (fits(p)) boost += p.percent;
+    }
+    return boost;
+  }
+
+  /// What a shot of [base] from [slot] amounts to, with what the card has
+  /// gained this fight and the boosts around it. Counts the shot.
+  int _power(int slot, int base) {
+    final e = gear[slot]!;
+    final ramp =
+        e.perks.whereType<Frenzy>().fold(0, (t, p) => t + p.perShot) +
+        e.perks.whereType<Veteran>().fold(0, (t, p) => t + p.perShot);
+    final hit = (base + ramp * shots[slot]) * (100 + boosts[slot]) ~/ 100;
+    shots[slot]++;
+    return hit;
+  }
+
+  /// Takes [amount] of hull damage from the enemy, less [armour], and
+  /// returns what got through.
+  int _hurt(int amount) {
+    if (amount <= 0) return 0;
+    final taken = max(amount - armour, (amount + 1) ~/ 2);
+    hull -= taken;
+    return taken;
+  }
+
+  /// Patches [amount] hull, up to the maximum, and returns what it patched.
+  int _patch(int amount) {
+    final patched = max(0, min(amount, maxHull - hull));
+    hull += patched;
+    return patched;
+  }
+
+  /// A second's worth of drone repairs, regrowing hull and regenerating
+  /// shields. Returns whether anything changed.
+  bool mend() {
+    final patched = _patch(drones * droneRate + hullRegen);
+    final before = shield;
+    shield = min(maxShield, shield + shieldRegen);
+    return patched > 0 || shield != before;
   }
 
   /// Counts every timer down one tick and returns the slots that fire.
@@ -354,89 +458,116 @@ class _Side {
   ) {
     void note(CombatEventKind kind, [int? value]) =>
         log.add(CombatEvent(time, side, slot, kind, value));
-    switch (gear[slot]!.action!) {
+    final card = gear[slot]!;
+    final pierce = card.perks.whereType<PierceShields>().fold(
+      0,
+      (t, p) => t + p.percent,
+    );
+
+    /// A hit that shields soak up, all but the share that pierces them.
+    /// Returns what reached the hull.
+    int beam(int hit) {
+      final absorbed = min(enemy.shield, hit - hit * min(100, pierce) ~/ 100);
+      enemy.shield -= absorbed;
+      return enemy._hurt(hit - absorbed);
+    }
+
+    switch (card.action!) {
       case FireLaser(:final damage):
-        final absorbed = min(enemy.shield, damage);
-        enemy.shield -= absorbed;
-        enemy.hull -= damage - absorbed;
+        final taken = beam(_power(slot, damage));
         note(
-          absorbed == damage
-              ? CombatEventKind.laserAbsorbed
-              : CombatEventKind.laserHit,
-          damage - absorbed,
+          taken == 0 ? CombatEventKind.laserAbsorbed : CombatEventKind.laserHit,
+          taken,
         );
       case FireMissile(:final damage):
         if (!_use(Ammo.missiles)) return note(CombatEventKind.outOfAmmo);
+        final hit = _power(slot, damage);
         if (enemy.drones > 0) {
           enemy.drones--;
-          note(CombatEventKind.missileIntercepted, damage);
+          if (card.perk<Overpenetrate>() == null) {
+            return note(CombatEventKind.missileIntercepted, hit);
+          }
+          note(CombatEventKind.missileHit, enemy._hurt(hit ~/ 2));
         } else {
-          enemy.hull -= damage;
-          note(CombatEventKind.missileHit, damage);
+          note(CombatEventKind.missileHit, enemy._hurt(hit));
         }
       case TeleportBomb(:final damage):
         if (!_use(Ammo.teleportCharges)) {
           return note(CombatEventKind.outOfAmmo);
         }
-        if (enemy.jams > 0) {
+        final hit = _power(slot, damage);
+        if (enemy.jams > 0 && card.perk<JamProof>() == null) {
           enemy.jams--;
-          return note(CombatEventKind.teleportJammed, damage);
+          note(CombatEventKind.teleportJammed, hit);
+          // A reflecting jammer sends the bomb home.
+          if (enemy.reflector case final back?) {
+            log.add(
+              CombatEvent(
+                time,
+                1 - side,
+                back,
+                CombatEventKind.teleportHit,
+                _hurt(hit),
+              ),
+            );
+          }
+          return;
         }
-        enemy.hull -= damage;
-        note(CombatEventKind.teleportHit, damage);
+        note(CombatEventKind.teleportHit, enemy._hurt(hit));
       case IonBlast(:final damage):
-        final stripped = min(enemy.shield, damage);
+        final hit = _power(slot, damage);
+        final stripped = min(enemy.shield, hit);
         enemy.shield -= stripped;
-        final through = (damage - stripped) ~/ 3;
-        enemy.hull -= through;
-        note(CombatEventKind.ionHit, through);
+        final leftover = hit - stripped;
+        final through = card.perk<Overload>() == null
+            ? leftover ~/ 3
+            : leftover;
+        note(CombatEventKind.ionHit, enemy._hurt(through));
       case Flak(:final count, :final shrapnel):
         final downed = min(enemy.drones, count);
         enemy.drones -= downed;
         if (downed > 0) note(CombatEventKind.flakHit, downed);
         if (downed < count) {
-          final burst = (count - downed) * shrapnel;
-          final absorbed = min(enemy.shield, burst);
-          enemy.shield -= absorbed;
-          enemy.hull -= burst - absorbed;
-          note(CombatEventKind.flakShrapnel, burst - absorbed);
+          note(CombatEventKind.flakShrapnel, beam((count - downed) * shrapnel));
         }
       case RailShot(:final damage):
         if (enemy.shield > 0) {
+          if (card.perk<ShieldBreaker>() != null) enemy.shield = 0;
           return note(CombatEventKind.railDeflected, damage);
         }
-        enemy.hull -= damage;
-        note(CombatEventKind.railHit, damage);
+        note(CombatEventKind.railHit, enemy._hurt(_power(slot, damage)));
       case Repair(:final amount):
-        final patched = min(amount, maxHull - hull);
+        final patched = _patch(_power(slot, amount));
         if (patched <= 0) return;
-        hull += patched;
         note(CombatEventKind.repaired, patched);
       case LanceShot(:final damage, :final ramp):
-        final hit = damage + ramp * shots[slot]++;
-        final absorbed = min(enemy.shield, hit);
-        enemy.shield -= absorbed;
-        enemy.hull -= hit - absorbed;
+        final taken = beam(_power(slot, damage + ramp * shots[slot]));
         note(
-          absorbed == hit
-              ? CombatEventKind.laserAbsorbed
-              : CombatEventKind.laserHit,
-          hit - absorbed,
+          taken == 0 ? CombatEventKind.laserAbsorbed : CombatEventKind.laserHit,
+          taken,
         );
       case JamTeleports():
         if (jams >= maxJams) return;
         jams = maxJams;
         note(CombatEventKind.jamsReady, jams);
-      case Hellfire(:final damage, :final recoil):
-        enemy.hull -= damage;
-        hull -= recoil;
-        note(CombatEventKind.hellfireHit, damage);
+      case Hellfire():
+        final hellfire = card.action! as Hellfire;
+        final hit = _power(slot, hellfire.damage);
+        hull -= hellfire.recoilFor(hit);
+        note(CombatEventKind.hellfireHit, enemy._hurt(hit));
       case Board():
         enemy.hull = 0;
         note(CombatEventKind.boarded);
       case ChargeShields():
+        final full = shield >= maxShield;
         shield = maxShield;
         note(CombatEventKind.shieldsCharged, shield);
+        // A generator with nothing to refill patches the hull instead.
+        final overflow = card.perk<Overflow>();
+        if (full && overflow != null) {
+          final patched = _patch(overflow.amount);
+          if (patched > 0) note(CombatEventKind.repaired, patched);
+        }
       case BuildDrone(:final count):
         if (drones >= maxDrones) return;
         var built = 0;

@@ -323,15 +323,13 @@ class _Ship {
   final Offset origin;
   final double width;
 
-  late final _slots = Triforce.slotCentres(width);
-  double get _tile => width * 0.145;
-  double get _height => (width - _tile) * sqrt(3) / 2;
+  late final _geo = TriforceGeometry(width);
 
-  Offset get _top => origin + Offset(width / 2, _tile / 2);
-  Offset get _left => origin + Offset(_tile / 2, _tile / 2 + _height);
-  Offset get _right => origin + Offset(width - _tile / 2, _tile / 2 + _height);
+  Offset get _top => origin + _geo.top;
+  Offset get _left => origin + _geo.left;
+  Offset get _right => origin + _geo.right;
 
-  Offset slot(int i) => origin + _slots[i];
+  Offset slot(int i) => origin + _geo.slotCentres[i];
 
   /// The middle of the big triangle.
   Offset get centre => (_top + _left + _right) / 3;

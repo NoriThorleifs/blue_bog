@@ -75,7 +75,6 @@ class _ShipTabState extends ConsumerState<ShipTab> {
     Widget tile(CardSpot spot) => SpotTile(
       spot: spot,
       id: brawl.loadout.at(spot),
-      size: 76,
       selected: using == spot,
       glowing: targets.contains(spot),
       dimmed: spot is HoldSpot && _inertInHold(brawl.loadout.at(spot)),

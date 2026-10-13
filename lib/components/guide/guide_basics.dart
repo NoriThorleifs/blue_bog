@@ -33,7 +33,9 @@ List<Widget> guideBasics() => [
       const GuideText(
         'Every captain flies the same ship: 500 hull and nine card slots, '
         'laid out as three small triangles that make one big one. Only cards '
-        'in a slot fight.',
+        'in a slot fight. A card\'s shape says what it is: the ship\'s '
+        'equipment and supplies are triangles, to fit the slots; the human '
+        'colony\'s cards are squares; cargo is round.',
       ),
       const GuideFigure(
         caption:
@@ -81,10 +83,13 @@ List<Widget> guideBasics() => [
       ]),
       GuideText(
         'Three copies of a card, anywhere on the ship, merge into the next '
-        'tier, which is exactly as strong as the three were. Three of those '
-        'merge into a super card. Merging frees slots, so a ship full of '
-        'super cards is a very strong ship. Tier marks on the card show how '
-        'far along it is.',
+        'tier, which is much stronger than the three were: four times their '
+        'numbers, plus a bonus of its own. Three of those merge into a super '
+        'card: sixteen times a basic card, and a bigger bonus. Every kind of '
+        'card gets a different bonus, marked with a gold star: lasers charge '
+        'faster, lances keep the damage they gain in every fight, plating '
+        'turns into armour, merged shops pay a flat sum. Tier marks on the '
+        'card show how far along it is.',
       ),
       GuideFigure(
         caption:
@@ -93,6 +98,8 @@ List<Widget> guideBasics() => [
         child: GuideMergeChain('laser'),
       ),
       GuideText(
+        'Shops only sell basic cards, so hunting down the third copy is how a '
+        'ship grows. Upgraded and super cards also come out of wrecks. '
         'Unique cards, like trophies from beating elite ships, never merge.',
       ),
     ],

@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 import '../../game_engine/combat/catalog.dart';
 import '../../game_engine/combat/equipment.dart';
 import '../theme.dart';
+import 'card_shapes.dart';
+
+export 'card_details.dart';
+export 'card_shapes.dart';
 
 /// Colour for a card's family, so cards of a kind read as a kind.
 Color cardColour(Equipment card) => switch (card.kind) {
@@ -37,7 +41,8 @@ Color cardColour(Equipment card) => switch (card.kind) {
   },
 };
 
-/// A small square card: tier marks and name.
+/// A small card in its kind's shape (see [CardShape]): tier marks, art and
+/// name.
 class CardTile extends StatelessWidget {
   const CardTile({
     super.key,
@@ -47,6 +52,7 @@ class CardTile extends StatelessWidget {
     this.footer,
     this.note,
     this.dimmed = false,
+    this.emptyShape = CardShape.square,
   });
 
   final String? id;
@@ -62,10 +68,14 @@ class CardTile extends StatelessWidget {
   /// For cards that do nothing where they are, like equipment in the hold.
   final bool dimmed;
 
+  /// The outline drawn when there's no card: what usually goes there.
+  final CardShape emptyShape;
+
   @override
   Widget build(BuildContext context) {
     final card = id == null ? null : equipmentById(id!);
     final colour = card == null ? Palette.muted : cardColour(card);
+    final shape = card == null ? emptyShape : CardShape.of(card);
     return Semantics(
       button: onTap != null,
       label: card?.name ?? 'Empty',
@@ -73,19 +83,19 @@ class CardTile extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: card == null
                 ? Colors.black.withValues(alpha: 0.3)
                 : Color.lerp(Palette.space, colour, dimmed ? 0.08 : 0.22),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: selected
-                  ? Colors.white
-                  : colour.withValues(alpha: card == null ? 0.3 : 0.8),
-              width: selected ? 2.5 : 1.2,
+            shape: shape.border(
+              BorderSide(
+                color: selected
+                    ? Colors.white
+                    : colour.withValues(alpha: card == null ? 0.3 : 0.8),
+                width: selected ? 2.5 : 1.2,
+              ),
             ),
-            boxShadow: [
+            shadows: [
               if (card != null && !dimmed)
                 BoxShadow(
                   color: colour.withValues(alpha: 0.35),
@@ -95,37 +105,28 @@ class CardTile extends StatelessWidget {
           ),
           child: card == null
               ? const SizedBox.expand()
-              : Opacity(
-                  opacity: dimmed ? 0.55 : 1,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      CardArt(card: card),
-                      // A dark fade at the bottom keeps the name readable
-                      // over the art.
-                      const DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            stops: [0.45, 1],
-                            colors: [Colors.transparent, Color(0xCC000000)],
+              : ClipPath(
+                  clipper: ShapeBorderClipper(shape: shape.border()),
+                  child: Opacity(
+                    opacity: dimmed ? 0.55 : 1,
+                    child: switch (shape) {
+                      CardShape.triangle => _triangle(card, colour),
+                      CardShape.square => _face(
+                        card,
+                        colour,
+                        const EdgeInsets.all(4),
+                      ),
+                      // Kept clear of the circle's narrowing edges.
+                      CardShape.circle => LayoutBuilder(
+                        builder: (context, box) => _face(
+                          card,
+                          colour,
+                          EdgeInsets.all(
+                            min(box.maxWidth, box.maxHeight) * 0.13,
                           ),
                         ),
                       ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Three tier marks are wider than a slot in the
-                          // combat replay.
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: TierMarks(card: card, colour: colour),
-                          ),
-                          Flexible(child: _label(card, colour)),
-                        ],
-                      ),
-                    ],
+                    },
                   ),
                 ),
         ),
@@ -133,13 +134,87 @@ class CardTile extends StatelessWidget {
     );
   }
 
-  Widget _label(Equipment card, Color colour) => FittedBox(
+  /// A square or round face: tier marks on top, art behind, name at the
+  /// bottom, all [inset] from the edge. The fade behind the name fills the
+  /// whole shape, so it follows the outline.
+  Widget _face(Equipment card, Color colour, EdgeInsets inset) => Stack(
+    fit: StackFit.expand,
+    children: [
+      Padding(
+        padding: inset,
+        child: CardArt(card: card),
+      ),
+      const _Fade(),
+      Padding(
+        padding: inset,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Three tier marks are wider than a slot in the combat replay.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: TierMarks(card: card, colour: colour),
+            ),
+            Flexible(child: _label(card, colour)),
+          ],
+        ),
+      ),
+    ],
+  );
+
+  /// A triangular face: tier marks under the point, art in the middle and
+  /// the name across the wide base.
+  Widget _triangle(Equipment card, Color colour) => LayoutBuilder(
+    builder: (context, box) {
+      final side = min(box.maxWidth, box.maxHeight / triangleHeight);
+      final h = side * triangleHeight;
+      return Center(
+        child: SizedBox(
+          width: side,
+          height: h,
+          child: Stack(
+            children: [
+              Positioned(
+                left: side * 0.26,
+                right: side * 0.26,
+                top: h * 0.34,
+                height: h * 0.42,
+                child: CardArt(card: card),
+              ),
+              const Positioned.fill(child: _Fade(from: 0.5)),
+              Positioned(
+                left: side * 0.36,
+                right: side * 0.36,
+                top: h * 0.24,
+                height: h * 0.1,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: TierMarks(card: card, colour: colour),
+                ),
+              ),
+              // The base is the widest part: names get more room here
+              // than on a square card, and wrap less.
+              Positioned(
+                left: side * 0.1,
+                right: side * 0.1,
+                top: h * 0.5,
+                bottom: h * 0.04,
+                child: _label(card, colour, width: 80),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+
+  Widget _label(Equipment card, Color colour, {double width = 64}) => FittedBox(
     fit: BoxFit.scaleDown,
     alignment: Alignment.bottomCenter,
     child: ConstrainedBox(
       // Laid out this wide, then shrunk to fit: narrow enough that names
       // stay readable in a phone's combat triforce.
-      constraints: const BoxConstraints(maxWidth: 64),
+      constraints: BoxConstraints(maxWidth: width),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -169,6 +244,25 @@ class CardTile extends StatelessWidget {
               style: const TextStyle(fontSize: 9, color: Palette.muted),
             ),
         ],
+      ),
+    ),
+  );
+}
+
+/// A dark fade towards the bottom, to keep a card's name readable over its
+/// art.
+class _Fade extends StatelessWidget {
+  const _Fade({this.from = 0.45});
+  final double from;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        stops: [from, 1],
+        colors: const [Colors.transparent, Color(0xCC000000)],
       ),
     ),
   );
@@ -229,104 +323,17 @@ class TierMarks extends StatelessWidget {
 /// Marks cards tagged Hellish.
 const hellishRed = Color(0xFFFF3D7F);
 
-/// Everything about one card.
-class CardDetails extends StatelessWidget {
-  const CardDetails({
-    super.key,
-    required this.id,
-    this.copies,
-    this.median,
-    this.actions = const [],
-  });
-
-  final String id;
-
-  /// How many the captain owns, for merge progress.
-  final int? copies;
-
-  /// What the card usually costs across the galaxy.
-  final int? median;
-  final List<Widget> actions;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final card = equipmentById(id);
-    final upgrade = upgradeOf(card);
-    final where = switch (card.kind) {
-      CardKind.equipment => 'Works in a slot.',
-      CardKind.supplies => 'Works from a slot or the hold.',
-      CardKind.commodity => 'Trade goods. Worth more at some markets.',
-      CardKind.mission => 'Cargo you\'ve been paid to deliver. Can\'t be sold.',
-      CardKind.colony => 'Works in the colony grid. Never fights.',
-    };
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(card.name, style: text.titleLarge),
-            Text(switch (card.kind) {
-              CardKind.commodity => 'Commodity',
-              CardKind.mission => 'Mission cargo',
-              _ => card.tier.label,
-            }, style: text.labelMedium?.copyWith(color: cardColour(card))),
-            if (card.tags.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                children: [
-                  for (final tag in card.tags)
-                    Chip(
-                      avatar: const Icon(
-                        Icons.sell_outlined,
-                        size: 14,
-                        color: hellishRed,
-                      ),
-                      label: Text(tag.label),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 8),
-            for (final line in card.describe()) Text(line),
-            Text(where, style: text.bodySmall?.copyWith(color: Palette.muted)),
-            if (card.text.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(
-                card.text,
-                style: text.bodySmall?.copyWith(fontStyle: FontStyle.italic),
-              ),
-            ],
-            if (median != null) ...[
-              const SizedBox(height: 6),
-              Text('Galactic median price: $median cr'),
-            ],
-            if (upgrade != null && copies != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                'You have $copies of 3. Three merge into ${upgrade.name}.',
-                style: text.bodySmall?.copyWith(color: Palette.muted),
-              ),
-            ],
-            if (actions.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Wrap(spacing: 8, runSpacing: 8, children: actions),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// A slow pulsing glow around [child], to show it can be picked.
 class GlowPulse extends StatefulWidget {
-  const GlowPulse({super.key, required this.child});
+  const GlowPulse({
+    super.key,
+    required this.child,
+    this.shape = CardShape.square,
+  });
   final Widget child;
+
+  /// The outline to glow around.
+  final CardShape shape;
 
   @override
   State<GlowPulse> createState() => _GlowPulseState();
@@ -353,13 +360,14 @@ class _GlowPulseState extends State<GlowPulse>
       final t = Curves.easeInOut.transform(_pulse.value);
       return DecoratedBox(
         position: DecorationPosition.foreground,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.125 + 0.3 * t),
-            width: 2,
+        decoration: ShapeDecoration(
+          shape: widget.shape.border(
+            BorderSide(
+              color: Colors.white.withValues(alpha: 0.125 + 0.3 * t),
+              width: 2,
+            ),
           ),
-          boxShadow: [
+          shadows: [
             BoxShadow(
               color: Colors.white.withValues(alpha: 0.05 + 0.175 * t),
               blurRadius: 6 + 10 * t,

@@ -1,6 +1,8 @@
 import 'dart:math';
 
 import '../combat/catalog.dart';
+import '../colony.dart';
+import '../combat/combat.dart' show CombatResult;
 import '../combat/equipment.dart';
 
 /// Where a card sits: one of the nine slots, the cargo bay slot, the hold,
@@ -165,14 +167,18 @@ class Loadout {
   /// there was no room for it.
   ///
   /// Tagged and plain copies merge together, and the merged card keeps
-  /// every tag any of the three had picked up.
+  /// every tag any of the three had picked up, and all the damage they had
+  /// gained in fights.
   List<String>? add(String id, {SlotSpot? preferred}) {
     final card = equipmentById(id);
     final upgraded = upgradeOf(card);
     if (upgraded != null && copiesOf(id) >= 2) {
-      final (freed, tags) = _removeCopies(id, 2);
+      final (freed, tags, grown) = _removeCopies(id, 2);
       final next = equipmentById(
-        taggedId(upgraded.id, {...tags, ...addedTags(id)}),
+        grownId(
+          taggedId(upgraded.id, {...tags, ...addedTags(id)}),
+          grown + grownBy(id),
+        ),
       );
       final rest = add(next.id, preferred: freed ?? preferred) ?? const [];
       return ['Three ${card.name} merged into ${next.name}.', ...rest];
@@ -231,16 +237,22 @@ class Loadout {
   }
 
   /// Removes [count] copies of [id], whatever their tags, hold first.
-  /// Returns the first slot one was taken from, and the tags they had
-  /// picked up.
-  (SlotSpot?, Set<CardTag>) _removeCopies(String id, int count) {
+  /// Returns the first slot one was taken from, the tags they had picked
+  /// up, and the damage they had gained in fights.
+  (SlotSpot?, Set<CardTag>, int) _removeCopies(String id, int count) {
     bool same(String? c) => c != null && baseId(c) == baseId(id);
     SlotSpot? freed;
     final tags = <CardTag>{};
+    var grown = 0;
+    void taken(String id) {
+      tags.addAll(addedTags(id));
+      grown += grownBy(id);
+    }
+
     for (var n = 0; n < count; n++) {
       final inHold = hold.indexWhere(same);
       if (inHold >= 0) {
-        tags.addAll(addedTags(hold.removeAt(inHold)));
+        taken(hold.removeAt(inHold));
         continue;
       }
       final inColony = colony.indexWhere(same);
@@ -249,16 +261,38 @@ class Loadout {
         continue;
       }
       if (same(cargo)) {
-        tags.addAll(addedTags(cargo!));
+        taken(cargo!);
         cargo = null;
         continue;
       }
       final inSlot = slots.indexWhere(same);
-      tags.addAll(addedTags(slots[inSlot]!));
+      taken(slots[inSlot]!);
       slots[inSlot] = null;
       freed ??= SlotSpot(inSlot);
     }
-    return (freed, tags);
+    return (freed, tags, grown);
+  }
+
+  /// After a fight, makes every slotted card that grows with its shots
+  /// (see [Veteran]) keep what it gained: [shots] is how often each slot
+  /// fired, from [CombatResult.shots]. Returns what grew, for the log.
+  ///
+  /// Call it before salvage is merged in, while the slots still hold the
+  /// cards that fought.
+  List<String> keepGrowth(List<int> shots) {
+    final lines = <String>[];
+    for (var i = 0; i < slotCount && i < shots.length; i++) {
+      final id = slots[i];
+      if (id == null || shots[i] == 0) continue;
+      final card = equipmentById(id);
+      final gain =
+          card.perks.whereType<Veteran>().fold(0, (t, p) => t + p.perShot) *
+          shots[i];
+      if (gain == 0) continue;
+      slots[i] = grownId(id, gain);
+      lines.add('${card.name} hits $gain harder for good.');
+    }
+    return lines;
   }
 
   /// Whether the card at [from] can be used on the card at [to].
@@ -356,6 +390,9 @@ class ShipStats {
     required this.hellShielding,
     required this.fuelCapacity,
     required this.holdCapacity,
+    this.signOn = 0,
+    this.morale = 0,
+    this.patchCap = Colony.patchCap,
   });
 
   /// Maximum hull gained per hull upgrade bought at a shipyard.
@@ -377,6 +414,15 @@ class ShipStats {
       hellShielding: min(0.9, gear.fold(0.0, (t, e) => t + e.hellShielding)),
       fuelCapacity: baseFuel + sum((e) => e.fuel),
       holdCapacity: loadout.holdCapacity,
+      signOn: colony(
+        (e) => e.perks.whereType<SignOn>().fold(0, (t, p) => t + p.percent),
+      ),
+      morale: colony(
+        (e) => e.perks.whereType<Morale>().fold(0, (t, p) => t + p.amount),
+      ),
+      patchCap: loadout.colonyCards
+          .expand((e) => e.perks.whereType<PatchCap>())
+          .fold(Colony.patchCap, (t, p) => max(t, p.percent / 100)),
     );
   }
 
@@ -391,4 +437,14 @@ class ShipStats {
   final double hellShielding;
   final int fuelCapacity;
   final int holdCapacity;
+
+  /// Percentage points of free housing that fill on top of the usual share
+  /// at a station. See [SignOn].
+  final int signOn;
+
+  /// Loyalty gained every time the ship docks. See [Morale].
+  final int morale;
+
+  /// The share of maximum hull the humans patch up to. See [PatchCap].
+  final double patchCap;
 }

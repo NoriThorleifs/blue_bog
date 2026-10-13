@@ -25,6 +25,56 @@ void main() {
     }
   }
 
+  group('the way into act 2', () {
+    final engine = GameEngine(storyContent);
+    final beat = storyContent.beats.firstWhere(
+      (b) => b.id == 'trae_restoration',
+    );
+    const routes = [
+      Flag.traeByCouncil,
+      Flag.traeByCoffin,
+      Flag.traeByUnfortunates,
+    ];
+    RunState withFlags(Set<String> flags) =>
+        engine.newRun(Species.tern, seed: 1).clone()..flags.addAll(flags);
+    List<Outcome> possible(RunState s) => [
+      for (final o in beat.outcomes)
+        if (o.condition?.test(s) ?? true) o,
+    ];
+
+    test('every route opens the gateway to Træ Træ Tene', () {
+      expect(
+        beat.effects.whereType<RestoreGateway>().single.b,
+        Sys.traeTraeTene,
+      );
+    });
+
+    test('the route the captain backed is the only one that can happen', () {
+      for (final route in routes) {
+        final outcomes = possible(withFlags({route}));
+        expect(outcomes, hasLength(1), reason: route);
+        expect(
+          outcomes.single.effects.whereType<SetFlag>().map((f) => f.flag),
+          contains(route),
+        );
+      }
+    });
+
+    test('a captain who stayed out leaves it to the galaxy, any route', () {
+      final outcomes = possible(withFlags({}));
+      expect({
+        for (final o in outcomes)
+          ...o.effects.whereType<SetFlag>().map((f) => f.flag),
+      }, containsAll(routes));
+    });
+
+    test('the news of the plans reaches the captain wherever they are', () {
+      final event = storyContent.events.firstWhere((e) => e.id == 'trae_plans');
+      expect(event.triggers, containsAll([Trigger.queued, Trigger.arrival]));
+      expect(event.condition!.test(withFlags({Flag.traePlans})), isTrue);
+    });
+  });
+
   test('event ids are unique', () {
     expect(ids.length, storyContent.events.length);
   });

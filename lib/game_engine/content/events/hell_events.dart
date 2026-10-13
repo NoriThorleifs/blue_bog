@@ -332,7 +332,7 @@ final hellEvents = <GameEvent>[
   ),
   // The Mourner is the last Havi left in Hell, a god holding its dead home
   // world at the lip of a black hole. It is far stronger than the Overseer,
-  // and the only thing that can kill it. You only get away by asking
+  // and the only thing that can kill them. You only get away by asking
   // politely, and only a Hellborn would know that.
   const GameEvent(
     id: 'hell_mourner',

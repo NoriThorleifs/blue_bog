@@ -28,6 +28,21 @@ abstract final class Flag {
   static const bhrunSubjugated = 'bhrun_subjugated';
   static const bhrunInvasion = 'bhrun_invasion';
 
+  // The way into act 2: the Center's dead gateway to Træ Træ Tene reopens,
+  // by one of three routes. The news of the plans reaches the captain, who
+  // can back one.
+  static const traePlans = 'trae_plans';
+
+  /// The council outvotes the Overseer and sends a Tern repair crew.
+  static const traeByCouncil = 'trae_by_council';
+
+  /// Mister Jay and the humans send "the coffin" on a wrong warp (see
+  /// `lore/Mister Jay.md`), and the Hellborn quietly see it through.
+  static const traeByCoffin = 'trae_by_coffin';
+
+  /// The Unfortunates wake the gate themselves, and deny it.
+  static const traeByUnfortunates = 'trae_by_unfortunates';
+
   // Act 2.
   static const traeGateRestored = 'trae_gate_restored';
   static const wrongWarping = 'wrong_warping';
@@ -50,7 +65,7 @@ abstract final class Flag {
   /// The Solar human army has let the captain into Sol.
   static const solEntered = 'sol_entered';
 
-  /// Shining-head is dead. Only destroying his complex, 10 km under Neo
+  /// Shining-head is dead. Only destroying its complex, 10 km under Neo
   /// Terra's capital, can do that.
   static const shiningHeadDead = 'shining_head_dead';
 
@@ -110,8 +125,8 @@ abstract final class Counter {
   static const pipeInstability = 'pipe_instability';
 
   /// How fed up the Tern are with the Overseer: the weakest of the Havi,
-  /// given the Center as a joke job, and now ruling by default because it
-  /// was the only one left after the gatecrash.
+  /// given the Center as a joke job, and now ruling by default because
+  /// they were the only one left after the gatecrash.
   static const ternDiscontent = 'tern_discontent';
 
   /// Credits owed to the Fuel Rats.

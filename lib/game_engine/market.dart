@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'combat/catalog.dart';
 import 'combat/equipment.dart';
 import 'rng.dart';
@@ -27,19 +29,28 @@ class Market {
   /// shipyard.
   final bool tradingPost;
 
-  /// Rerolls bought this visit. Each costs more than the last.
+  /// Rerolls bought this visit. After the first [cheapRerolls], each costs
+  /// more than the last.
   final int rerolls;
 
   static const size = 27;
   static const tradingPostSize = 9;
 
-  int get rerollPrice => 5 * (rerolls + 1);
+  /// Rerolls a visit gets at [rerollBase] before the price starts climbing.
+  /// Shops only sell basic cards, so hunting for the third copy of a card
+  /// is how a captain builds, and it shouldn't get dear at once.
+  static const cheapRerolls = 3;
+  static const rerollBase = 5;
 
-  /// A market has 27 offers: 18 pieces of equipment and 9 commodities. A
-  /// trading post has 9: 4 supplies and 5 commodities. Equipment is mostly
-  /// basic, sometimes upgraded, rarely super, priced 0.8–1.2 of its value.
-  /// Commodities sell at this shop's going rate. [stock] limits which
-  /// equipment families can turn up.
+  /// 5, 5, 5, then 10, 15, 20…
+  int get rerollPrice => rerollBase * max(1, rerolls - cheapRerolls + 2);
+
+  /// A market has 27 offers: 18 cards and 9 commodities. A trading post
+  /// has 9: 4 supplies and 5 commodities. Cards are always basic, priced
+  /// 0.8–1.2 of their value: upgraded and super cards come from merging
+  /// three of the tier below, or from wrecks. Commodities sell at this
+  /// shop's going rate. [stock] limits which equipment families can turn
+  /// up.
   static Market roll(
     String systemId,
     GameRng rng,
@@ -57,10 +68,7 @@ class Market {
           ]
         : stock;
     for (var i = 0; i < (tradingPost ? 4 : 18); i++) {
-      final family = rng.pick(families);
-      final roll = rng.nextDouble();
-      final tier = roll < 0.6 ? 0 : (roll < 0.9 ? 1 : 2);
-      final card = family.tiers[tier];
+      final card = rng.pick(families).tiers.first;
       offers.add(
         Offer(card.id, (card.price * rng.rangeDouble(0.8, 1.2)).round()),
       );

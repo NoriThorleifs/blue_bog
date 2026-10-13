@@ -240,30 +240,111 @@ final storyBeats = <StoryBeat>[
     ],
     localEvent: (const AtSystem(Sys.bhrunGai), 'direction_remover'),
   ),
+  // The way into act 2. Three plans for the dead gateway reach the captain
+  // wherever they are, and they can back one. A few turns later the gate
+  // opens by the route they backed, or, if they stayed out of it, by the
+  // one the galaxy leans to. However it happens, act 2 begins.
   StoryBeat(
-    id: 'trae_restoration',
-    headline: 'The fourth gateway reopens',
+    id: 'trae_plans',
+    headline: 'Three plans for the dead gateway',
     condition: const AllOf([
       ActIs(1),
       AnyOf([
-        AllOf([HasFlag(Flag.neoTerraWar), TurnAtLeast(16)]),
-        TurnAtLeast(24),
+        AllOf([HasFlag(Flag.neoTerraWar), TurnAtLeast(13)]),
+        TurnAtLeast(21),
       ]),
     ]),
     chance: 0.15,
     deadline: 6,
     modifiers: const [(CounterAtLeast(Counter.humanPower, 6), 1.5)],
+    effects: const [SetFlag(Flag.traePlans)],
+    outcomes: const [
+      Outcome(
+        'The council wants the Center\'s fourth gateway reopened, and the '
+        'Overseer will veto it as always. A Tern called Mister Jay has been '
+        'seen with the humans a great deal lately. And the Unfortunates, '
+        'who know more about gateways than they admit, have gone quiet.',
+      ),
+    ],
+    // Wherever the captain is, unless Hell has them; then it waits for
+    // their next arrival (see `trae_plans` in story_beat_events.dart).
+    localEvent: (NotInHell(), 'trae_plans'),
+  ),
+  StoryBeat(
+    id: 'trae_restoration',
+    headline: 'The fourth gateway reopens',
+    condition: const AllOf([ActIs(1), HasFlag(Flag.traePlans)]),
+    chance: 0.4,
+    // Time for the captain to take part.
+    delay: 1,
+    deadline: 4,
     effects: const [
       RestoreGateway(Sys.center, Sys.traeTraeTene),
       SetFlag(Flag.traeGateRestored),
-      AddCounter(Counter.ternDiscontent, 1),
     ],
-    outcomes: const [
-      Outcome(
+    outcomes: [
+      // The route the captain backed.
+      const Outcome(
+        'The vote was close, and your speech is being quoted. For the '
+        'first time anyone can remember, the Overseer\'s veto failed. The '
+        'council pushed a Tern repair crew through, the Unfortunates '
+        '"consulted", and the Center\'s fourth gateway is open again.',
+        condition: HasFlag(Flag.traeByCouncil),
+        effects: _byCouncil,
+      ),
+      const Outcome(
+        'Without a vote, the Center\'s fourth gateway lit up. Mister Jay '
+        'activated it, at a moment he had counted out from a pulsar, and '
+        'the tiny ship you helped launch, the humans call it "the coffin", '
+        'had carried a piece of him to Træ Træ Tene to open the far side at '
+        'the same instant. The whole council is shouting. Its pilot did not '
+        'survive.',
+        condition: HasFlag(Flag.traeByCoffin),
+        effects: [
+          ..._byCoffin,
+          Note(
+            'Your humans say the coffin\'s course was impossible, and that '
+            'somebody on the other side must have caught it. They won\'t say '
+            'who.',
+          ),
+        ],
+      ),
+      const Outcome(
+        'One night the Center\'s fourth gateway simply woke up. Nobody '
+        'claims to have touched it, and the Unfortunates deny everything. '
+        'You put the question to them, though, and since then they have '
+        'stopped answering your calls.',
+        condition: HasFlag(Flag.traeByUnfortunates),
+        effects: _byUnfortunates,
+      ),
+      // The captain stayed out of it: the galaxy decides.
+      const Outcome(
         'Rattled by how strong the humans have become, the council '
         'pushed a Tern repair crew through. The Unfortunates "consulted". '
         'For the first time anyone can remember, the Overseer\'s veto '
         'failed. The Center\'s fourth gateway is open again.',
+        condition: _noRoute,
+        weight: 1.5,
+        effects: _byCouncil,
+      ),
+      const Outcome(
+        'Without a vote, the Center\'s fourth gateway lit up. A Tern '
+        'called Mister Jay had been working with the humans in secret: a '
+        'tiny ship they called "the coffin" took a piece of him through on '
+        'a wrong warp to Træ Træ Tene, and the Tern there opened the far '
+        'side at the moment he had counted out from a pulsar. The council '
+        'is furious. The coffin\'s pilot did not survive.',
+        condition: _noRoute,
+        bondWeight: 1.5,
+        effects: _byCoffin,
+      ),
+      const Outcome(
+        'One night the Center\'s fourth gateway simply woke up. Nobody '
+        'claims to have touched it. The Unfortunates deny everything, a '
+        'little too quickly.',
+        condition: _noRoute,
+        weight: 0.6,
+        effects: _byUnfortunates,
       ),
     ],
   ),
@@ -288,6 +369,14 @@ final storyBeats = <StoryBeat>[
         'taking them. There are no laws against it, because no species was '
         'ever insane enough to try. Every pipe in the network feels '
         'shakier for it.',
+        condition: NoFlag(Flag.traeByCoffin),
+      ),
+      Outcome(
+        'Since the coffin, the humans have stopped hiding it. Their ships '
+        'enter gateways at extreme speed and impossible angles and reach '
+        'the exit before Hell has finished taking them. There are still no '
+        'laws against it. Every pipe in the network feels shakier for it.',
+        condition: HasFlag(Flag.traeByCoffin),
       ),
     ],
   ),
@@ -308,7 +397,7 @@ final storyBeats = <StoryBeat>[
         'human must watch. It tells soldiers to ignore radio calls from '
         'strangers and to report strange noises. Consumers cannot imitate '
         'speech. The Overseer\'s reaction was immediate and, for once, '
-        'assertive. It has not said why. Those who remember the Havi civil '
+        'assertive. They have not said why. Those who remember the Havi civil '
         'war, fought between the Havi who uploaded their minds and those who '
         'kept their bodies, can guess which side the voice on Neo Terra was '
         'on.',
@@ -322,15 +411,15 @@ final storyBeats = <StoryBeat>[
     chance: 0.25,
     delay: 1,
     deadline: 5,
-    // Shining-head only dies when his complex is destroyed. The Overseer
+    // Shining-head only dies when its complex is destroyed. The Overseer
     // only dies to the Mourner.
     outcomes: const [
       Outcome(
         'The Overseer and five councillors went to Neo Terra, which no '
         'longer answers to the Republic. The Uploaded humans stood between '
-        'the Overseer and the complex under their capital, and for all its '
-        'power the Overseer would not fight its way through them. It came '
-        'back with nothing, and the whole Republic saw it.',
+        'the Overseer and the complex under their capital, and for all '
+        'their power the Overseer would not fight a way through. The '
+        'Overseer came back with nothing, and the whole Republic saw it.',
         weight: 50,
         condition: AllOf([
           HasFlag(Flag.uploadedFormed),
@@ -340,10 +429,10 @@ final storyBeats = <StoryBeat>[
       ),
       Outcome(
         'The Overseer went to Neo Terra to finish Shining-head, and found '
-        'his complex already a crater. The human leader thanked it, then '
-        'warped it and five councillors to the domain of the Mourner. The '
+        'its complex already a crater. The human leader thanked them, then '
+        'warped them and five councillors to the domain of the Mourner. The '
         'councillors asked politely to leave and were let go. The Overseer '
-        'did not ask. The Mourner took it.',
+        'did not ask. The Mourner took them.',
         weight: 50,
         condition: HasFlag(Flag.shiningHeadDead),
         effects: [
@@ -371,8 +460,9 @@ final storyBeats = <StoryBeat>[
       Outcome(
         'The Overseer and five councillors went to Neo Terra. Only the '
         'councillors came back. The Overseer destroyed the complex under '
-        'Neo Terra, they say, and then a blind human psychic delivered it '
-        'to the Mourner, the one being that could kill it. The Republic '
+        'Neo Terra, they say, and then a blind human psychic delivered the '
+        'Overseer to the Mourner, the one being that could kill them. The '
+        'Republic '
         'has no god left, and it knows who to blame.',
         condition: AllOf([
           NoFlag(Flag.uploadedFormed),
@@ -571,4 +661,34 @@ const _gorFleetLost = <Effect>[
   AddCounter(Counter.gorAggression, -3),
   AddCounter(Counter.humanPower, 2),
   AddCounter(Counter.hellbornAwareness, 1),
+];
+
+/// The captain didn't back any of the plans for the Træ Træ Tene gateway.
+const _noRoute = AllOf([
+  NoFlag(Flag.traeByCouncil),
+  NoFlag(Flag.traeByCoffin),
+  NoFlag(Flag.traeByUnfortunates),
+]);
+
+/// The council outvoted the Overseer: the Tern see how little the veto is
+/// worth.
+const _byCouncil = <Effect>[
+  SetFlag(Flag.traeByCouncil),
+  AddCounter(Counter.ternDiscontent, 1),
+  AddCounter(Counter.republicStance, 2),
+];
+
+/// The humans went around the council, and the Hellborn helped.
+const _byCoffin = <Effect>[
+  SetFlag(Flag.traeByCoffin),
+  AddCounter(Counter.humanPower, 1),
+  AddCounter(Counter.republicStance, -4),
+  AddCounter(Counter.hellbornAwareness, 1),
+];
+
+/// The Unfortunates showed what they can do, and the Overseer didn't
+/// stop them.
+const _byUnfortunates = <Effect>[
+  SetFlag(Flag.traeByUnfortunates),
+  AddCounter(Counter.ternDiscontent, 1),
 ];

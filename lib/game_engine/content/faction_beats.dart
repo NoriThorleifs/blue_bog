@@ -87,9 +87,10 @@ final factionBeats = <StoryBeat>[
       Outcome(
         'The Tern remember what the Overseer was before the gatecrash: the '
         'weakest of the Havi, handed a tourist station because the others '
-        'wanted it out of the way. It rules the Republic only because it '
-        'was the last one left, and the Tern have had enough. They are not '
-        'hostile. They simply no longer accept it as their leader. Every '
+        'wanted them out of the way. The Overseer rules the Republic only '
+        'because they were the last one left, and the Tern have had enough. '
+        'The Tern are not hostile. They simply no longer accept the '
+        'Overseer as their leader. Every '
         'Tern relay now answers to the Collective.',
         condition: NoFlag(Flag.overseerGone),
       ),

@@ -22,9 +22,9 @@ Plan for the card combat system, the ship loadout rules and the economy around t
 1. **Measure everything in DPS and effective hull.**
    - Time to kill (TTK) = effective hull ÷ the damage per second (DPS) that actually gets through.
    - Every card gets a power budget measured in DPS, or hull and damage prevented per second, so different card types can be compared.
-2. **One unit of power = one basic card.**
-   - An upgraded card is worth 3 units and a super card 9, matching the merge rule.
-   - Merging never adds power by itself. It frees slots, and that is where the growth comes from.
+2. **One unit of power = one basic card, and merging adds power.**
+   - Shops sell only basic cards. An upgraded card costs three basics and a super card nine, but is worth far more: ×4 and ×16 numbers, plus perks (see "Merging and perks" below).
+   - So rerolling to find the third copy is the main skill of shopping, and a merged ship outgrows a ship of loose basics. (Until the author changed it, merging was power-neutral: ×3 and ×9, and the growth came only from freed slots.)
 3. **The player's edge is hull.**
    - A starter has 500 hull, while early enemies have 200–500.
    - Enemies of a similar stage carry *fewer* damage cards than the player. That way a fair fight costs the player 10–50% of their hull, not all of it.
@@ -61,7 +61,7 @@ Plan for the card combat system, the ship loadout rules and the economy around t
 | Hull plating | — | +100 hull | Passive. |
 | Cargo pod | — | +3 hold capacity | Passive. Upgraded +9, super +27. Only works in the cargo bay, its own slot outside the triforce; spare pods wait in the hold or a slot until they merge. |
 
-- **Upgraded and super cards** keep the same cooldown and have 3× or 9× the effect.
+- **Upgraded and super cards** have 4× or 16× the effect (colony cards, cargo pods, teleporters, supplies, barriers and tanks only 3× or 9×), and the perks of their family.
 - **Ammo and materials** are commodity cards. One crate holds 9 shots, used up in combat from the hold or a slot, and restocked at shops.
 - **Synergy budget:**
 
@@ -70,6 +70,49 @@ Plan for the card combat system, the ship loadout rules and the economy around t
   | Triangle card (affects the 2 other cards in its triangle) | ≈ one extra card's worth, e.g. +50% to each neighbour, or −33% cooldown |
   | Ship-wide card (affects the other 8) | ≈ one extra card's worth, e.g. +12% each, or "when this fires, every other card's timer drops by 1 s" |
   | Triangle set bonus (3 cards of the same type in a triangle) | +25% to that triangle |
+
+## Merging and perks
+
+Each family gains its own bonuses when it merges, on top of bigger numbers. The super card's list replaces the upgraded card's. Card details show them as gold starred lines, and preview the next tier's.
+
+| Family | Upgraded | Super |
+| --- | --- | --- |
+| Laser | charges 20% faster | 40% faster; +3 damage for good per shot (Veteran) |
+| Missile rack | brings 6 missiles | brings 24; a missile a drone stops still hits for half |
+| Teleport bomb (×3/×9) | brings 1 charge | brings 3; can't be jammed |
+| Shield generator (30/140/600) | charges 20% faster | 35% faster; charging full shields patches 40 hull |
+| Drone fabricator | drones repair +1 hull/s | +2 hull/s; brings 16 feedstock |
+| Hull plating | armour 4 (every hull hit 4 weaker, down to half) | armour 12 |
+| Shield capacitor | shields start the fight full | and regenerate 6 a second |
+| Ion cannon | charges 25% faster | and leftover hits the hull in full |
+| Flak battery | charges 25% faster | and shrapnel passes shields |
+| Repair bay | patches 10 more each time this fight | 40 more; charges 25% faster |
+| Plasma lance | +2 damage for good per shot | +6; a quarter of each shot passes shields |
+| Rail cannon | charges 20% faster | and a deflected slug knocks the shields out |
+| Teleport jammer | charges 30% faster | and jammed bombs go off aboard the sender |
+| Fire control | weapons in the triangle hit 15% harder | 40% harder |
+| Capacitor bank | every card starts 15% charged | 35% |
+| Quick-arm fuzes | missiles in the triangle hit 20% harder | 50% harder |
+| Habitat (×3/×9) | +10% of free housing signs on at stations | +25% |
+| Clinic (×3/×9) | +1 loyalty a dock | +3 |
+| Crawlspace crews (×3/×9) | humans patch to 85% | to 100% |
+| Corner shop (×3/×9) | +15 cr a dock, flat | +60 |
+| Card room (×3/×9) | +5% sign-ons | +10%, and +25 cr a dock |
+| Two-sided brothel (×3/×9) | +1 loyalty a dock | +2, and +10% sign-ons |
+| Brandy Burner | burns its user half as much | not at all |
+| Loose Teeth | +2 damage per shot this fight (Frenzy) | +6, and +1 for good |
+| Brandy Mist (50/230/1000) | shields regenerate 4 a second | 15 |
+| Metal Flesh Graft | regrows 3 hull a second | 10 |
+
+| Missile crate (×3/×9) | missiles you fire hit 15% harder, from the hold too | 40% harder |
+| Teleport charges (×3/×9) | teleport bombs you fire hit 10% harder | 25% harder |
+| Drone feedstock (×3/×9) | 3 drones are out when a fight starts | 9, and every drone repairs +1 hull/s |
+
+Supplies only grow ×3 and ×9, so merging never loses ammo, but no fight can use more than a few dozen missiles or feedstock: at ×16 a Feedstock Silo carried 144, which was worth nothing. Their merge bonus is the perk, which works from the hold as well as a slot. Cargo pods, barriers and drop tanks grow ×3 and ×9 with no perk.
+
+Veteran growth is written into the card id after every fight (`lance_2+30`), and merging adds the three cards' growth together.
+
+**What the simulations showed.** `tool/brawl_sim.dart` bots that buy whatever is on offer do as before (median 6 fights won). Bots that buy copies of cards they own and use the cheap rerolls to find them win a median of 7–10, and the best runs reach the 20s. `tool/enemy_balance.dart` at the old budgets shows the same: the player wins 5–35 points more often from stage 5 on, and the elites got easier (the Last Vote 3% to 15% at fight 4, the Unmerged foundry 42% to 62%). The enemy pools were left as they were.
 
 ## Enemies
 
@@ -118,7 +161,7 @@ Same ship for everyone. Every kit has a cargo pod in the cargo bay, a Habitat To
   - Base value: basic 30, upgraded 90, super 270. Buying three basics costs the same as one upgraded card.
   - Each shop multiplies prices by a random 0.8–1.2 per card.
   - Selling returns 50% of the base value.
-- **Shops.** Only trading-hub systems have one, a new tag on the map. Each rolls **27 cards per round**. I'm reading "round" as each turn you arrive or stay there. The mix is roughly 60% basic, 30% upgraded, 10% super, plus commodities.
+- **Shops.** Only trading-hub systems have one, a new tag on the map. Each rolls **27 cards per round**. I'm reading "round" as each turn you arrive or stay there. Every card is basic, plus commodities; upgraded and super cards come from merging, wrecks and events.
 - **Commodities.**
   - Each has a base price and a per-hub multiplier between 0.6 and 1.6, set per run and drifting a little each turn.
   - They are not halved when sold.
@@ -178,12 +221,13 @@ First balance findings:
 - **Escaping at 60 seconds:** no loot, and the hostile faction remembers you.
 - **Winning lets you scrap the enemy ship:** credits, plus a chance to salvage each of its cards.
 - **Boss fights** that matter to the story have a **tractor beam**. There's no 60-second limit, so you win or you die.
-- **A shop rolls its 27 cards on every visit.** A small fee rerolls it: 5 credits, plus 5 more for each reroll in the same visit.
+- **A shop rolls its 27 cards on every visit.** A small fee rerolls it: the first three rerolls of a visit cost 5 credits each, then each costs 5 more than the last (10, 15, 20…). The delay is there because shops only sell basic cards, so hunting for copies to merge takes a few rerolls.
 
 ## The end of a brawl
 
-- **Satan at fight 27.** He comes wherever the captain is, Hell included, with a tractor beam, so there's no escaping at the time limit. His ship is fixed rather than scaled: Hell's own upgraded cards (Teleport Barrage, Brimstone Projector, Tooth Lattice, a Brandy Mist shield, a Behemoth Hide and a Living Hull) and what he scavenged from our dimension (Ion Cannon, Flak Battery, one Teleport Jammer), on 2000 base hull (4160 in all).
+- **Satan at fight 27.** He comes wherever the captain is, Hell included, with a tractor beam, so there's no escaping at the time limit. His ship is fixed rather than scaled: Hell's own upgraded cards (Teleport Barrage, two Brimstone Projectors, Tooth Lattice, a Behemoth Hide and a Living Hull) and what he scavenged from our dimension (Ion Cannon, Flak Battery, one Teleport Jammer), on 3500 base hull (7100 in all).
 - **The baseline is a good build, not a god build.** The Hell Clock is rare even in a 27-fight brawl, so Satan is tuned without it, using `tool/boss_balance.dart`: five hand-built late archetypes (lasers and shields, missiles and drones, teleport bombs, lance and rail, Hell cards; upgraded cards with a super or two, +400 hull) all win, mostly with 300–650 hull left; random builds win 4% at 1500 credits, 38% at 2500 and 69% at 4000. At 2500 base hull two of the five archetypes lose. A first version, tuned so the author's Hell Clock god run barely won, beat every realistic build.
+- **Retuned for merge perks.** Stronger merged cards made the old Satan easy (every archetype won with 1300–4500 hull left). His hull hardly mattered, since late builds out-heal him; his damage did. He swapped his Brandy Mist for a second Brimstone Projector and went to 3500 base hull: every archetype still wins, the weakest (lance and rail) with about 400 hull left, the strongest with far more; random builds win 9% at 1500 credits, 60% at 2500 and 84% at 4000. Random builds buy merged cards outright, which players can't, so they overstate a real captain.
 - **Winning.** Beating Satan pays The Broken Seal (unique, Hellish: 240 hellfire every 3 s, +300 hull) and wins the brawl. The captain retires on a victory screen, or keeps going for score: every fight past 27 has 1.3× the hull of the one before, on top of the usual scaling, so endless runs always end.
 - **Wreckage and jettisoning.** Salvage, plunder and event cards that don't fit wait in the wreckage until the ship moves on. Any card can be jettisoned for nothing to make room.
 - **Colony dividends** keep scaling with population and tier; the author chose to leave them (a late god run made 672 credits a dock), since the ending now caps the run.

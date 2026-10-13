@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 import '../../game_engine/combat/catalog.dart';
@@ -9,12 +7,12 @@ import '../cards/card_widgets.dart';
 import '../theme.dart';
 
 /// A card in a slot or the hold, optionally draggable to another spot.
+/// Empty, it shows the outline of what usually goes there.
 class SpotTile extends StatelessWidget {
   const SpotTile({
     super.key,
     required this.spot,
     required this.id,
-    required this.size,
     this.selected = false,
     this.dimmed = false,
     this.onTap,
@@ -24,7 +22,6 @@ class SpotTile extends StatelessWidget {
 
   final CardSpot spot;
   final String? id;
-  final double size;
   final bool selected;
   final bool dimmed;
   final ValueChanged<CardSpot>? onTap;
@@ -35,18 +32,24 @@ class SpotTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final empty = CardShape.forSpot(spot);
     Widget tile({bool hovered = false}) {
       final card = CardTile(
         id: id,
         selected: selected || hovered,
         dimmed: dimmed,
+        emptyShape: empty,
         // Empty spots take taps only where cards move by tapping, not by
         // dragging.
         onTap: onTap == null || (id == null && onDrop != null)
             ? null
             : () => onTap!(spot),
       );
-      return glowing ? GlowPulse(child: card) : card;
+      if (!glowing) return card;
+      return GlowPulse(
+        shape: id == null ? empty : CardShape.of(equipmentById(id!)),
+        child: card,
+      );
     }
 
     final drop = onDrop;
@@ -56,17 +59,20 @@ class SpotTile extends StatelessWidget {
       onAcceptWithDetails: (details) => drop(details.data, spot),
       builder: (context, hovering, _) => id == null
           ? tile(hovered: hovering.isNotEmpty)
-          : Draggable<CardSpot>(
-              data: spot,
-              feedback: SizedBox.square(
-                dimension: size * 1.15,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: CardTile(id: id, selected: true),
+          : LayoutBuilder(
+              builder: (context, box) => Draggable<CardSpot>(
+                data: spot,
+                feedback: SizedBox(
+                  width: box.maxWidth * 1.15,
+                  height: box.maxHeight * 1.15,
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: CardTile(id: id, selected: true),
+                  ),
                 ),
+                childWhenDragging: CardTile(id: null, emptyShape: empty),
+                child: tile(hovered: hovering.isNotEmpty),
               ),
-              childWhenDragging: const CardTile(id: null),
-              child: tile(hovered: hovering.isNotEmpty),
             ),
     );
   }
@@ -111,40 +117,26 @@ class Triforce extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, box) {
-        // The triangle is inset by half a tile so slots near its corners
-        // stay inside the box.
-        final tile = box.maxWidth * 0.145;
-        final inner = Size(
-          box.maxWidth - tile,
-          (box.maxWidth - tile) * sqrt(3) / 2,
-        );
-        final inset = Offset(tile / 2, tile / 2);
-        final centres = slotCentres(box.maxWidth);
+        final geo = TriforceGeometry(box.maxWidth);
+        // A small gap between each card and the lines around it.
+        final gap = geo.side * 0.012;
         return SizedBox(
-          width: box.maxWidth,
-          height: inner.height + tile,
+          width: geo.width,
+          height: geo.height,
           child: Stack(
             children: [
-              Positioned(
-                left: inset.dx,
-                top: inset.dy,
-                width: inner.width,
-                height: inner.height,
-                child: CustomPaint(painter: _TrianglePainter()),
+              Positioned.fill(
+                child: CustomPaint(painter: _TrianglePainter(geo)),
               ),
               for (var i = 0; i < Loadout.slotCount; i++)
-                Positioned(
-                  left: centres[i].dx - tile / 2,
-                  top: centres[i].dy - tile / 2,
-                  width: tile,
-                  height: tile,
+                Positioned.fromRect(
+                  rect: geo.slotRects[i].deflate(gap),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
                       SpotTile(
                         spot: SlotSpot(i),
                         id: slots[i],
-                        size: tile,
                         selected: selected == SlotSpot(i),
                         dimmed: slots[i] != null && _inert(slots[i]!),
                         onTap: onTap,
@@ -162,45 +154,74 @@ class Triforce extends StatelessWidget {
     );
   }
 
-  /// Each small triangle holds three slots, one near each of its corners.
   /// Where each slot's centre sits in a triforce [width] wide, so effects
   /// can be drawn over it.
-  static List<Offset> slotCentres(double width) {
-    final tile = width * 0.145;
-    final inner = Size(width - tile, (width - tile) * sqrt(3) / 2);
-    return [
-      for (final c in _slotCentres(inner)) c + Offset(tile / 2, tile / 2),
-    ];
-  }
+  static List<Offset> slotCentres(double width) =>
+      TriforceGeometry(width).slotCentres;
+}
 
-  static List<Offset> _slotCentres(Size size) => [
-    for (final triangle in _smallTriangles(size)) ...[
-      for (final corner in triangle)
-        Offset.lerp(_centroid(triangle), corner, 0.42)!,
-    ],
+/// Where everything in a [Triforce] [width] wide sits.
+///
+/// The big triangle splits into three small ones, and each small one into
+/// four smaller still: the three at its corners are its slots, point up
+/// like the triangular cards that fill them, and the one in the middle,
+/// upside down, stays empty.
+class TriforceGeometry {
+  TriforceGeometry(this.width);
+  final double width;
+
+  /// Room around the big triangle for its glow.
+  double get margin => width * 0.02;
+
+  /// The big triangle's side.
+  double get side => width - 2 * margin;
+
+  double get height => side * triangleHeight + 2 * margin;
+
+  /// Height over width, for fitting a triforce into a box.
+  static double get aspect => 0.96 * triangleHeight + 0.04;
+
+  Offset get top => Offset(width / 2, margin);
+  Offset get left => Offset(margin, margin + side * triangleHeight);
+  Offset get right => Offset(width - margin, margin + side * triangleHeight);
+
+  /// Top, bottom left and bottom right, each as its top, bottom left and
+  /// bottom right corners.
+  List<List<Offset>> get smallTriangles => _split([top, left, right]);
+
+  /// The nine slots' triangles, in slot order.
+  late final List<List<Offset>> slotTriangles = [
+    for (final t in smallTriangles) ..._split(t),
   ];
 
-  static List<List<Offset>> _smallTriangles(Size size) {
-    final top = Offset(size.width / 2, 0);
-    final left = Offset(0, size.height);
-    final right = Offset(size.width, size.height);
-    final midLeft = Offset.lerp(top, left, 0.5)!;
-    final midRight = Offset.lerp(top, right, 0.5)!;
-    final midBottom = Offset.lerp(left, right, 0.5)!;
+  /// Each slot's bounding box, which its card fills.
+  late final List<Rect> slotRects = [
+    for (final t in slotTriangles)
+      Rect.fromLTRB(t[1].dx, t[0].dy, t[2].dx, t[1].dy),
+  ];
+
+  late final List<Offset> slotCentres = [
+    for (final t in slotTriangles) (t[0] + t[1] + t[2]) / 3,
+  ];
+
+  /// The three corner triangles of [t] (top, bottom left, bottom right).
+  static List<List<Offset>> _split(List<Offset> t) {
+    final [a, b, c] = t;
+    final ab = Offset.lerp(a, b, 0.5)!;
+    final ac = Offset.lerp(a, c, 0.5)!;
+    final bc = Offset.lerp(b, c, 0.5)!;
     return [
-      [top, midLeft, midRight],
-      [midLeft, left, midBottom],
-      [midRight, midBottom, right],
+      [a, ab, ac],
+      [ab, b, bc],
+      [ac, bc, c],
     ];
   }
-
-  static Offset _centroid(List<Offset> t) => Offset(
-    (t[0].dx + t[1].dx + t[2].dx) / 3,
-    (t[0].dy + t[1].dy + t[2].dy) / 3,
-  );
 }
 
 class _TrianglePainter extends CustomPainter {
+  _TrianglePainter(this.geo);
+  final TriforceGeometry geo;
+
   @override
   void paint(Canvas canvas, Size size) {
     final glow = Paint()
@@ -212,7 +233,7 @@ class _TrianglePainter extends CustomPainter {
       ..color = Palette.gateway.withValues(alpha: 0.7)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
-    for (final t in Triforce._smallTriangles(size)) {
+    for (final t in geo.smallTriangles) {
       final path = Path()..addPolygon(t, true);
       canvas
         ..drawPath(
@@ -225,5 +246,5 @@ class _TrianglePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_TrianglePainter old) => false;
+  bool shouldRepaint(_TrianglePainter old) => old.geo.width != geo.width;
 }

@@ -14,9 +14,10 @@ List<Widget> guideWorld() => [
     title: 'Stations and trade',
     children: [
       GuideBullets([
-        'Buy: each station stocks its own cards. Every price shows the '
-            'galactic median under it, so you can tell a bargain. Reroll the '
-            'stock for a few credits, more each time.',
+        'Buy: each station stocks its own basic cards. Every price shows '
+            'the galactic median under it, so you can tell a bargain. Reroll '
+            'the stock to hunt for copies to merge: the first three rerolls '
+            'of a visit cost 5 credits, then each costs 5 more than the last.',
         'Sell: anything sells for about half its price; commodities sell for '
             'whatever this station pays for them, which differs from station '
             'to station.',
@@ -244,4 +245,5 @@ final _hold = Loadout(
 
 /// A non-interactive tile builder showing [loadout]'s cards.
 Widget Function(CardSpot) _tile(Loadout loadout) =>
-    (spot) => CardTile(id: loadout.at(spot));
+    (spot) =>
+        CardTile(id: loadout.at(spot), emptyShape: CardShape.forSpot(spot));

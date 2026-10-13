@@ -343,7 +343,7 @@ final placeEvents = <GameEvent>[
       Choice('Turn back', outcomes: [Outcome('You turn back.')]),
     ],
   ),
-  // Shining-head can only be killed by destroying his complex, 10 km under
+  // Shining-head can only be killed by destroying its complex, 10 km under
   // the capital.
   GameEvent(
     id: 'deep_complex',
@@ -363,8 +363,9 @@ final placeEvents = <GameEvent>[
     text:
         'Your humans take you to the station that does nothing but bombard '
         'one point on the surface, over and over. Ten kilometres under the '
-        'capital is a complex, and in it is the voice. The colonists tried '
-        'digging once. It threatened to crack the planet\'s core. They '
+        'capital is a complex, and in it is the voice the colonists call '
+        'the Entity. They tried digging once. It threatened to crack the '
+        'planet\'s core. They '
         'think it was bluffing. They would like a ship with real guns to '
         'help them find out.',
     choices: [
@@ -375,7 +376,7 @@ final placeEvents = <GameEvent>[
             '',
             effects: [
               Combat(
-                'Shining-head\'s defences',
+                'The Entity\'s defences',
                 13,
                 win: [
                   SetFlag(Flag.shiningHeadDead),
@@ -385,7 +386,7 @@ final placeEvents = <GameEvent>[
                   Loyalty(15),
                   Note(
                     'Helped the colonists destroy the complex under Neo '
-                    'Terra. Shining-head was bluffing.',
+                    'Terra. The Entity was bluffing.',
                   ),
                 ],
                 lose: [Hull(-150)],

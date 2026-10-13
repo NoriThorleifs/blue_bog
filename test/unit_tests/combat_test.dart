@@ -22,12 +22,12 @@ Combatant target(
 
 void main() {
   test('shields absorb laser damage before the hull', () {
-    // Shield charges to 30 at 6 s. The upgraded laser (90) fires at 5 s,
-    // 10 s, ...: the shot at 10 s loses 30 to the shield.
+    // Shield charges to 30 at 6 s. The upgraded laser (120) fires at 4 s,
+    // 8 s, ...: the shot at 8 s loses 30 to the shield.
     final r = fight(ship(['laser_2']), target(['shield_1']));
-    final atTen = r.events.firstWhere((e) => e.time == 10 && e.side == 0);
-    expect(atTen.kind, CombatEventKind.laserHit);
-    expect(atTen.value, 60);
+    final atEight = r.events.firstWhere((e) => e.time == 8 && e.side == 0);
+    expect(atEight.kind, CombatEventKind.laserHit);
+    expect(atEight.value, 90);
   });
 
   test('shields refill to the maximum from every generator, not beyond', () {
@@ -51,7 +51,7 @@ void main() {
 
   test('each drone stops one missile, however big', () {
     final r = fight(
-      ship(['missiles_3', 'missile_crate_1']),
+      ship(['missiles_2', 'missile_crate_1']),
       target(['fabricator_1', 'feedstock_1']),
     );
     final first = r.events.firstWhere((e) => e.side == 0);
@@ -64,44 +64,38 @@ void main() {
     );
   });
 
-  test(
-    'a merged fabricator builds as many drones as the three it replaced',
-    () {
-      int interceptions(String fabricator, String feedstock) {
-        final r = fight(
-          ship(
-            ['missiles_1', 'missiles_1', 'missiles_1'],
-            hold: ['missile_crate_2'],
-          ),
-          target([fabricator], hold: [feedstock]),
-        );
-        return r.events
-            .where((e) => e.kind == CombatEventKind.missileIntercepted)
-            .length;
-      }
-
-      final three =
-          fight(
-                ship(
-                  ['missiles_1', 'missiles_1', 'missiles_1'],
-                  hold: ['missile_crate_2'],
-                ),
-                target(
-                  ['fabricator_1', 'fabricator_1', 'fabricator_1'],
-                  hold: ['feedstock_2'],
-                ),
-              ).events
-              .where((e) => e.kind == CombatEventKind.missileIntercepted)
-              .length;
-      expect(interceptions('fabricator_2', 'feedstock_2'), three);
-      expect(
-        interceptions('fabricator_2', 'feedstock_2'),
-        greaterThan(interceptions('fabricator_1', 'feedstock_2')),
+  test('a merged fabricator builds more drones than the three it replaced', () {
+    int interceptions(String fabricator, String feedstock) {
+      final r = fight(
+        ship(
+          ['missiles_1', 'missiles_1', 'missiles_1'],
+          hold: ['missile_crate_2'],
+        ),
+        target([fabricator], hold: [feedstock]),
       );
-    },
-  );
+      return r.events
+          .where((e) => e.kind == CombatEventKind.missileIntercepted)
+          .length;
+    }
 
-  test('a Swarm Mother puts out nine drones at once', () {
+    final three = fight(
+      ship(
+        ['missiles_1', 'missiles_1', 'missiles_1'],
+        hold: ['missile_crate_2'],
+      ),
+      target(
+        ['fabricator_1', 'fabricator_1', 'fabricator_1'],
+        hold: ['feedstock_2'],
+      ),
+    ).events.where((e) => e.kind == CombatEventKind.missileIntercepted).length;
+    expect(interceptions('fabricator_2', 'feedstock_2'), greaterThan(three));
+    expect(
+      interceptions('fabricator_2', 'feedstock_2'),
+      greaterThan(interceptions('fabricator_1', 'feedstock_2')),
+    );
+  });
+
+  test('a Swarm Mother puts out sixteen drones at once', () {
     final r = fight(
       ship(['laser_1']),
       target(['fabricator_3'], hold: ['feedstock_2']),
@@ -109,19 +103,31 @@ void main() {
     final first = r.events.firstWhere(
       (e) => e.kind == CombatEventKind.droneBuilt,
     );
-    expect(first.value, 9);
+    expect(first.value, 16);
   });
 
   test('drones out patch the hull a little every second', () {
     final hurt = Combatant(
       name: 'hurt',
-      loadout: CombatLoadout.of(['fabricator_2'], hold: ['feedstock_2']),
+      loadout: CombatLoadout.of(['fabricator_1'], hold: ['feedstock_1']),
       hull: 200,
     );
     final r = fight(hurt, target(['plating_1']));
-    // Three drones from the first build at 8 s, one hull each per second
-    // for the remaining 53 seconds.
-    expect(r.hull, 200 + 3 * 53);
+    // One drone from the first build at 8 s, one hull a second for the
+    // remaining 53 seconds.
+    expect(r.hull, 200 + 53);
+  });
+
+  test('a Drone Foundry\'s drones patch twice as much', () {
+    final hurt = Combatant(
+      name: 'hurt',
+      loadout: CombatLoadout.of(['fabricator_2'], hold: ['feedstock_1']),
+      baseHull: 1000,
+      hull: 200,
+    );
+    final r = fight(hurt, target(['plating_1']));
+    // Four drones at 8 s, two hull each a second for 53 seconds.
+    expect(r.hull, 200 + 4 * 2 * 53);
   });
 
   test('shield capacitors speed up shield generators in their triangle', () {
@@ -145,11 +151,11 @@ void main() {
   });
 
   test('shields grow faster than lasers as they merge', () {
-    for (final (tier, shield) in [(1, 30), (2, 105), (3, 360)]) {
+    for (final (tier, shield) in [(1, 30), (2, 140), (3, 600)]) {
       expect(equipmentById('shield_$tier').maxShield, shield);
     }
     // A super laser shot against a super shield is stopped outright.
-    expect(equipmentById('laser_3').damage, lessThan(360));
+    expect(equipmentById('laser_3').damage, lessThan(600));
   });
 
   test('teleported bombs go through shields and drones', () {
@@ -167,7 +173,7 @@ void main() {
     // Triangle 0: a basic rack with fuzes. Triangle 1: an upgraded rack,
     // too big for the fuzes. The small missile now leads.
     final loadout = [
-      'missiles_1', 'quick_fuzes_1', 'missile_crate_2', //
+      'missiles_1', 'quick_fuzes_1', 'missile_crate_1', //
       'missiles_2', null, null,
     ];
     final r = fight(
@@ -332,6 +338,167 @@ void main() {
       );
       expect(boarded.outcome, CombatOutcome.loss);
       expect(boarded.seconds, 40);
+    });
+  });
+
+  group('merge perks', () {
+    List<CombatEvent> mine(CombatResult r) =>
+        r.events.where((e) => e.side == 0).toList();
+
+    test('armour takes a little off every hit, but never more than half', () {
+      int firstHit(List<String> plating) =>
+          mine(fight(ship(['laser_1']), target(plating))).first.value!;
+      expect(firstHit([]), 30);
+      expect(firstHit(['plating_2']), 26);
+      expect(firstHit(['plating_3']), 18);
+      expect(firstHit(['plating_3', 'plating_3']), 15);
+    });
+
+    test('a super missile a drone stops still hits for half', () {
+      // The drone is out at 8 s; the missile at 12 s goes through it.
+      final r = fight(
+        ship(['missiles_3']),
+        target(['fabricator_1', 'feedstock_1']),
+      );
+      final atTwelve = mine(r).firstWhere((e) => e.time == 12);
+      expect(atTwelve.kind, CombatEventKind.missileHit);
+      expect(atTwelve.value, equipmentById('missiles_3').damage! ~/ 2);
+    });
+
+    test(
+      'super teleport bombs bring their own charges and can\'t be jammed',
+      () {
+        final r = fight(ship(['teleporter_3']), target(['jammer_1']));
+        expect(mine(r).first.kind, CombatEventKind.teleportHit);
+      },
+    );
+
+    test('a Null Lattice sends jammed bombs home', () {
+      final r = fight(
+        ship(['teleporter_1', 'teleport_charges_1']),
+        target(['jammer_3']),
+      );
+      expect(mine(r).first.kind, CombatEventKind.teleportJammed);
+      final back = r.events.firstWhere(
+        (e) => e.side == 1 && e.kind != CombatEventKind.jamsReady,
+      );
+      expect(back.kind, CombatEventKind.teleportHit);
+      expect(back.value, 240);
+    });
+
+    test('a Barrier Cathedral patches the hull when the shields are full', () {
+      final hurt = Combatant(
+        name: 'hurt',
+        loadout: CombatLoadout.of(['shield_3']),
+        baseHull: 1000,
+        hull: 200,
+      );
+      final r = fight(hurt, target([]));
+      // Charges every 3.9 s: 15 times, and all but the first find the
+      // shields full.
+      expect(r.hull, 200 + 14 * 40);
+    });
+
+    test('capacitor rings start the fight with the shields up', () {
+      final r = fight(ship(['laser_1']), target(['shield_capacitor_2']));
+      expect(mine(r).first.kind, CombatEventKind.laserAbsorbed);
+    });
+
+    test('regenerating shields keep up with a basic laser', () {
+      final r = fight(ship(['laser_1']), target(['shield_capacitor_3']));
+      expect(
+        mine(r).every((e) => e.kind == CombatEventKind.laserAbsorbed),
+        isTrue,
+      );
+    });
+
+    test('a living hull regrows', () {
+      final hurt = Combatant(
+        name: 'hurt',
+        loadout: CombatLoadout.of(['metal_flesh_2']),
+        hull: 200,
+      );
+      expect(fight(hurt, target([])).hull, 200 + 3 * 60);
+    });
+
+    test('frenzied weapons hit harder with every shot this fight', () {
+      final r = fight(ship(['teeth_2']), target([]));
+      expect(mine(r).take(3).map((e) => e.value), [72, 74, 76]);
+    });
+
+    test('veteran lances ramp in the fight and count their shots', () {
+      final r = fight(ship(['lance_2']), target([]));
+      // 40 damage, 20 more a shot from the lance, 2 more from the perk.
+      expect(mine(r).take(3).map((e) => e.value), [40, 62, 84]);
+      expect(r.shots.first, 10);
+    });
+
+    test('fire control makes the weapons in its triangle hit harder', () {
+      int firstHit(String fireControl) =>
+          mine(fight(ship(['laser_1', fireControl]), target([]))).first.value!;
+      expect(firstHit('fire_control_1'), 30);
+      expect(firstHit('fire_control_2'), 34);
+      expect(firstHit('fire_control_3'), 42);
+    });
+
+    test('a Sky Shredder\'s shrapnel passes shields', () {
+      int atSix(String flak) => mine(
+        fight(ship([flak]), target(['shield_1'])),
+      ).firstWhere((e) => e.time == 6).value!;
+      expect(atSix('flak_2'), 4 * 10 - 30);
+      expect(atSix('flak_3'), 16 * 10);
+    });
+
+    test('a Storm Engine\'s leftover hits the hull in full', () {
+      int firstHit(String ion) =>
+          mine(fight(ship([ion]), target([]))).first.value!;
+      expect(firstHit('ion_2'), 180 ~/ 3);
+      expect(firstHit('ion_3'), 720);
+    });
+
+    test('a Mass Accelerator\'s deflected slug knocks the shields out', () {
+      final r = fight(ship(['rail_3']), target(['shield_1']));
+      final deflected = mine(r).first;
+      expect(deflected.kind, CombatEventKind.railDeflected);
+      expect(r.at(deflected.time).shield[1], 0);
+    });
+
+    test('merged missile crates make every missile hit harder, from the '
+        'hold', () {
+      int firstHit(String crate) => mine(
+        fight(ship(['missiles_1'], hold: [crate]), target([])),
+      ).first.value!;
+      expect(firstHit('missile_crate_1'), 45);
+      expect(firstHit('missile_crate_2'), 45 * 115 ~/ 100);
+      expect(firstHit('missile_crate_3'), 45 * 140 ~/ 100);
+    });
+
+    test('merging supplies never loses ammo', () {
+      for (final family in ['missile_crate', 'teleport_charges', 'feedstock']) {
+        final [one, three, nine] = [
+          for (var t = 1; t <= 3; t++)
+            equipmentById('${family}_$t').ammo.values.single,
+        ];
+        expect(three, greaterThanOrEqualTo(3 * one), reason: family);
+        expect(nine, greaterThanOrEqualTo(3 * three), reason: family);
+      }
+    });
+
+    test('merged feedstock has drones out before the first missile', () {
+      final r = fight(
+        ship(['missiles_1', 'missile_crate_1']),
+        target(['fabricator_1', 'fabricator_1'], hold: ['feedstock_2']),
+      );
+      expect(r.at(0).drones[1], 2, reason: 'as many as there is room for');
+      expect(mine(r).first.kind, CombatEventKind.missileIntercepted);
+    });
+
+    test('insulated hellfire burns its own ship less', () {
+      int burnt(String gun) => 100000 - fight(ship([gun]), target([])).hull;
+      expect(burnt('brimstone_1'), greaterThan(0));
+      // Four times the damage, so four times the burn, halved.
+      expect(burnt('brimstone_2'), burnt('brimstone_1') * 2);
+      expect(burnt('brimstone_3'), 0);
     });
   });
 }

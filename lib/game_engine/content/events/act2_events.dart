@@ -120,7 +120,7 @@ final act2Events = <GameEvent>[
     choices: [
       Choice.simple(
         'Take it to the Overseer',
-        'The Overseer hears you out in silence. Then it begins to prepare '
+        'The Overseer hears you out in silence. Then they begin to prepare '
             'for a journey.',
         effects: const [
           SetFlag(Flag.overseerSuspects),
@@ -130,8 +130,9 @@ final act2Events = <GameEvent>[
       ),
       Choice.simple(
         'Ask your humans first',
-        '"There\'s something under the capital, captain. It talks." They '
-            'are relieved that someone finally asked.',
+        '"There\'s something under the capital, captain. It talks. We call '
+            'it the Radio Host." They are relieved that someone finally '
+            'asked.',
         effects: const [
           SetFlag(Flag.overseerSuspects),
           SetFlag(Flag.captainFoundBroadcast),

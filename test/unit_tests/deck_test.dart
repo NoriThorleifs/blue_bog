@@ -1,4 +1,5 @@
 import 'package:blue_bog/game_engine/captain/species.dart';
+import 'package:blue_bog/game_engine/colony.dart';
 import 'package:blue_bog/game_engine/combat/catalog.dart';
 import 'package:blue_bog/game_engine/combat/equipment.dart';
 import 'package:blue_bog/game_engine/content/content.dart';
@@ -37,14 +38,57 @@ void main() {
       expect(log, ['Three Laser merged into Twin Lasers.']);
     });
 
-    test('nine basics chain into one super card worth nine', () {
+    test('nine basics chain into one super card worth more than nine', () {
       final l = Loadout();
       for (var i = 0; i < 9; i++) {
         l.add('plating_1');
       }
       expect(l.all, ['plating_3']);
       expect(equipmentById('plating_3').tier, Tier.superior);
-      expect(equipmentById('plating_3').hull, 900);
+      expect(equipmentById('plating_3').hull, 1600);
+      expect(equipmentById('plating_3').price, 9 * 30);
+    });
+
+    test('merged cards gain perks the cards they were made from lack', () {
+      expect(equipmentById('laser_1').perks, isEmpty);
+      expect(equipmentById('laser_2').perk<Quicker>(), isNotNull);
+      expect(equipmentById('laser_2').cooldown, lessThan(5));
+      expect(equipmentById('laser_3').perk<Veteran>(), isNotNull);
+      expect(equipmentById('missiles_2').ammo[Ammo.missiles], 6);
+      expect(equipmentById('laser_2').describePerks(), isNotEmpty);
+    });
+
+    test('colony cards and cargo pods only triple: their perks are the '
+        'bonus', () {
+      expect(equipmentById('habitat_3').housing, 900);
+      expect(equipmentById('cargo_pod_3').hold, 27);
+      expect(equipmentById('shop_2').perk<FlatIncome>(), isNotNull);
+    });
+
+    test('damage gained for good is kept through tags and merges', () {
+      final grown = grownId('lance_2', 30);
+      expect(grown, 'lance_2+30');
+      expect(
+        equipmentById(grown).damage,
+        equipmentById('lance_2').damage! + 30,
+      );
+      expect(taggedId(grown, {CardTag.hellish}), 'lance_2#hellish+30');
+      expect(baseId('lance_2#hellish+30'), 'lance_2');
+      expect(grownBy(grownId(grown, 12)), 42);
+
+      final l = Loadout()
+        ..add(grownId('lance_2', 10))
+        ..add(grownId('lance_2', 5));
+      l.add('lance_2');
+      expect(l.all, ['lance_3+15']);
+    });
+
+    test('a veteran card keeps what it gained in a fight', () {
+      final l = Loadout(slots: ['lance_2', 'laser_1', ...List.filled(7, null)]);
+      final lines = l.keepGrowth([4, 6, 0, 0, 0, 0, 0, 0, 0]);
+      expect(l.slots[0], 'lance_2+8');
+      expect(l.slots[1], 'laser_1', reason: 'basic lasers don\'t grow');
+      expect(lines, hasLength(1));
     });
 
     test('commodities never merge', () {
@@ -93,6 +137,36 @@ void main() {
   });
 
   group('the colony grid', () {
+    Loadout colony(List<String> cards) =>
+        Loadout(colony: [...cards, ...List.filled(9 - cards.length, null)]);
+
+    test('a merged shop pays a flat sum however few humans', () {
+      final rng = GameRng(1);
+      expect(Colony.dividends(colony(['shop_1']), 0, rng), 0);
+      expect(Colony.dividends(colony(['shop_2']), 0, rng), 15);
+      expect(Colony.dividends(colony(['shop_3']), 100, rng), 60 + 9);
+    });
+
+    test('merged habitats draw more humans to sign on', () {
+      int joined(String habitat) => Colony.growth(
+        humans: 0,
+        housing: 900,
+        loyalty: 50,
+        station: true,
+        humanStation: true,
+        rng: GameRng(7),
+        signOn: ShipStats.of(colony([habitat])).signOn,
+      ).joined;
+      expect(joined('habitat_3'), greaterThan(joined('habitat_1')));
+    });
+
+    test('Hull Keepers patch the hull past 75%', () {
+      final plain = ShipStats.of(colony(['crawlspace_1']));
+      final keepers = ShipStats.of(colony(['crawlspace_3']));
+      expect(Colony.patched(370, 0, plain), 375);
+      expect(Colony.patched(370, 0, keepers), 370 + 90);
+    });
+
     test('colony cards go to the colony, and nothing else does', () {
       final l = Loadout()
         ..add('habitat_1')
@@ -139,8 +213,8 @@ void main() {
     test('every captain gets 500 hull, and plating adds to it', () {
       expect(ShipStats.of(Loadout()).maxHull, 500);
       final plated = Loadout(slots: ['plating_2', ...List.filled(8, null)]);
-      expect(ShipStats.of(plated).maxHull, 800);
-      expect(ShipStats.of(plated, hullUpgrades: 2).maxHull, 1000);
+      expect(ShipStats.of(plated).maxHull, 900);
+      expect(ShipStats.of(plated, hullUpgrades: 2).maxHull, 1100);
     });
 
     test('equipment in the hold does nothing', () {
@@ -277,14 +351,31 @@ void main() {
       expect(commodityPrice(grain, 'a', 1), commodityPrice(grain, 'a', 1));
     });
 
-    test('rerolling costs a little more each time', () {
+    test('the first rerolls cost 5, then each costs more', () {
       var s = _atOrcha();
       final first = s.market!.offers.map((o) => o.cardId).toList();
       s = engine.rerollMarket(s);
       expect(s.credits, 495);
       expect(s.market!.offers.map((o) => o.cardId), isNot(first));
       s = engine.rerollMarket(s);
+      s = engine.rerollMarket(s);
       expect(s.credits, 485);
+      s = engine.rerollMarket(s);
+      expect(s.credits, 475);
+      s = engine.rerollMarket(s);
+      expect(s.credits, 460);
+    });
+
+    test('shops only sell basic cards', () {
+      final rng = GameRng(3);
+      for (var i = 0; i < 20; i++) {
+        final market = Market.roll('orcha', rng, 1);
+        for (final offer in market.offers) {
+          final card = equipmentById(offer.cardId);
+          if (card.kind == CardKind.commodity) continue;
+          expect(card.tier, Tier.basic, reason: offer.cardId);
+        }
+      }
     });
 
     test('the shipyard repairs hull and sells upgrades at rising prices', () {

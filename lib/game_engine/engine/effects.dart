@@ -205,6 +205,9 @@ extension Effects on EngineTurn {
     );
     final result = fight(player, foe, tractorBeam: c.tractorBeam);
     s.hull = result.hull;
+    for (final line in s.loadout.keepGrowth(result.shots)) {
+      log(LogKind.ship, line);
+    }
 
     final salvage = <String>[];
     var scrap = 0;
