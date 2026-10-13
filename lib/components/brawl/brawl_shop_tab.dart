@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../game_engine/brawl/brawl.dart';
 import '../../game_engine/combat/catalog.dart';
+import '../../game_engine/combat/equipment.dart';
 import '../../game_engine/market.dart';
 import '../../providers/brawl_provider.dart';
 import '../cards/card_widgets.dart';
@@ -47,8 +48,10 @@ class _SupplyShock extends ConsumerWidget {
   }
 }
 
-class BuyTab extends ConsumerWidget {
-  const BuyTab({super.key, required this.brawl});
+/// A station's market, shipyard and games. Selling is on the Ship tab,
+/// where the captain's cards are.
+class ShopTab extends ConsumerWidget {
+  const ShopTab({super.key, required this.brawl});
   final BrawlState brawl;
 
   @override
@@ -103,8 +106,8 @@ class BuyTab extends ConsumerWidget {
           children: [
             Expanded(
               child: Text(
-                'Price, then the galactic median. Your next stop is '
-                'a surprise.',
+                'Commodities show the galactic median under their price. '
+                'Your next stop is a surprise.',
                 style: muted,
               ),
             ),
@@ -125,7 +128,11 @@ class BuyTab extends ConsumerWidget {
                 id: offer.cardId,
                 dimmed: offer.sold,
                 footer: offer.sold ? 'Sold' : '${offer.price} cr',
-                note: 'median ${engine.median(brawl, offer.cardId)}',
+                // Only trade goods need it at a glance, and it crowds
+                // the rest. Every card's details show it.
+                note: equipmentById(offer.cardId).kind == CardKind.commodity
+                    ? 'median ${engine.median(brawl, offer.cardId)}'
+                    : null,
                 onTap: offer.sold ? null : () => _showOffer(context, ref, i),
               ),
           ],

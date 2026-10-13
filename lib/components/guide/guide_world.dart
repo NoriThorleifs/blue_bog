@@ -14,13 +14,15 @@ List<Widget> guideWorld() => [
     title: 'Stations and trade',
     children: [
       GuideBullets([
-        'Buy: each station stocks its own basic cards. Every price shows '
-            'the galactic median under it, so you can tell a bargain. Reroll '
-            'the stock to hunt for copies to merge: the first three rerolls '
-            'of a visit cost 5 credits, then each costs 5 more than the last.',
-        'Sell: anything sells for about half its price; commodities sell for '
-            'whatever this station pays for them, which differs from station '
-            'to station.',
+        'Shop: each station stocks its own basic cards. Commodities show '
+            'the galactic median under their price, so you can tell a '
+            'bargain; tap any card to see its median. Reroll the stock to '
+            'hunt for copies to merge: the first three rerolls of a visit '
+            'cost 5 credits, then each costs 5 more than the last.',
+        'Sell from the Ship tab: tap a card, then Sell. Anything sells for '
+            'about half its price; commodities sell for whatever this station '
+            'pays for them, which differs from station to station, and while '
+            'docked each one in the hold shows that price over the median.',
         'Shipyard: repairs cost 1 credit per 5 hull. Hull upgrades add 100 '
             'maximum hull for good, each costing twice the last.',
       ]),
@@ -102,7 +104,7 @@ List<Widget> guideWorld() => [
       ),
       const GuideCardRow([
         ('habitat_1', 'Houses 100 humans'),
-        ('hospital_1', 'Cuts the colony\'s losses'),
+        ('hospital_1', 'More babies born and grown'),
         ('crawlspace_1', 'Patches hull between fights'),
         ('shop_1', 'Pays on docking'),
         ('casino_1', 'Pays on docking, a gamble'),

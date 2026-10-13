@@ -2,9 +2,11 @@ import '../brawl_events.dart';
 import '../brawl_state.dart';
 
 /// What a happy colony does for a captain who has made it feel at home:
-/// you scratch our backs, we scratch yours. Gifts come up in transit, only
-/// when the colony is Content (loyalty [_content]) or Devoted ([_devoted]),
-/// and at most once every [_giftGap] fights.
+/// you scratch our backs, we scratch yours. Gifts come up only when the
+/// colony is Content (loyalty [_content]) or Devoted ([_devoted]), and at
+/// most once every [_giftGap] fights. Most come up in transit; the
+/// volunteers come up on the way out of a station, with the fight just
+/// ahead.
 final colonyGiftEvents = <BrawlEvent>[
   // Content -----------------------------------------------------------------
   BrawlEvent(
@@ -102,20 +104,21 @@ final colonyGiftEvents = <BrawlEvent>[
       ]),
     ],
   ),
+  // On the way out, not in transit: the fight they board is the next one.
   BrawlEvent(
     id: 'gift_boarders',
     title: 'Volunteers',
-    aftermath: true,
     weight: (s) => 1.5,
     condition: (s) =>
         _giftDue(s, _devoted) &&
         s.humans.count >= 100 &&
         !s.flags.contains(boardingParty),
     text:
-        'A hundred humans in vacuum suits are waiting at the airlock, '
-        'rifles slung. They want to go ahead of you to the next fight and '
-        'get aboard the enemy before the shooting starts. They say they '
-        'have done this before. They are very calm about it.',
+        'As you undock, a hundred humans in vacuum suits are waiting at the '
+        'airlock, rifles slung. Something is waiting for you down the lane, '
+        'and they want to go ahead and get aboard it before the shooting '
+        'starts. They say they have done this before. They are very calm '
+        'about it.',
     choices: [
       Choice('Let them go', [
         Outcome(

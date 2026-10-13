@@ -113,8 +113,19 @@ class ChargeShields extends Action {
 /// Hull each drone out repairs per second of a fight.
 const droneRepair = 1;
 
-/// The most a colony's hospitals can cut its losses, in percent.
-const maxHospitalCut = 75;
+/// [p] without a trailing ".0".
+String _percent(double p) =>
+    p == p.roundToDouble() ? '${p.round()}' : p.toStringAsFixed(1);
+
+/// Births a colony has without hospitals, in percent of the colony.
+const baseBirths = 1.0;
+
+/// Extra births each hospital level adds, in percent of the colony:
+/// healthier babies, more of whom grow up.
+const birthsPerHospital = 0.5;
+
+/// The most a colony's hospitals add to its births, in percent.
+const maxHospitalBirths = 4.0;
 
 /// Builds one drone, up to the ship's maximum. Uses one unit of feedstock.
 class BuildDrone extends Action {
@@ -525,8 +536,8 @@ class Equipment {
   /// without a home leave.
   final int housing;
 
-  /// Each level cuts the colony's losses by a tenth, up to
-  /// [maxHospitalCut], and slowly raises loyalty.
+  /// Each level adds [birthsPerHospital] to the colony's births, up to
+  /// [maxHospitalBirths]. In story mode it also slowly raises loyalty.
   final int hospital;
 
   /// Hull the humans in the walls patch every turn.
@@ -706,7 +717,8 @@ class Equipment {
             ' charge ${b.percent}% faster',
       if (housing != 0) 'Houses $housing humans',
       if (hospital != 0)
-        'Cuts the colony\'s losses by ${min(hospital * 10, maxHospitalCut)}%',
+        'More babies born and grown: +${_percent(min(hospital * birthsPerHospital, maxHospitalBirths))}% '
+            'of the colony',
       if (crawlspace != 0) 'Patches $crawlspace hull a turn',
       if (dividend != 0)
         gamble

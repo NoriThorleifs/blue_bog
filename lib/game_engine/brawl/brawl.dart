@@ -363,10 +363,15 @@ class BrawlEngine {
     });
   }
 
+  /// Whether choice [index] of the current event is on offer at all. See
+  /// [Choice.shown].
+  bool shows(BrawlState s, int index) =>
+      s.currentEvent?.choices[index].shown?.call(s) ?? true;
+
   /// Whether the captain can make choice [index] of the current event.
   bool canChoose(BrawlState s, int index) {
     final event = s.currentEvent;
-    if (event == null || s.result != null) return false;
+    if (event == null || s.result != null || !shows(s, index)) return false;
     return event.choices[index].available?.call(s) ?? true;
   }
 
@@ -600,6 +605,7 @@ class BrawlEngine {
       humanStation: s.humansLiveHere,
       rng: rng,
       signOn: s.stats.signOn,
+      hospital: s.stats.hospital,
     );
     s.humans = s.humans.copyWith(count: s.humans.count + born + joined);
     if (joined > 0) s.log.add('$joined humans moved into the colony.');

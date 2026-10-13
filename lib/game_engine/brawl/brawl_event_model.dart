@@ -117,7 +117,7 @@ class ClearFlag extends BrawlEffect {
   final String flag;
 }
 
-/// The colony grows or shrinks (hospitals cut losses), and its feelings
+/// The colony grows or shrinks, and its feelings
 /// about the captain shift: [loyalty] toward them, [drift] toward human
 /// ways if positive.
 class ColonyChange extends BrawlEffect {
@@ -147,12 +147,17 @@ class Outcome {
 }
 
 class Choice {
-  const Choice(this.label, this.outcomes, {this.available});
+  const Choice(this.label, this.outcomes, {this.available, this.shown});
   final String label;
   final List<Outcome> outcomes;
 
   /// Whether the captain can pick this. Shown greyed out when not.
   final bool Function(BrawlState)? available;
+
+  /// Whether the captain sees this at all. For semi-hidden options that
+  /// only turn up when something about the ship allows them, so the
+  /// captain finds them by chance rather than as a greyed-out hint.
+  final bool Function(BrawlState)? shown;
 }
 
 class BrawlEvent {

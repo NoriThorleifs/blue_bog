@@ -18,6 +18,8 @@ class SpotTile extends StatelessWidget {
     this.onTap,
     this.onDrop,
     this.glowing = false,
+    this.footer,
+    this.note,
   });
 
   final CardSpot spot;
@@ -30,6 +32,10 @@ class SpotTile extends StatelessWidget {
   /// Pulses to show the card can be picked.
   final bool glowing;
 
+  /// See [CardTile.footer] and [CardTile.note].
+  final String? footer;
+  final String? note;
+
   @override
   Widget build(BuildContext context) {
     final empty = CardShape.forSpot(spot);
@@ -38,6 +44,8 @@ class SpotTile extends StatelessWidget {
         id: id,
         selected: selected || hovered,
         dimmed: dimmed,
+        footer: footer,
+        note: note,
         emptyShape: empty,
         // Empty spots take taps only where cards move by tapping, not by
         // dragging.
@@ -118,7 +126,8 @@ class Triforce extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, box) {
         final geo = TriforceGeometry(box.maxWidth);
-        // A small gap between each card and the lines around it.
+        // A small gap between each card and the lines around it, keeping
+        // each slot's box equilateral so its card is too.
         final gap = geo.side * 0.012;
         return SizedBox(
           width: geo.width,
@@ -130,7 +139,11 @@ class Triforce extends StatelessWidget {
               ),
               for (var i = 0; i < Loadout.slotCount; i++)
                 Positioned.fromRect(
-                  rect: geo.slotRects[i].deflate(gap),
+                  rect: Rect.fromCenter(
+                    center: geo.slotRects[i].center,
+                    width: geo.slotRects[i].width - 2 * gap,
+                    height: geo.slotRects[i].height - 2 * gap * triangleHeight,
+                  ),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [

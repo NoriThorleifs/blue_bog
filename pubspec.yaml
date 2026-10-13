@@ -77,6 +77,8 @@ flutter:
   assets:
     - assets/galaxy_ai_generated.jpg
     - assets/cards/
+    - assets/species/
+    - assets/events/
     - assets/sounds/
 
   shaders:

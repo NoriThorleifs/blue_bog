@@ -75,6 +75,7 @@ extension TurnFlow on EngineTurn {
       humanStation: s.here.tags.contains(Tag.humans),
       rng: rng,
       signOn: s.stats.signOn,
+      hospital: s.stats.hospital,
     );
     if (born + joined > 0) apply(Humans(born + joined), StringBuffer());
     if (joined > 0) {

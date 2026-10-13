@@ -4,6 +4,7 @@ import 'package:blue_bog/components/deck/triforce.dart';
 import 'package:blue_bog/game_engine/combat/catalog.dart';
 import 'package:blue_bog/game_engine/deck/loadout.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -55,6 +56,60 @@ void main() {
         ),
       );
       expect(tester.takeException(), isNull);
+    });
+  }
+
+  test('a triangle stands as tall as a square in a square box', () {
+    expect(triangleIn(const Size(120, 120)), const Size(120, 120));
+    // A triforce slot's box keeps the triangle equilateral.
+    final slot = triangleIn(Size(80, 80 * triangleHeight));
+    expect(slot.height / slot.width, closeTo(triangleHeight, 1e-9));
+    // A wide box never makes it squatter than equilateral.
+    final wide = triangleIn(const Size(200, 50));
+    expect(wide.height / wide.width, closeTo(triangleHeight, 1e-9));
+  });
+
+  // The name's lines once ran past the triangle's sloping sides, cutting
+  // off their first and last letters.
+  final triangles = {
+    for (final card in equipmentCatalog.values)
+      if (CardShape.of(card) == CardShape.triangle) card.name: card.id,
+  };
+  for (final size in [
+    const Size(120, 120), // a shop square
+    const Size(64, 64), // a hold space
+    Size(84, 84 * triangleHeight), // a triforce slot on a phone
+  ]) {
+    testWidgets('every triangular card\'s name stays inside it at $size', (
+      tester,
+    ) async {
+      for (final MapEntry(key: name, value: id) in triangles.entries) {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Center(
+              child: SizedBox.fromSize(
+                size: size,
+                child: CardTile(id: id, footer: '999 cr'),
+              ),
+            ),
+          ),
+        );
+        final rect = tester.getRect(find.byType(CardTile));
+        final outline = TriangleBorder.pathIn(rect);
+        final paragraph = tester.renderObject<RenderParagraph>(find.text(name));
+        final boxes = paragraph.getBoxesForSelection(
+          TextSelection(baseOffset: 0, extentOffset: name.length),
+        );
+        for (final box in boxes) {
+          for (final corner in [
+            Offset(box.left, box.top),
+            Offset(box.right, box.top),
+          ]) {
+            final at = paragraph.localToGlobal(corner);
+            expect(outline.contains(at), isTrue, reason: '$name at $at');
+          }
+        }
+      }
     });
   }
 

@@ -4,7 +4,9 @@ the app icon made from one of them.
 Proof-of-concept placeholders, not final art. Writes
 concept_art/icon_<n>_ai_generated.png, a contact sheet of them all as a
 phone's launcher would mask them (concept_art/icon_mockups_ai_generated.png),
-and the chosen one as the app icon in assets/icon/:
+the playable species' mockups as captain portraits for the title screen
+(assets/species/<species>_ai_generated.png), and the chosen one as the app
+icon in assets/icon/:
 
 - app_icon_ai_generated.png: the full icon, for iOS, the web and desktops.
 - app_icon_background_ai_generated.png and
@@ -52,6 +54,7 @@ S = 1024
 ROOT = os.path.join(os.path.dirname(__file__), '..')
 CONCEPTS = os.path.join(ROOT, 'concept_art')
 ICON_DIR = os.path.join(ROOT, 'assets', 'icon')
+SPECIES_DIR = os.path.join(ROOT, 'assets', 'species')
 YY, XX = np.mgrid[0:S, 0:S].astype(np.float32)
 C = S / 2
 
@@ -841,16 +844,17 @@ def havi(rng):
 
 
 SCENES = [
-    # Name, scene, and a seed of its own, so changing one scene never
-    # changes another.
+    # Name, scene, a seed of its own, so changing one scene never changes
+    # another, and for a playable species, its name in the game's `Species`
+    # enum.
     ('The triforce', triforce, 7),
     ('A gateway', gateway, 14),
     ('Hell', hell, 21),
-    ('The Tern', tern, 28),
-    ('The Gor', gor, 63),
-    ('The Ál', al, 42),
-    ('The Bhrun', bhrun, 49),
-    ('The Unfortunates', unfortunates, 56),
+    ('The Tern', tern, 28, 'tern'),
+    ('The Gor', gor, 63, 'gor'),
+    ('The Ál', al, 42, 'al'),
+    ('The Bhrun', bhrun, 49, 'bhrun'),
+    ('The Unfortunates', unfortunates, 56, 'unfortunate'),
     ('The Hellborn', hellborn, 35),
     ('A demon', demon, 70),
     ('The Havi', havi, 77),
@@ -915,10 +919,16 @@ def main():
     args = parser.parse_args()
     os.makedirs(CONCEPTS, exist_ok=True)
     icons = []
-    for n, (name, scene, seed) in enumerate(SCENES, start=1):
+    os.makedirs(SPECIES_DIR, exist_ok=True)
+    for n, (name, scene, seed, *species) in enumerate(SCENES, start=1):
         bg, emblem = scene(np.random.default_rng(seed))
         icon = to_image(emblem.over(bg))
         icon.save(os.path.join(CONCEPTS, f'icon_{n}_ai_generated.png'), optimize=True)
+        if species:
+            # The title screen shows these at about 100 px; 256 keeps them
+            # sharp on a phone without shipping the full 1024.
+            icon.resize((256, 256), Image.LANCZOS).save(
+                os.path.join(SPECIES_DIR, f'{species[0]}_ai_generated.png'), optimize=True)
         icons.append((name, icon))
         if n == args.icon:
             app_icon(bg, emblem)

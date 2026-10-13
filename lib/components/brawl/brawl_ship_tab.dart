@@ -72,15 +72,29 @@ class _ShipTabState extends ConsumerState<ShipTab> {
         : equipmentById(brawl.loadout.at(using)!);
     final targets = _targets(using);
     final drop = using == null ? _drop : null;
-    Widget tile(CardSpot spot) => SpotTile(
-      spot: spot,
-      id: brawl.loadout.at(spot),
-      selected: using == spot,
-      glowing: targets.contains(spot),
-      dimmed: spot is HoldSpot && _inertInHold(brawl.loadout.at(spot)),
-      onTap: _tap,
-      onDrop: drop,
-    );
+    final engine = ref.read(brawlEngineProvider);
+    Widget tile(CardSpot spot) {
+      final id = brawl.loadout.at(spot);
+      // Docked, trade goods show what they'd sell for here against the
+      // galactic median, as they do in the shop.
+      final trade =
+          id != null &&
+          brawl.docked &&
+          equipmentById(id).kind == CardKind.commodity &&
+          brawl.market.buys(equipmentById(id));
+      return SpotTile(
+        spot: spot,
+        id: id,
+        footer: trade ? '${engine.sellValue(brawl, id)} cr' : null,
+        note: trade ? 'median ${engine.median(brawl, id)}' : null,
+        selected: using == spot,
+        glowing: targets.contains(spot),
+        dimmed: spot is HoldSpot && _inertInHold(brawl.loadout.at(spot)),
+        onTap: _tap,
+        onDrop: drop,
+      );
+    }
+
     return PopScope(
       canPop: using == null,
       onPopInvokedWithResult: (didPop, _) {

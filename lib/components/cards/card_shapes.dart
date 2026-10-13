@@ -8,6 +8,15 @@ import '../../game_engine/deck/loadout.dart';
 /// Height over side of an equilateral triangle.
 final triangleHeight = sqrt(3) / 2;
 
+/// The base and height of a triangular card in [box]: as big as fits, and
+/// filling the box's height, from equilateral (in a triforce slot) up to as
+/// tall as it is wide (in a square grid cell, so it stands as tall as the
+/// square and round cards beside it).
+Size triangleIn(Size box) {
+  final side = min(box.width, box.height / triangleHeight);
+  return Size(side, min(box.height, side));
+}
+
 /// The outline of a card, which says what kind of card it is: the ship's
 /// equipment is triangular, to fit the triforce; the humans build in
 /// squares; cargo is round.
@@ -39,15 +48,14 @@ enum CardShape {
   };
 }
 
-/// An equilateral triangle, point up, as big as fits in the box and centred
-/// in it, with its corners rounded off.
+/// A triangle, point up, as big as fits in the box (see [triangleIn]) and
+/// centred in it, with its corners rounded off.
 class TriangleBorder extends OutlinedBorder {
   const TriangleBorder({super.side});
 
   /// The triangle's corners in [rect]: top, bottom right, bottom left.
   static List<Offset> corners(Rect rect) {
-    final side = min(rect.width, rect.height / triangleHeight);
-    final h = side * triangleHeight;
+    final Size(width: side, height: h) = triangleIn(rect.size);
     final c = rect.center;
     return [
       Offset(c.dx, c.dy - h / 2),

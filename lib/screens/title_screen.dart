@@ -195,12 +195,27 @@ class _SpeciesCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(species.name, style: text.titleLarge),
-              Text(
-                species.traits,
-                style: text.labelMedium?.copyWith(color: Palette.muted),
+              Row(
+                children: [
+                  _Portrait(species: species, selected: selected),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(species.name, style: text.titleLarge),
+                        Text(
+                          species.traits,
+                          style: text.labelMedium?.copyWith(
+                            color: Palette.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Text(species.blurb, style: text.bodyMedium),
               const Divider(height: 24),
               Text(ship.name, style: text.titleSmall),
@@ -238,6 +253,44 @@ class _SpeciesCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The species' placeholder portrait, from `tool/generate_icon_concepts.py`,
+/// glowing when it's the captain picked.
+class _Portrait extends StatelessWidget {
+  const _Portrait({required this.species, required this.selected});
+  final Species species;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) => AnimatedContainer(
+    duration: const Duration(milliseconds: 200),
+    width: 84,
+    height: 84,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(
+        color: Palette.gateway.withValues(alpha: selected ? 0.9 : 0.25),
+        width: selected ? 2 : 1,
+      ),
+      boxShadow: [
+        if (selected)
+          BoxShadow(
+            color: Palette.gateway.withValues(alpha: 0.35),
+            blurRadius: 14,
+          ),
+      ],
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      // The enum's own name (`al`), not the species' display name (`Ál`).
+      child: Image.asset(
+        'assets/species/${EnumName(species).name}_ai_generated.png',
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stack) => const SizedBox.shrink(),
+      ),
+    ),
+  );
 }
 
 class _Stat extends StatelessWidget {

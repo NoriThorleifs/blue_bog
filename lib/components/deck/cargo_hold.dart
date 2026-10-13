@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../game_engine/deck/loadout.dart';
-import '../cards/card_shapes.dart';
 import '../theme.dart';
 
 /// The cargo bay's own slot, outside the triforce, and below it the hold
@@ -40,11 +39,7 @@ class CargoHold extends StatelessWidget {
       children: [
         Row(
           children: [
-            SizedBox(
-              width: maxTile,
-              height: maxTile * triangleHeight,
-              child: tile(const CargoSpot()),
-            ),
+            SizedBox.square(dimension: maxTile, child: tile(const CargoSpot())),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

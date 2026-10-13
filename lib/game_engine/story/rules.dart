@@ -32,13 +32,12 @@ class Hull extends Effect {
   final int amount;
 }
 
-/// Humans join or leave the colony, capped by its housing. Hospitals cut
-/// losses, except when [everyone] leaves.
+/// Humans join or leave the colony, capped by its housing.
 class Humans extends Effect {
   const Humans(this.amount);
   final int amount;
 
-  /// A loss this big empties the colony, whatever its hospitals do.
+  /// A loss this big empties the colony.
   static const everyone = Colony.everyone;
 }
 

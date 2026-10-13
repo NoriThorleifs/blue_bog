@@ -210,7 +210,7 @@ void main() {
   });
 
   test('but no card fires more than once a second', () {
-    // Two Ternary Fire Directors at 45% each would leave half a second.
+    // Two Ternary Directors at 45% each would leave half a second.
     expect(
       firstShot(['laser_1', 'fire_control_3', 'fire_control_3']),
       minCooldown,

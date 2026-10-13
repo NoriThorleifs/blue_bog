@@ -83,6 +83,47 @@ void main() {
       expect(l.all, ['lance_3+15']);
     });
 
+    test('three Plasma Spears make a Sunspear with all their growth', () {
+      final l = Loadout(
+        slots: [
+          grownId('lance_2', 24),
+          grownId('lance_2', 9),
+          null,
+          ...List.filled(6, null),
+        ],
+      );
+      final log = l.add(grownId('lance_2', 3))!;
+      final sunspear = equipmentById(l.slots[0]!);
+      expect(sunspear.name, 'Sunspear');
+      expect(grownBy(sunspear.id), 36);
+      expect(sunspear.damage, equipmentById('lance_3').damage! + 36);
+      expect(log, ['Three Plasma Spear merged into Sunspear.']);
+    });
+
+    test('a card tagged Hellish with Brandy stays Hellish when it merges', () {
+      final l = Loadout(
+        slots: ['laser_1', ...List.filled(8, null)],
+        cargo: 'cargo_pod_1',
+        hold: ['goods_brandy'],
+      );
+      expect(l.use(const HoldSpot(0), const SlotSpot(0)), isTrue);
+      expect(l.slots[0], 'laser_1#hellish');
+      l
+        ..add('laser_1')
+        ..add('laser_1');
+      expect(l.slots[0], 'laser_2#hellish');
+      expect(equipmentById(l.slots[0]!).has(CardTag.hellish), isTrue);
+      // And on up a tier, with the tag and a veteran's growth together.
+      final up = Loadout(
+        slots: [
+          grownId('lance_2#hellish', 10),
+          'lance_2',
+          ...List.filled(7, null),
+        ],
+      )..add(grownId('lance_2', 5));
+      expect(up.slots[0], 'lance_3#hellish+15');
+    });
+
     test('a veteran card keeps what it gained in a fight', () {
       final l = Loadout(slots: ['lance_2', 'laser_1', ...List.filled(7, null)]);
       final lines = l.keepGrowth([4, 6, 0, 0, 0, 0, 0, 0, 0]);
@@ -158,6 +199,31 @@ void main() {
         signOn: ShipStats.of(colony([habitat])).signOn,
       ).joined;
       expect(joined('habitat_3'), greaterThan(joined('habitat_1')));
+    });
+
+    test('hospitals mean more babies born and grown', () {
+      int born(List<String> cards) => Colony.growth(
+        humans: 400,
+        housing: 900,
+        loyalty: 50,
+        station: false,
+        humanStation: false,
+        rng: GameRng(7),
+        hospital: ShipStats.of(colony(['habitat_3', ...cards])).hospital,
+      ).born;
+      expect(born([]), 4, reason: '1% of the colony');
+      expect(born(['hospital_1']), 6, reason: 'a Clinic: 1.5%');
+      expect(born(['hospital_2']), 10, reason: 'a Human Hospital: 2.5%');
+      expect(born(['hospital_3']), 20, reason: 'a Hospital Deck: the 5% cap');
+      expect(born(['hospital_3', 'hospital_1']), 20);
+      expect(
+        equipmentById('hospital_1').describe().join(),
+        contains('+0.5% of the colony'),
+      );
+      expect(
+        equipmentById('hospital_3').describe().join(),
+        contains('+4% of the colony'),
+      );
     });
 
     test('Hull Keepers patch the hull past 75%', () {

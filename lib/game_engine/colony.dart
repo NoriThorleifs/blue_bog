@@ -22,25 +22,25 @@ abstract final class Colony {
     return hull < cap && patch > 0 ? min(cap, hull + patch) : hull;
   }
 
-  /// The colony after [amount] humans join (or leave, if negative): capped
-  /// by housing, with hospitals cutting every loss short of [everyone]
-  /// leaving.
-  static int changed(int humans, int amount, ShipStats stats) {
-    final cut = min(stats.hospital * 10, maxHospitalCut);
-    final change = amount < 0 && amount > -everyone
-        ? (amount * (100 - cut) / 100).round()
-        : amount;
-    return (humans + change).clamp(0, stats.housing);
-  }
+  /// The colony after [amount] humans join (or leave, if negative), capped
+  /// by housing.
+  static int changed(int humans, int amount, ShipStats stats) =>
+      (humans + amount).clamp(0, stats.housing);
 
-  /// A loss this big empties the colony, whatever its hospitals do.
+  /// A loss this big empties the colony.
   static const everyone = 1000000;
 
+  /// The share of the colony born each time it grows, in percent: the
+  /// usual [baseBirths], and more for every [hospital] level (see
+  /// [birthsPerHospital]).
+  static double birthRate(int hospital) =>
+      baseBirths + min(hospital * birthsPerHospital, maxHospitalBirths);
+
   /// How many humans move into the colony's free housing: children born
-  /// aboard wherever the ship is, and at a [station], adults signing on,
-  /// more where humans live, the better the colony thinks of its captain,
-  /// and the more [signOn] (percentage points, see [SignOn]) the colony's
-  /// cards add.
+  /// aboard wherever the ship is, more with [hospital]s (see [birthRate]),
+  /// and at a [station], adults signing on, more where humans live, the
+  /// better the colony thinks of its captain, and the more [signOn]
+  /// (percentage points, see [SignOn]) the colony's cards add.
   static ({int born, int joined}) growth({
     required int humans,
     required int housing,
@@ -49,10 +49,11 @@ abstract final class Colony {
     required bool humanStation,
     required GameRng rng,
     int signOn = 0,
+    int hospital = 0,
   }) {
     final free = housing - humans;
     if (free <= 0) return (born: 0, joined: 0);
-    final born = min(free, (humans * 0.01).ceil());
+    final born = min(free, (humans * birthRate(hospital) / 100).ceil());
     if (!station) return (born: born, joined: 0);
     final share =
         (0.05 + 0.25 * loyalty / 100 + signOn / 100) *

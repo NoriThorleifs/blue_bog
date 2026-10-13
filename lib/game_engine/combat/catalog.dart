@@ -18,7 +18,7 @@ const equipmentFamilies = [
   ),
   EquipmentFamily(
     id: 'missiles',
-    names: ['Missile Rack', 'Missile Battery', 'Rip and Tear Array'],
+    names: ['Missile Rack', 'Missile Battery', 'Rip and Tear'],
     cooldown: 6,
     action: FireMissile(45),
     perks: [
@@ -66,7 +66,7 @@ const equipmentFamilies = [
   ),
   EquipmentFamily(
     id: 'plating',
-    names: ['Hull Plating', 'Ablative Plating', 'Triplex Lattice Hull'],
+    names: ['Hull Plating', 'Ablative Plating', 'Triplex Hull'],
     hull: 100,
     perks: [
       [Armour(4)],
@@ -153,7 +153,7 @@ const equipmentFamilies = [
   // Synergy ---------------------------------------------------------------
   EquipmentFamily(
     id: 'fire_control',
-    names: ['Fire Control', 'Targeting Suite', 'Ternary Fire Director'],
+    names: ['Fire Control', 'Targeting Suite', 'Ternary Director'],
     boostScope: BoostScope.triangle,
     boostPercents: [15, 30, 45],
     perks: [
@@ -336,7 +336,7 @@ const hellFamilies = [
   ),
   EquipmentFamily(
     id: 'teeth',
-    names: ['Loose Teeth', 'Tooth Lattice', 'The Chewer\'s Grin'],
+    names: ['Loose Teeth', 'Tooth Lattice', 'Chewer\'s Grin'],
     cooldown: 2.5,
     action: FireLaser(18),
     price: 35,
@@ -348,7 +348,7 @@ const hellFamilies = [
   ),
   EquipmentFamily(
     id: 'brandy_mist',
-    names: ['Brandy Mist', 'Fume Bank', 'The Drowning Sea'],
+    names: ['Brandy Mist', 'Fume Bank', 'Drowning Sea'],
     cooldown: 6,
     action: ChargeShields(),
     maxShield: 50,
@@ -493,7 +493,7 @@ const mournerCards = [
   ),
   Equipment(
     id: 'mourner_unfallen_world',
-    name: 'The World That Never Falls',
+    name: 'Unfallen World',
     family: 'mourner_unfallen_world',
     tier: Tier.unique,
     hull: 600,
@@ -530,7 +530,7 @@ const mournerCards = [
 const eliteTrophies = [
   Equipment(
     id: 'trophy_last_vote',
-    name: 'The Last Vote\'s Battery',
+    name: 'Last Vote\'s Battery',
     family: 'trophy_last_vote',
     tier: Tier.unique,
     cooldown: 3,

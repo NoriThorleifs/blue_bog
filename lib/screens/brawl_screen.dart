@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../components/brawl/brawl_buy_tab.dart';
 import '../components/brawl/brawl_event_tab.dart';
 import '../components/brawl/brawl_game_over.dart';
 import '../components/brawl/brawl_launch_bar.dart';
-import '../components/brawl/brawl_sell_tab.dart';
+import '../components/brawl/brawl_shop_tab.dart';
 import '../components/brawl/brawl_ship_tab.dart';
 import '../components/brawl/brawl_victory.dart';
 import '../components/brawl/brawl_wreckage.dart';
+import '../components/brawl/event_art.dart';
 import '../components/dialogs.dart';
 import '../components/theme.dart';
 import '../game_engine/brawl/brawl.dart';
@@ -70,11 +70,9 @@ class _BrawlScreenState extends ConsumerState<BrawlScreen> {
     final hull = 'Hull ${brawl.hull}/${brawl.stats.maxHull}';
     return DefaultTabController(
       key: ValueKey(docked),
-      length: docked ? 3 : 2,
+      length: 2,
       child: Scaffold(
-        backgroundColor: brawl.inHell
-            ? Color.lerp(Palette.space, Palette.hell, 0.12)
-            : null,
+        backgroundColor: brawlBackground(context, brawl),
         appBar: AppBar(
           automaticallyImplyLeading: false,
           backgroundColor: brawl.inHell
@@ -121,8 +119,13 @@ class _BrawlScreenState extends ConsumerState<BrawlScreen> {
           ],
           bottom: TabBar(
             tabs: [
-              if (docked) ...const [Tab(text: 'Buy'), Tab(text: 'Sell')] else
-                Tab(text: brawl.inHell ? 'Hell' : 'Event'),
+              Tab(
+                text: docked
+                    ? 'Shop'
+                    : brawl.inHell
+                    ? 'Hell'
+                    : 'Event',
+              ),
               const Tab(text: 'Ship'),
             ],
           ),
@@ -143,10 +146,9 @@ class _BrawlScreenState extends ConsumerState<BrawlScreen> {
               Expanded(
                 child: TabBarView(
                   children: [
-                    if (docked) ...[
-                      BuyTab(brawl: brawl),
-                      SellTab(brawl: brawl),
-                    ] else
+                    if (docked)
+                      ShopTab(brawl: brawl)
+                    else
                       EventTab(brawl: brawl, onProceed: _proceed),
                     ShipTab(brawl: brawl),
                   ],

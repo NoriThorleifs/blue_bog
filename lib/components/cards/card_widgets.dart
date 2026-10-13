@@ -115,6 +115,9 @@ class CardTile extends StatelessWidget {
                         card,
                         colour,
                         const EdgeInsets.all(4),
+                        // Wide enough for "Maintenance" on one line.
+                        labelWidth: 72,
+                        artAboveName: true,
                       ),
                       // Kept clear of the circle's narrowing edges.
                       CardShape.circle => LayoutBuilder(
@@ -136,13 +139,27 @@ class CardTile extends StatelessWidget {
 
   /// A square or round face: tier marks on top, art behind, name at the
   /// bottom, all [inset] from the edge. The fade behind the name fills the
-  /// whole shape, so it follows the outline.
-  Widget _face(Equipment card, Color colour, EdgeInsets inset) => Stack(
+  /// whole shape, so it follows the outline. With [artAboveName], the art
+  /// keeps to the space between the tier marks and the name rather than
+  /// filling the face.
+  Widget _face(
+    Equipment card,
+    Color colour,
+    EdgeInsets inset, {
+    double labelWidth = 64,
+    bool artAboveName = false,
+  }) => Stack(
     fit: StackFit.expand,
     children: [
       Padding(
         padding: inset,
-        child: CardArt(card: card),
+        child: artAboveName
+            ? FractionallySizedBox(
+                alignment: const Alignment(0, -0.45),
+                heightFactor: 0.56,
+                child: CardArt(card: card),
+              )
+            : CardArt(card: card),
       ),
       const _Fade(),
       Padding(
@@ -155,7 +172,7 @@ class CardTile extends StatelessWidget {
               fit: BoxFit.scaleDown,
               child: TierMarks(card: card, colour: colour),
             ),
-            Flexible(child: _label(card, colour)),
+            Flexible(child: _label(card, colour, width: labelWidth)),
           ],
         ),
       ),
@@ -163,11 +180,17 @@ class CardTile extends StatelessWidget {
   );
 
   /// A triangular face: tier marks under the point, art in the middle and
-  /// the name across the wide base.
+  /// the name in the wide band along the base. The triangle narrows towards
+  /// its point, so the band is only as wide as the triangle is at its top,
+  /// and a name's top line never runs past the edges.
   Widget _triangle(Equipment card, Color colour) => LayoutBuilder(
     builder: (context, box) {
-      final side = min(box.maxWidth, box.maxHeight / triangleHeight);
-      final h = side * triangleHeight;
+      final Size(width: side, height: h) = triangleIn(box.biggest);
+      // How far down the name's band starts, as a share of the height.
+      const band = 0.64;
+      // The triangle's width at the band's top, less the rounded corners
+      // and the border.
+      final labelWidth = side * band * 0.86;
       return Center(
         child: SizedBox(
           width: side,
@@ -175,31 +198,36 @@ class CardTile extends StatelessWidget {
           child: Stack(
             children: [
               Positioned(
-                left: side * 0.26,
-                right: side * 0.26,
-                top: h * 0.34,
-                height: h * 0.42,
+                left: side * 0.24,
+                right: side * 0.24,
+                top: h * 0.27,
+                height: h * 0.41,
                 child: CardArt(card: card),
               ),
-              const Positioned.fill(child: _Fade(from: 0.5)),
+              const Positioned.fill(child: _Fade(from: 0.55)),
               Positioned(
-                left: side * 0.36,
-                right: side * 0.36,
-                top: h * 0.24,
-                height: h * 0.1,
+                left: side * 0.38,
+                right: side * 0.38,
+                top: h * 0.19,
+                height: h * 0.09,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: TierMarks(card: card, colour: colour),
                 ),
               ),
-              // The base is the widest part: names get more room here
-              // than on a square card, and wrap less.
               Positioned(
-                left: side * 0.1,
-                right: side * 0.1,
-                top: h * 0.5,
-                bottom: h * 0.04,
-                child: _label(card, colour, width: 80),
+                left: (side - labelWidth) / 2,
+                width: labelWidth,
+                top: h * band,
+                bottom: h * 0.05,
+                child: _label(
+                  card,
+                  colour,
+                  // Laid out no narrower than a short word needs, then
+                  // shrunk to fit a small slot.
+                  width: max(labelWidth, 58),
+                  maxLines: 2,
+                ),
               ),
             ],
           ),
@@ -208,7 +236,12 @@ class CardTile extends StatelessWidget {
     },
   );
 
-  Widget _label(Equipment card, Color colour, {double width = 64}) => FittedBox(
+  Widget _label(
+    Equipment card,
+    Color colour, {
+    double width = 64,
+    int maxLines = 3,
+  }) => FittedBox(
     fit: BoxFit.scaleDown,
     alignment: Alignment.bottomCenter,
     child: ConstrainedBox(
@@ -221,7 +254,8 @@ class CardTile extends StatelessWidget {
           Text(
             card.name,
             textAlign: TextAlign.center,
-            maxLines: 3,
+            maxLines: maxLines,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 11,
               height: 1.1,
@@ -233,6 +267,7 @@ class CardTile extends StatelessWidget {
               footer!,
               style: TextStyle(
                 fontSize: 10,
+                height: 1.15,
                 color: colour,
                 fontWeight: FontWeight.w600,
                 shadows: const [Shadow(blurRadius: 3)],

@@ -18,7 +18,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Fight 1'), findsOneWidget);
-    expect(find.text('Buy'), findsOneWidget);
+    expect(find.text('Shop'), findsOneWidget);
   });
 
   testWidgets(

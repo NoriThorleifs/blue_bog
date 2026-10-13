@@ -12,8 +12,8 @@ final eliteEvents = <BrawlEvent>[
     text:
         'Three ships with no transponders box you in, and a fourth, much '
         'bigger, settles in behind them. The Last Vote, by its paint. '
-        'There are no humans aboard your ship, so nobody over there has to '
-        'be polite, but they would still rather be paid than shoot. This '
+        'You are not human, so nobody over there feels they have to be '
+        'polite, but they would still rather be paid than shoot. This '
         'is a shakedown, their captain explains, and you are the one being '
         'shaken.',
     choices: [
@@ -31,6 +31,19 @@ final eliteEvents = <BrawlEvent>[
           effects: [LoseCargo(), LoseCargo(), NoFight(), SetFlag(_shakedown)],
         ),
       ], available: (s) => s.loadout.hold.isNotEmpty),
+      // Semi-hidden: only a ship with a hospital in its colony thinks of it.
+      Choice('Show them the hospital', const [
+        Outcome(
+          'You patch their captain through to the colony\'s hospital '
+          'instead of the bridge. On the screen, a nurse is weighing a '
+          'newborn. The channel goes quiet for a long time. Half the crew of '
+          'the Last Vote were born in a ward like that one.\n\n'
+          'They wave you off without taking a thing. Whatever was waiting '
+          'down the lane has heard who works it, and has gone elsewhere. '
+          'Your humans heard all of it.',
+          effects: [NoFight(), SetFlag(_shakedown), ColonyChange(loyalty: 4)],
+        ),
+      ], shown: (s) => s.stats.hospital > 0 && s.humans.count > 0),
       const Choice('Refuse', [
         Outcome(
           'The little ships scatter to watch. The Last Vote comes about '

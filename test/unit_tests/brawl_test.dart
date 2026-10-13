@@ -637,6 +637,53 @@ void main() {
       expect(s.stats.maxHull, max + ShipStats.hullPerUpgrade);
     });
 
+    test('the volunteers come up between the station and the fight', () {
+      final volunteers = brawlEventsById['gift_boarders']!;
+      expect(volunteers.aftermath, isFalse, reason: 'not in transit');
+      expect(volunteers.hell, isFalse);
+      // Launching a devoted colony's ship turns them up for some seeds,
+      // and taking them up boards the very fight that follows.
+      var offered = 0;
+      for (var seed = 0; seed < 200 && offered < 3; seed++) {
+        final out = engine.launch(colony(90)..rngState = seed);
+        if (out.currentEvent?.id != volunteers.id) continue;
+        offered++;
+        final chosen = engine.choose(out, 0);
+        expect(chosen.flags, contains(boardingParty));
+        final fought = engine.proceed(chosen);
+        expect(fought.lastCombat, isNot(out.lastCombat));
+        expect(
+          fought.lastCombat!.result.snapshots.first.hull[1],
+          (fought.lastCombat!.enemyMaxHull * boardedHull).round(),
+        );
+      }
+      expect(offered, greaterThan(0));
+    });
+
+    test('pirates turn up a hidden choice for a ship with a hospital', () {
+      BrawlState pirates({required bool hospital}) {
+        final s = colony(60)..event = 'shakedown';
+        if (hospital) s.loadout.colony[1] = 'hospital_1';
+        return s;
+      }
+
+      int option(BrawlState s) => s.currentEvent!.choices.indexWhere(
+        (c) => c.label == 'Show them the hospital',
+      );
+      final without = pirates(hospital: false);
+      expect(engine.shows(without, option(without)), isFalse);
+      expect(engine.canChoose(without, option(without)), isFalse);
+
+      final s = pirates(hospital: true);
+      expect(engine.shows(s, option(s)), isTrue);
+      final chosen = engine.choose(s, option(s));
+      expect(chosen.plannedFight, isNull, reason: 'they wave you off');
+      expect(chosen.humans.loyalty, 64);
+      expect(chosen.flags, contains('shakedown'));
+      final after = engine.proceed(chosen);
+      expect(after.lastCombat, s.lastCombat, reason: 'no fight');
+    });
+
     test('a boarding party holes the next enemy before the fight', () {
       var fights = 0;
       for (var seed = 0; seed < 20; seed++) {
