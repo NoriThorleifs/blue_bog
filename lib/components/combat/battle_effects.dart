@@ -13,6 +13,7 @@ import 'shot_painting.dart';
 /// is the moment the fight records it. Beams land the instant they fire.
 double launchLead(CombatEventKind kind) => switch (kind) {
   CombatEventKind.missileHit || CombatEventKind.missileIntercepted => 0.6,
+  CombatEventKind.fissionHit => 0.9,
   CombatEventKind.hellfireHit => 0.35,
   _ => 0,
 };
@@ -186,6 +187,44 @@ class BattleEffects extends CustomPainter {
             target.width * 0.07,
           );
         }
+      case CombatEventKind.fissionHit:
+        // Slow, heavy, and a flash that swallows the drones with it.
+        paintMissile(canvas, i, from, hit, colour, age, launchLead(e.kind));
+        if (age >= 0) {
+          paintBlast(canvas, hit, Colors.white, age, 0.7, target.width * 0.4);
+          paintRings(
+            canvas,
+            target.centre,
+            colour,
+            age,
+            0.6,
+            target.width * 0.5,
+          );
+          paintNumber(canvas, hit, '-${e.value}', colour, age);
+        }
+      case CombatEventKind.broadcastHit:
+        paintRings(canvas, from, colour, age, 0.5, source.width * 0.12);
+        paintBolt(canvas, i, from, hit, colour, age);
+        if ((e.value ?? 0) > 0) {
+          paintNumber(canvas, hit, '-${e.value}', colour, age);
+        }
+      case CombatEventKind.dronesHijacked:
+        paintRings(
+          canvas,
+          target.centre,
+          colour,
+          age,
+          0.5,
+          target.width * 0.45,
+        );
+        paintNumber(
+          canvas,
+          target.centre,
+          '${e.value} ${e.value == 1 ? 'drone' : 'drones'} turned',
+          colour,
+          age,
+          small: true,
+        );
       case CombatEventKind.hellfireHit:
         paintFireball(canvas, i, from, hit, age, launchLead(e.kind), time);
         if (age >= 0) {

@@ -40,6 +40,13 @@ List<Cue> battleCues(FightRecord record) {
       case CombatEventKind.missileIntercepted:
         cue(launch, Sfx.missileLaunch, e.side, 0.6);
         cue(e.time, Sfx.explosionSmall, target, 0.45);
+      case CombatEventKind.fissionHit:
+        cue(launch, Sfx.missileLaunch, e.side, 0.8);
+        cue(e.time, Sfx.fission, target);
+      case CombatEventKind.broadcastHit:
+        cue(e.time, Sfx.broadcast, e.side, 0.8);
+      case CombatEventKind.dronesHijacked:
+        cue(e.time + 0.1, Sfx.jammed, target, 0.7);
       case CombatEventKind.teleportHit:
         // The sound rises for a moment before its pop.
         cue(e.time - 0.15, Sfx.teleport, target);

@@ -307,6 +307,28 @@ def out_of_ammo():
     save('out_of_ammo', mix(click, at(0.06, click * 0.6)), 0.4)
 
 
+def fission():
+    """A white flash of a blast: a crack, then a long, deep roll, and a
+    pressure wave that sucks in and booms."""
+    s = 1.8
+    crack = highpass(noise(0.08), 2000) * env(int(RATE * 0.08), 0.0005, 0.08, 6)
+    roll = lowpass(noise(s), 500, 4) * env(int(RATE * s), 0.02, s, 3)
+    boom = sweep(70, 22, s) * env(int(RATE * s), 0.005, s * 0.7, 3)
+    suck = sweep(60, 200, 0.25) * np.linspace(0, 0.6, int(RATE * 0.25))
+    save('fission', mix(crack, at(0.02, roll), at(0.02, boom * 1.3), at(0.9, suck * 0.4)), 0.9)
+
+
+def broadcast():
+    """A voice that isn't quite a voice: a warm carrier, wobbling as if it
+    were talking, with static on the edges."""
+    s = 0.8
+    x = t(s)
+    syllables = 0.5 + 0.5 * np.sin(2 * np.pi * 6 * x) * np.sin(2 * np.pi * 2.3 * x)
+    carrier = sum(np.sin(2 * np.pi * f * x) * a for f, a in ((220, 0.5), (330, 0.3), (440, 0.2)))
+    static = bandpass(noise(s), 2000, 6000) * 0.15
+    save('broadcast', (carrier * syllables + static) * env(int(RATE * s), 0.03, s, 2), 0.5)
+
+
 # Endings ------------------------------------------------------------------------
 
 def ship_explode():
@@ -356,7 +378,9 @@ def defeat():
 
 ALL = [laser, lance, missile_launch, explosion_small, teleport, hellfire, ion,
        flak, rail, rail_glance, teeth, brandy_mist, hell_clock, shield_block, shield_charge, drone_built, repair, jammed,
-       out_of_ammo, ship_explode, boarded, victory, defeat]
+       out_of_ammo, ship_explode, boarded, victory, defeat,
+       # Last, so they don't change the random draws of the ones above.
+       fission, broadcast]
 
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)

@@ -125,6 +125,13 @@ class BrawlEngine {
     final rng = GameRng(s.rngState);
     f(s, rng);
     s.rngState = rng.state;
+    if (!s.flags.contains(fullBuild) && s.hasFullBuild) {
+      s.flags.add(fullBuild);
+      s.log.add(
+        'Every slot in your triforce holds a Super card. Something deep in '
+        'Hell has started paying attention to you.',
+      );
+    }
     return s;
   }
 
@@ -619,6 +626,25 @@ class BrawlEngine {
     }
   }
 
+  /// The final bosses: the flag for beating each, and what the log says.
+  static const _finalWins = {
+    SpecialEnemy.satan: (
+      beatSatan,
+      'Satan\'s ship comes apart around him. He crawls back into Hell, '
+          'beaten. Nobody in the Republic will ever believe you.',
+    ),
+    SpecialEnemy.idunFlagship: (
+      beatIdun,
+      'The Matriarch strikes her colours. Lady Idun salutes you from the '
+          'bridge, and takes your humans home with her anyway.',
+    ),
+    SpecialEnemy.uploadedFlagship: (
+      beatShiningHead,
+      'The Ascension breaks apart, and the voice on every channel stops '
+          'mid-sentence. For the first time in years, Neo Terra is quiet.',
+    ),
+  };
+
   /// Fights [plan]. Winning pays scrap and maybe salvage; breaking away at
   /// the time limit pays nothing. Losing ends the brawl.
   void _fight(BrawlState s, GameRng rng, Fight plan) {
@@ -636,12 +662,13 @@ class BrawlEngine {
       loadout: enemy.loadout,
       baseHull: enemy.hull,
     );
-    final foe = boarded
+    final share = min(boarded ? boardedHull : 1.0, plan.startHull);
+    final foe = share < 1
         ? Combatant(
             name: enemy.name,
             loadout: enemy.loadout,
             baseHull: enemy.hull,
-            hull: (full.maxHull * boardedHull).round(),
+            hull: (full.maxHull * share).round(),
           )
         : full;
     if (boarded) {
@@ -687,12 +714,21 @@ class BrawlEngine {
           }
           s.log.add('Plundered ${equipmentById(id).name}.');
         }
-        if (plan.special == SpecialEnemy.satan) {
-          s.flags.add(beatSatan);
+        if (demon &&
+            plan.demon == heraldDemon &&
+            s.flags.contains(fullBuild) &&
+            !s.flags.contains(beatSatan)) {
+          s.flags.add(satanSummoned);
           s.log.add(
-            'Satan\'s ship comes apart around him. He crawls back into Hell, '
-            'beaten. Nobody in the Republic will ever believe you.',
+            'The herald dies screaming a name. Far below, its master has '
+            'heard it.',
           );
+        }
+        if (_finalWins[plan.special] case (final flag, final line)?) {
+          s.flags
+            ..add(flag)
+            ..add(wonBrawl);
+          s.log.add(line);
         }
         if (s.wreckage.isNotEmpty) s.log.add(wreckageNote(s.wreckage));
       case CombatOutcome.escape:

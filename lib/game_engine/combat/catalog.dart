@@ -566,21 +566,83 @@ const eliteTrophies = [
   ),
 ];
 
-/// The trophy for beating Satan at the end of a brawl.
+/// The trophy for beating Satan, the hardest of a brawl's final bosses.
+/// Better than any Super card by a distance: hellfire with no recoil, and
+/// the hull of a small moon.
 const satanTrophy = Equipment(
   id: 'trophy_broken_seal',
   name: 'The Broken Seal',
   family: 'trophy_broken_seal',
   tier: Tier.unique,
   cooldown: 3,
-  action: Hellfire(240),
-  hull: 300,
-  price: 600,
+  action: Hellfire(960, insulation: 100),
+  hull: 1200,
+  price: 1200,
   tags: {CardTag.hellish},
   text:
       'The seal Satan broke at Kyndari to start the gatecrash, rebuilt into '
       'a gun. He wants it back.',
 );
+
+/// Lady Idun's fission missiles, carried by her flagship and taken from it
+/// by a captain who beats her. Nothing stops them, and every drone in the
+/// blast goes too.
+const idunTrophy = Equipment(
+  id: 'trophy_fission',
+  name: 'Idun\'s Fission Battery',
+  family: 'trophy_fission',
+  tier: Tier.unique,
+  cooldown: 6,
+  action: FissionMissile(1200),
+  ammo: {Ammo.missiles: 10},
+  price: 1000,
+  text:
+      'The House of the Elephant built these in secret, and told nobody. '
+      'Humans never do.',
+);
+
+/// Shining-head's broadcast, carried by the Uploaded flagship and taken
+/// from it by a captain who silences it. It talks its way into every
+/// system, and drones listen.
+const shiningHeadTrophy = Equipment(
+  id: 'trophy_voice_below',
+  name: 'The Voice Below',
+  family: 'trophy_voice_below',
+  tier: Tier.unique,
+  cooldown: 3,
+  action: Broadcast(360, 9),
+  price: 1000,
+  text:
+      'The Neo Terrans called it the Radio Host: a voice under their capital '
+      'that would not stop talking. It still has a lot to say.',
+);
+
+/// What each of a brawl's final bosses pays for beating it.
+const finalTrophies = [satanTrophy, idunTrophy, shiningHeadTrophy];
+
+/// The final bosses' own versions of their trophies: weaker, so a captain
+/// at fight 27 can win, and never salvaged.
+const bossWeapons = [
+  Equipment(
+    id: 'idun_fission',
+    name: 'Fission Missiles',
+    family: 'trophy_fission',
+    tier: Tier.unique,
+    cooldown: 8,
+    action: FissionMissile(500),
+    ammo: {Ammo.missiles: 8},
+    text: 'Lady Idun\'s. She keeps the good ones in reserve.',
+  ),
+  Equipment(
+    id: 'shining_broadcast',
+    name: 'The Radio Host',
+    family: 'trophy_voice_below',
+    tier: Tier.unique,
+    cooldown: 4,
+    action: Broadcast(150, 3),
+    text: 'Shining-head, talking. It never stops talking.',
+  ),
+];
 
 /// Nobody's only weapon. Never salvaged: nobody else could use it.
 const boardingTeleporter = Equipment(
@@ -600,7 +662,8 @@ final equipmentCatalog = <String, Equipment>{
   for (final e in missionCargo) e.id: e,
   for (final e in mournerCards) e.id: e,
   for (final e in eliteTrophies) e.id: e,
-  satanTrophy.id: satanTrophy,
+  for (final e in finalTrophies) e.id: e,
+  for (final e in bossWeapons) e.id: e,
   boardingTeleporter.id: boardingTeleporter,
   for (final family in hellFamilies)
     for (final e in family.tiers) e.id: e,

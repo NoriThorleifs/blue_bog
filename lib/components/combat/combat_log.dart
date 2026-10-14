@@ -33,6 +33,13 @@ class CombatLog extends StatelessWidget {
           CombatEventKind.missileHit => '$who: $card hits for ${e.value}',
           CombatEventKind.missileIntercepted =>
             '$who: $card is shot down by a drone',
+          CombatEventKind.fissionHit =>
+            '$who: $card detonates for ${e.value}, and no drone survives it',
+          CombatEventKind.broadcastHit =>
+            '$who: $card gets into every system for ${e.value}',
+          CombatEventKind.dronesHijacked =>
+            '$who: $card turns ${e.value} '
+                '${e.value == 1 ? 'drone' : 'drones'} to its side',
           CombatEventKind.teleportHit =>
             '$who: $card goes off inside the hull for ${e.value}',
           CombatEventKind.hellfireHit =>

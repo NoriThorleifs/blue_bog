@@ -14,7 +14,7 @@ void main() {
   final won = const BrawlEngine().start(Species.tern, seed: 1).clone()
     ..round = 27
     ..fightsWon = 26
-    ..flags.add(beatSatan);
+    ..flags.addAll([beatSatan, wonBrawl]);
 
   Widget host(Widget child) => ProviderScope(
     child: MaterialApp(home: Scaffold(body: child)),

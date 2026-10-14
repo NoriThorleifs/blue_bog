@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../game_engine/brawl/brawl.dart';
+import '../../game_engine/brawl/brawl_events.dart';
 import '../../providers/brawl_provider.dart';
 import '../dialogs.dart';
 import '../theme.dart';
 
-/// Satan is beaten: the brawl is won. The captain retires on top, or fights
-/// on for score against ever harder ships.
+/// A final boss is beaten: the brawl is won. The captain retires on top, or
+/// fights on for score against ever harder ships.
 class Victory extends ConsumerWidget {
   const Victory({super.key, required this.brawl});
   final BrawlState brawl;
@@ -24,12 +25,20 @@ class Victory extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Satan is beaten', style: text.displaySmall),
+                Text(
+                  switch (brawl.bossesBeaten.lastOrNull) {
+                    'Shining-head' => 'Shining-head is silenced',
+                    final boss? => '$boss is beaten',
+                    null => 'You won',
+                  },
+                  textAlign: TextAlign.center,
+                  style: text.displaySmall,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   'You won the brawl at fight ${brawl.round}, after '
                   '${brawl.fightsWon} fights, with ${brawl.credits} credits '
-                  'and ${brawl.humans.count} humans aboard.',
+                  '${brawl.flags.contains(colonySeceded) ? 'and an empty colony grid where your humans used to be' : 'and ${brawl.humans.count} humans aboard'}.',
                   textAlign: TextAlign.center,
                   style: text.bodyLarge,
                 ),

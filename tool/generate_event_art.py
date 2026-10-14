@@ -38,6 +38,7 @@ EVENTS = [
     ('gor_duel', 'lane_duel'),
     ('unmerged_foundry', 'lane_foundry'),
     ('nobody', 'lane_nobody'),
+    ('nobody_abandoned', 'lane_nobody'),
     ('gift_boarders', 'colony_volunteers'),
     ('wrong_warp', 'gate_2'),
     # In transit: the colony's story.
@@ -71,6 +72,8 @@ EVENTS = [
     ('hell_mourner', 'mourner_2'),
     # The end.
     ('satan', 'hell_satan'),
+    ('secession', 'colony_secession'),
+    ('uploaded_flagship', 'lane_ascension'),
 ]
 
 

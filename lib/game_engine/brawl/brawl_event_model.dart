@@ -72,6 +72,7 @@ class Fight extends BrawlEffect {
     this.scrap = 1,
     this.winCredits = 0,
     this.winCards = const [],
+    this.startHull = 1,
   });
   final int? demon;
   final SpecialEnemy? special;
@@ -89,6 +90,9 @@ class Fight extends BrawlEffect {
   /// Taken for a win, forced aboard in place of the cheapest card if
   /// there's no room.
   final List<String> winCards;
+
+  /// The share of its hull the enemy starts the fight with.
+  final double startHull;
 }
 
 /// No fight follows.
@@ -131,6 +135,12 @@ class ColonyChange extends BrawlEffect {
 class CellChange extends BrawlEffect {
   const CellChange(this.amount);
   final int amount;
+}
+
+/// The colony votes to leave: every human goes, and takes the colony grid's
+/// cards with them. See [colonySeceded].
+class Secede extends BrawlEffect {
+  const Secede();
 }
 
 /// The universal draft for the war on Neo Terra starts: from now on every

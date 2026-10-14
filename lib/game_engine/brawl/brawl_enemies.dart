@@ -328,26 +328,80 @@ enum SpecialEnemy {
     ),
   ),
 
-  /// The end of a brawl: the demon lord himself, at fight
-  /// [brawlFinalFight], wherever the captain is. Hell's own weapons and
-  /// what he scavenged from our dimension during the gatecrash. Not scaled:
-  /// tuned with `tool/boss_balance.dart` so a well-built ship of any style
-  /// wins without the rare Hell Clock, though not by much.
-  satan(
+  /// A final boss: Lady Idun the Giantess, in the House of the Elephant's
+  /// flagship, come for a colony that voted to leave its captain at fight
+  /// [brawlFinalFight]. A human ship: missiles, and her fission missiles,
+  /// which no drone stops and which take every drone out with them. Not
+  /// scaled: tuned with `tool/boss_balance.dart` against the builds
+  /// captains have by then.
+  idunFlagship(
     EnemyTemplate(
-      'Satan',
+      'The Matriarch',
       3500,
       CombatLoadout(
         [
+          'idun_fission',
+          'missiles_2',
+          'quick_fuzes_1',
+          'plating_3',
+          'missiles_1',
+          'fire_control_1',
+          'shield_2',
+          'plating_2',
+          'jammer_2',
+        ],
+        hold: ['missile_crate_2'],
+      ),
+    ),
+    scaled: false,
+  ),
+
+  /// A final boss: Shining-head's flagship, crewed by Uploaded zealots,
+  /// come for a captain whose colony still likes them at fight
+  /// [brawlFinalFight]. Its broadcast talks its way through shields and
+  /// drones and turns the enemy's drones to its side. It has fought its
+  /// way through the Republic to get here, so it starts the fight badly
+  /// holed (see [uploadedFlagshipHull]). Not scaled.
+  uploadedFlagship(
+    EnemyTemplate(
+      'The Ascension',
+      8500,
+      CombatLoadout([
+        'shining_broadcast',
+        'lance_2',
+        'fire_control_1',
+        'repair_2',
+        'ion_1',
+        'plating_2',
+        'shield_2',
+        'plating_3',
+        'shield_capacitor_1',
+      ]),
+    ),
+    scaled: false,
+  ),
+
+  /// The hardest of a brawl's final bosses: the demon lord himself, who
+  /// comes up out of Hell for a captain with a full build (every slot Super,
+  /// or the Hell Clock) who kills his herald. Hell's own weapons and what
+  /// he scavenged from our dimension during the gatecrash. Not scaled:
+  /// tuned with `tool/boss_balance.dart` so a full build of any style wins,
+  /// though not by much.
+  satan(
+    EnemyTemplate(
+      'Satan',
+      6500,
+      CombatLoadout(
+        [
           'teleporter_2',
-          'brimstone_2',
+          'brimstone_3',
           'teeth_2',
-          'jammer_1',
-          'ion_2',
-          'flak_2',
+          'jammer_3',
+          'ion_3',
+          'flak_3',
           'brimstone_2',
           'metal_flesh_3',
-          'metal_flesh_2',
+          'metal_flesh_3',
         ],
         hold: ['teleport_charges_2'],
       ),
@@ -356,6 +410,10 @@ enum SpecialEnemy {
   );
 
   const SpecialEnemy(this.template, {this.actsAhead = 0, this.scaled = true});
+
+  /// The share of its hull the Uploaded flagship has left when it reaches
+  /// the captain.
+  static const uploadedFlagshipHull = 0.55;
   final EnemyTemplate template;
 
   /// How many acts ahead of the usual enemy this ship is scaled.

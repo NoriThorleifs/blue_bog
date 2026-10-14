@@ -33,6 +33,8 @@ elite_events.dart:
   still building itself bigger from wrecks, its drones turning as one.
 - nobody (nobody): a small human ship with no markings alongside, a shield
   and drones far too big for it, a pleasant voice on the comm.
+- ascension (uploaded_flagship): Shining-head's flagship at the end, holed
+  bow to stern, the Republic's wrecks burning behind it.
 
 Needs numpy, scipy and Pillow.
 """
@@ -471,8 +473,47 @@ def nobody():
     finish(img, 'lane_nobody', rng, grain=0.02)
 
 
+# 12. The Ascension ------------------------------------------------------------------------------
+# Shining-head's flagship, white and gold under a halo, holed from bow to
+# stern, the Republic's fleets burning behind it, and its voice on every
+# channel, including yours.
+def ascension():
+    rng = np.random.default_rng(4141)
+    img = space(rng, nebula=np.array([0.2, 0.15, 0.05]), stars=1300)
+    # The Republic's wrecks, burning.
+    for _ in range(9):
+        x, y = rng.uniform(100, 1500), rng.uniform(80, 420)
+        img, _ = lit_ship(img, str(rng.choice(['gunship', 'freighter', 'heavy'])), x, y,
+                          rng.uniform(60, 130), rng.uniform(0, 2 * math.pi),
+                          base=STEEL * 0.25, toward=(0, 1), rim_colour=AMBER)
+        img = dot(img, x, y, 5, AMBER, gain=2, halo=24)
+    cx, cy, length, angle = 820, 560, 1050, math.radians(176)
+    # The broadcast, rolling out from the halo.
+    R = Layer()
+    for k in range(1, 7):
+        R.ring(cx, cy - 170, 140 + k * 120, 50 + k * 45, 3, 0.9 - k * 0.12)
+    img = add(img, R.array() * 0.3 + glow(R.array(), 6, 0.4), GOLD)
+    img, hull = lit_ship(img, 'sleek', cx, cy, length, angle, base=np.array([0.42, 0.4, 0.36]),
+                         toward=(0, -1), rim_colour=GOLD)
+    # Holed from bow to stern, and burning where it's holed.
+    for u in (-0.32, -0.12, 0.05, 0.22, 0.36):
+        x, y = along(cx, cy, length, angle, u, rng.uniform(-0.04, 0.04))
+        hole = np.hypot((XX - x) / rng.uniform(30, 55), (YY - y) / rng.uniform(14, 24)) + \
+            (noise(rng, 5) - 0.5) * 0.6 < 1
+        img = over(img, hole * hull, np.array([0.02, 0.01, 0.01]))
+        img = add(img, glow(hole * hull, 10, 1.2), AMBER)
+    halo = Layer()
+    halo.ring(cx, cy - 170, 150, 46, 10)
+    ring_ = halo.array()
+    img = add(img, ring_ * 1.4 + glow(ring_, 16, 2), GOLD)
+    img = screen(img, 70, 690, 540, 970, concept('icon_11'), tint=GOLD,
+                 caption='SHINING-HEAD  ·  ALL CHANNELS', bar=np.array([0.35, 0.25, 0.04]))
+    finish(img, 'lane_ascension', rng, grain=0.02)
+
+
 SCENES = {f.__name__: f for f in (
-    toll, wreck, exclusion, smuggler, leak, quiet, convoy, shakedown, duel, foundry, nobody)}
+    toll, wreck, exclusion, smuggler, leak, quiet, convoy, shakedown, duel, foundry, nobody,
+    ascension)}
 
 if __name__ == '__main__':
     scene_main(SCENES, 'lane mockups')

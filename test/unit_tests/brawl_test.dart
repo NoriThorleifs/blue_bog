@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:blue_bog/game_engine/brawl/brawl.dart';
 import 'package:blue_bog/game_engine/brawl/brawl_events.dart';
 import 'package:blue_bog/game_engine/brawl/brawl_outcomes.dart';
@@ -162,7 +164,7 @@ void main() {
     }
   });
 
-  test('every elite fight, and Satan, pays a unique trophy', () {
+  test('every elite fight, and every final boss, pays a unique trophy', () {
     final elites = [
       for (final e in brawlEvents)
         for (final c in e.choices)
@@ -177,6 +179,8 @@ void main() {
         SpecialEnemy.gorChampion,
         SpecialEnemy.unmergedFoundry,
         SpecialEnemy.satan,
+        SpecialEnemy.idunFlagship,
+        SpecialEnemy.uploadedFlagship,
       },
     );
     for (final f in elites) {
@@ -708,11 +712,13 @@ void main() {
   group('the end', () {
     String h(String id) => '$id#hellish';
 
-    /// The author's god run, rebuilt: it should beat Satan, barely.
-    BrawlState godRun({int round = brawlFinalFight}) {
+    /// The author's god run, rebuilt: a full build, with a colony that
+    /// likes its captain unless told otherwise.
+    BrawlState godRun({int round = 20, int loyalty = 70}) {
       final s = engine.start(Species.tern, seed: 7).clone()
         ..round = round
         ..hullUpgrades = 8
+        ..humans = HumanResources(count: 250, loyalty: loyalty, drift: 0)
         ..loadout = Loadout(
           slots: [
             h('laser_3'),
@@ -727,35 +733,62 @@ void main() {
           ],
           cargo: 'cargo_pod_2',
           hold: ['teleport_charges_3', 'feedstock_3'],
+          colony: ['habitat_2', ...List.filled(8, null)],
         );
       return s..hull = s.stats.maxHull;
     }
 
-    test('Satan comes at the final fight, and not before', () {
-      final early = engine.launch(godRun(round: brawlFinalFight - 1));
-      expect(early.event, isNot('satan'));
-      final due = engine.launch(godRun());
-      expect(due.event, 'satan');
-      expect(godRun().nextEnemy.name, 'Satan');
+    BrawlState fightIt(BrawlState s) => engine.proceed(engine.choose(s, 0));
+
+    test('a full build sets its flag the first time, and says so', () {
+      final s = godRun();
+      expect(s.flags, isNot(contains(fullBuild)));
+      final launched = engine.launch(s);
+      expect(launched.flags, contains(fullBuild));
+      expect(launched.log.join(), contains('Every slot'));
+
+      final short = godRun()..loadout.slots[0] = 'laser_2';
+      expect(engine.launch(short).flags, isNot(contains(fullBuild)));
     });
 
-    test('Satan comes for you in Hell too', () {
-      final s = godRun().clone()
+    test('a full build draws the herald in Hell, sooner and more often', () {
+      final herald = brawlEventsById['hell_herald']!;
+      final s = godRun()
         ..inHell = true
-        ..event = 'hell_clocks';
-      final stay = s.currentEvent!.choices.indexWhere(
-        (c) => !c.outcomes.any((o) => o.effects.any((e) => e is LeaveHell)),
-      );
-      final next = engine.proceed(engine.choose(s, stay));
-      if (next.lost) return;
-      expect(next.event, 'satan');
+        ..hellTurns = 1;
+      expect(herald.condition!(s), isFalse);
+      expect(herald.weight!(s), 1);
+      s.flags.add(fullBuild);
+      expect(herald.condition!(s), isTrue);
+      expect(herald.weight!(s), greaterThan(4));
+    });
+
+    test('killing the herald with a full build brings Satan', () {
+      BrawlState herald(BrawlState s) => s
+        ..inHell = true
+        ..hellTurns = 1
+        ..event = 'hell_herald';
+      final summoned = fightIt(herald(godRun()..flags.add(fullBuild)));
+      expect(summoned.lastCombat!.result.outcome, CombatOutcome.win);
+      expect(summoned.flags, contains(satanSummoned));
+      expect(summoned.event, 'satan');
+
+      final plain = godRun()..loadout.slots[0] = h('laser_2');
+      final ignored = fightIt(herald(plain));
+      expect(ignored.lastCombat!.result.outcome, CombatOutcome.win);
+      expect(ignored.flags, isNot(contains(satanSummoned)));
+      expect(ignored.event, isNot('satan'));
     });
 
     test('beating Satan wins, then the captain retires or goes on', () {
-      final fought = engine.proceed(engine.choose(engine.launch(godRun()), 0));
+      final s = godRun()..flags.addAll([fullBuild, satanSummoned]);
+      expect(s.nextEnemy.name, 'Satan');
+      final met = engine.launch(s);
+      expect(met.event, 'satan');
+      final fought = fightIt(met);
       expect(fought.lost, isFalse);
-      expect(fought.lastCombat!.result.outcome, CombatOutcome.win);
       expect(fought.awaitingVerdict, isTrue);
+      expect(fought.bossesBeaten, ['Satan']);
       expect(fought.docked, isFalse);
       expect(fought.loadout.all, contains('trophy_broken_seal'));
       expect(() => engine.launch(fought), throwsA(isA<IllegalMove>()));
@@ -767,24 +800,154 @@ void main() {
       final onward = engine.goEndless(fought);
       expect(onward.endless, isTrue);
       expect(onward.docked, isTrue);
-      expect(onward.round, brawlFinalFight + 1);
-      expect(engine.launch(onward).event, isNot('satan'));
+      // Won already, so fight 27 brings no other final boss.
+      final later = onward.clone()..round = brawlFinalFight;
+      expect(engine.launch(later).event, isNot('uploaded_flagship'));
     });
 
-    test('a weak ship that reaches Satan dies there', () {
+    test('at fight 27 a colony that likes you brings the Uploaded', () {
+      final early = engine.launch(godRun(round: brawlFinalFight - 1));
+      expect(early.event, isNot('uploaded_flagship'));
+      // No Hell Clock, so nothing fires before the first moment recorded.
+      final s = godRun(round: brawlFinalFight)..loadout.slots[4] = 'plating_3';
+      expect(s.nextEnemy.name, 'The Ascension');
+      final met = engine.launch(s);
+      expect(met.event, 'uploaded_flagship');
+      final fought = fightIt(met);
+      final record = fought.lastCombat!;
+      expect(
+        record.result.snapshots.first.hull[1],
+        (record.enemyMaxHull * SpecialEnemy.uploadedFlagshipHull).round(),
+        reason: 'it fought its way here, and starts holed',
+      );
+      expect(fought.awaitingVerdict, isTrue);
+      expect(fought.bossesBeaten, ['Shining-head']);
+      expect(fought.loadout.all, contains('trophy_voice_below'));
+      expect(fought.humans.count, greaterThan(0));
+    });
+
+    test('at fight 27 a colony that still dislikes you leaves with Idun', () {
+      final s = godRun(round: brawlFinalFight, loyalty: secedeBelow - 1);
+      expect(s.nextEnemy.name, 'The Matriarch');
+      final met = engine.launch(s);
+      expect(met.event, 'secession');
+      final chosen = engine.choose(met, 0);
+      expect(chosen.humans.count, 0);
+      expect(chosen.loadout.colony.whereType<String>(), isEmpty);
+      expect(chosen.plannedFight!.special, SpecialEnemy.idunFlagship);
+      final fought = engine.proceed(chosen);
+      expect(fought.awaitingVerdict, isTrue);
+      expect(fought.bossesBeaten, ['Lady Idun']);
+      expect(fought.loadout.all, contains('trophy_fission'));
+      // The colony left by its own vote, so Nobody doesn't come for it.
+      final onward = engine.goEndless(fought);
+      expect(engine.launch(onward).event, isNot('nobody_abandoned'));
+    });
+
+    test('a weak ship that reaches fight 27 dies there', () {
       final s = engine.start(Species.gor, seed: 3).clone()
         ..round = brawlFinalFight;
-      final after = engine.proceed(engine.choose(engine.launch(s), 0));
-      expect(after.lost, isTrue);
+      expect(fightIt(engine.launch(s)).lost, isTrue);
     });
 
-    test('past Satan, every fight gets steeply harder', () {
+    test('past the win, every fight gets steeply harder', () {
       for (var seed = 0; seed < 10; seed++) {
         expect(
           brawlEnemy(brawlFinalFight + 10, seed).hull,
           greaterThan(brawlEnemy(brawlFinalFight, seed).hull * 8),
         );
       }
+    });
+
+    test('putting every human off the ship brings Nobody at once', () {
+      final s = engine.start(Species.tern, seed: 5).clone()
+        ..humans = const HumanResources(count: 0, loyalty: 50, drift: 0);
+      expect(engine.launch(s).event, 'nobody_abandoned');
+      final met = s.clone()..flags.add('nobody');
+      expect(engine.launch(met).event, isNot('nobody_abandoned'));
+    });
+
+    test('a Human Hospital or better keeps Nobody from turning up', () {
+      final nobody = brawlEventsById['nobody']!;
+      BrawlState ship(String? hospital) =>
+          engine.start(Species.tern, seed: 5).clone()
+            ..round = 12
+            ..loadout.colony[1] = hospital;
+      expect(nobody.condition!(ship(null)), isTrue);
+      expect(nobody.condition!(ship('hospital_1')), isTrue, reason: 'a Clinic');
+      expect(nobody.condition!(ship('hospital_2')), isFalse);
+      expect(nobody.condition!(ship('hospital_3')), isFalse);
+    });
+
+    test('a Grumbling colony secedes at fight 27; a Content one stays', () {
+      expect(
+        engine.launch(godRun(round: brawlFinalFight, loyalty: 59)).event,
+        'secession',
+      );
+      expect(
+        engine.launch(godRun(round: brawlFinalFight, loyalty: 60)).event,
+        'uploaded_flagship',
+      );
+    });
+
+    test('the Broken Seal outguns every Super card', () {
+      double perSecond(Equipment e) => (e.damage ?? 0) / (e.cooldown ?? 1);
+      final best = equipmentCatalog.values
+          .where((e) => e.tier == Tier.superior)
+          .map(perSecond)
+          .reduce(max);
+      expect(perSecond(equipmentById('trophy_broken_seal')), greaterThan(best));
+    });
+  });
+
+  group('the final bosses\' weapons', () {
+    test('a fission missile ignores drones, and takes them all out', () {
+      final r = fight(
+        Combatant(name: 'Idun', loadout: CombatLoadout.of(['idun_fission'])),
+        Combatant(
+          name: 'drones',
+          loadout: CombatLoadout.of(
+            ['fabricator_3', 'plating_3'],
+            hold: ['feedstock_3'],
+          ),
+        ),
+      );
+      final hit = r.events.firstWhere(
+        (e) => e.kind == CombatEventKind.fissionHit,
+      );
+      expect(hit.value, greaterThan(0));
+      expect(r.at(hit.time).drones[1], 0);
+      expect(
+        r.events.where((e) => e.kind == CombatEventKind.missileIntercepted),
+        isEmpty,
+      );
+    });
+
+    test('a broadcast turns the enemy\'s drones to its side', () {
+      final r = fight(
+        Combatant(
+          name: 'Shining-head',
+          loadout: CombatLoadout.of(['shining_broadcast']),
+        ),
+        Combatant(
+          name: 'drones',
+          loadout: CombatLoadout.of(
+            ['fabricator_3', 'shield_3', 'plating_3'],
+            hold: ['feedstock_3'],
+          ),
+        ),
+      );
+      final turned = r.events.firstWhere(
+        (e) => e.kind == CombatEventKind.dronesHijacked,
+      );
+      expect(r.at(turned.time).drones[0], turned.value);
+      expect(
+        r.events
+            .where((e) => e.kind == CombatEventKind.broadcastHit)
+            .every((e) => e.value! > 0),
+        isTrue,
+        reason: 'shields don\'t stop it',
+      );
     });
   });
 

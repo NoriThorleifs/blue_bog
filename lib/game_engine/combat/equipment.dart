@@ -35,6 +35,23 @@ class FireMissile extends Action {
   final int damage;
 }
 
+/// A nuclear fission missile. Drones can't stop it, and the blast takes
+/// every drone the enemy has out with it. Passes through shields like any
+/// missile. Uses one missile.
+class FissionMissile extends Action {
+  const FissionMissile(this.damage);
+  final int damage;
+}
+
+/// Shining-head's broadcast: [damage] straight to the hull, past shields
+/// and drones, and up to [steal] of the enemy's drones overwritten to fight
+/// for the broadcaster. Needs no ammo.
+class Broadcast extends Action {
+  const Broadcast(this.damage, this.steal);
+  final int damage;
+  final int steal;
+}
+
 /// Passes through shields and drones. Uses one teleport charge.
 class TeleportBomb extends Action {
   const TeleportBomb(this.damage);
@@ -656,6 +673,8 @@ class Equipment {
   int? get damage => switch (action) {
     FireLaser(:final damage) ||
     FireMissile(:final damage) ||
+    FissionMissile(:final damage) ||
+    Broadcast(:final damage) ||
     TeleportBomb(:final damage) ||
     Hellfire(:final damage) ||
     IonBlast(:final damage) ||
@@ -671,10 +690,16 @@ class Equipment {
       switch (action) {
         FireLaser(:final damage) => 'Laser: $damage damage$every',
         FireMissile(:final damage) => 'Missile: $damage damage$every',
+        FissionMissile(:final damage) =>
+          'Fission missile: $damage damage$every. Drones can\'t stop it, '
+              'and the blast vaporises every drone the enemy has',
+        Broadcast(:final damage, :final steal) =>
+          'Broadcast$every: $damage damage through shields and drones, and '
+              'turns up to $steal enemy drones to your side',
         TeleportBomb(:final damage) => 'Teleport bomb: $damage damage$every',
         Hellfire(:final damage, :final recoil) =>
-          'Hellfire: $damage damage$every, through shields and drones. '
-              'Burns your own hull for $recoil',
+          'Hellfire: $damage damage$every, through shields and drones'
+              '${recoil > 0 ? '. Burns your own hull for $recoil' : ''}',
         ChargeShields() => 'Charges shields$every',
         BuildDrone(count: 1) => 'Builds a drone$every',
         BuildDrone(:final count) => 'Builds $count drones$every',
@@ -898,6 +923,8 @@ class EquipmentFamily {
 Action scaleAction(Action action, int x) => switch (action) {
   FireLaser(:final damage) => FireLaser(damage * x),
   FireMissile(:final damage) => FireMissile(damage * x),
+  FissionMissile(:final damage) => FissionMissile(damage * x),
+  Broadcast(:final damage, :final steal) => Broadcast(damage * x, steal * x),
   TeleportBomb(:final damage) => TeleportBomb(damage * x),
   Hellfire(:final damage, :final insulation) => Hellfire(
     damage * x,
@@ -917,6 +944,8 @@ Action scaleAction(Action action, int x) => switch (action) {
 Action plusDamage(Action action, int extra) => switch (action) {
   FireLaser(:final damage) => FireLaser(damage + extra),
   FireMissile(:final damage) => FireMissile(damage + extra),
+  FissionMissile(:final damage) => FissionMissile(damage + extra),
+  Broadcast(:final damage, :final steal) => Broadcast(damage + extra, steal),
   TeleportBomb(:final damage) => TeleportBomb(damage + extra),
   Hellfire(:final damage, :final insulation) => Hellfire(
     damage + extra,

@@ -1,6 +1,7 @@
 import '../captain/species.dart';
 import '../combat/catalog.dart';
 import '../combat/combat.dart';
+import '../combat/equipment.dart';
 import '../deck/loadout.dart';
 import '../gambling/roulette.dart';
 import '../gambling/twenty_seven.dart';
@@ -157,7 +158,8 @@ class BrawlState {
   /// something to take them, until the ship moves on.
   List<String> wreckage;
 
-  /// Set when a captain who beat Satan retires: the brawl is won and over.
+  /// Set when a captain who beat a final boss retires: the brawl is won and
+  /// over.
   bool retired;
 
   /// Between a fight and the next dock, with an event in front of the
@@ -175,16 +177,40 @@ class BrawlState {
   /// The universal draft for Neo Terra is on.
   bool get drafted => flags.contains(draftOn);
 
-  /// Satan is coming: the brawl has reached [brawlFinalFight] and he
-  /// hasn't been beaten.
-  bool get satanDue => round >= brawlFinalFight && !flags.contains(beatSatan);
+  /// Satan is coming: a captain with a full build killed his herald, and
+  /// he hasn't been beaten yet.
+  bool get satanDue =>
+      flags.contains(satanSummoned) && !flags.contains(beatSatan);
 
-  /// Satan has just been beaten, and the captain hasn't yet chosen
+  /// The brawl has reached [brawlFinalFight] with nobody beaten yet: Lady
+  /// Idun or Shining-head is coming, whichever [secessionDue] says.
+  bool get finalDue => round >= brawlFinalFight && !flags.contains(wonBrawl);
+
+  /// At the final fight, the colony still doesn't like its captain, and
+  /// votes to leave for the House of the Elephant.
+  bool get secessionDue =>
+      finalDue && humans.count > 0 && humans.loyalty < secedeBelow;
+
+  /// Every triforce slot holds a Super card or the Hell Clock. See
+  /// [fullBuild].
+  bool get hasFullBuild => loadout.slots.every(
+    (id) =>
+        id != null &&
+        (baseId(id) == hellClock.id || equipmentById(id).tier == Tier.superior),
+  );
+
+  /// The final bosses beaten so far, first one first.
+  List<String> get bossesBeaten => [
+    for (final flag in flags)
+      if (finalBossNames[flag] case final name?) name,
+  ];
+
+  /// A final boss has just been beaten, and the captain hasn't yet chosen
   /// between retiring and going on.
   bool get awaitingVerdict =>
-      flags.contains(beatSatan) && !flags.contains(wentEndless) && !retired;
+      flags.contains(wonBrawl) && !flags.contains(wentEndless) && !retired;
 
-  /// Past Satan, fighting on for score.
+  /// Past the brawl's win, fighting on for score.
   bool get endless => flags.contains(wentEndless);
 
   String get stationName => brawlStations[station]!;
@@ -193,8 +219,13 @@ class BrawlState {
   /// Whether lots of humans live at this station, so more sign on here.
   bool get humansLiveHere => _humanStations.contains(station);
   ShipStats get stats => ShipStats.of(loadout, hullUpgrades: hullUpgrades);
-  EnemyTemplate get nextEnemy =>
-      satanDue ? SpecialEnemy.satan.template : brawlEnemy(round, seed);
+  EnemyTemplate get nextEnemy => satanDue
+      ? SpecialEnemy.satan.template
+      : secessionDue
+      ? SpecialEnemy.idunFlagship.template
+      : finalDue
+      ? SpecialEnemy.uploadedFlagship.template
+      : brawlEnemy(round, seed);
   BrawlEvent? get currentEvent => event == null ? null : brawlEventsById[event];
 
   /// At a station with nothing pending: free to trade and launch.

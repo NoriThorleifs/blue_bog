@@ -4,6 +4,7 @@
 //   flutter run -d linux -t tool/combat_preview.dart
 //   flutter run -d emulator-5554 -t tool/combat_preview.dart
 //   flutter run -d linux -t tool/combat_preview.dart --dart-define=FIGHT=hell
+//   (fights: ark, hell, rail, nobody, idun, ascension)
 import 'package:blue_bog/functions/sound.dart';
 import 'package:blue_bog/components/theme.dart';
 import 'package:blue_bog/game_engine/brawl/brawl_enemies.dart';
@@ -51,6 +52,23 @@ final _fights = <String, (CombatLoadout, EnemyTemplate)>{
   'rail': (
     CombatLoadout.of(['rail_1', 'rail_1', 'ion_1', 'ion_1', 'plating_1']),
     brawlPools[2].firstWhere((e) => e.name.contains('customs')),
+  ),
+  // A drone build against Lady Idun's fission missiles, which take every
+  // drone out at once.
+  'idun': (
+    CombatLoadout.of(
+      ['missiles_2', 'fabricator_3', 'fabricator_2', 'shield_2', 'plating_3'],
+      hold: ['missile_crate_2', 'feedstock_3'],
+    ),
+    SpecialEnemy.idunFlagship.template,
+  ),
+  // The same drones against Shining-head, whose broadcast turns them.
+  'ascension': (
+    CombatLoadout.of(
+      ['laser_2', 'fabricator_3', 'fabricator_2', 'shield_2', 'plating_3'],
+      hold: ['feedstock_3'],
+    ),
+    SpecialEnemy.uploadedFlagship.template,
   ),
   // Forty seconds to kill Nobody. This build doesn't make it.
   'nobody': (

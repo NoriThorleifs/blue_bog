@@ -19,6 +19,7 @@ const eventArt = <String, Alignment>{
   'gor_duel': Alignment(-0.45, 0),
   'unmerged_foundry': Alignment.center,
   'nobody': Alignment.center,
+  'nobody_abandoned': Alignment.center,
   'gift_boarders': Alignment.center,
   'wrong_warp': Alignment.center,
   'neo_terra_war': Alignment(0.85, 0),
@@ -49,6 +50,8 @@ const eventArt = <String, Alignment>{
   'hell_herald': Alignment.center,
   'hell_mourner': Alignment(0, 0.3),
   'satan': Alignment.center,
+  'secession': Alignment(0.1, 0),
+  'uploaded_flagship': Alignment(0.2, 0),
 };
 
 /// The brawl screen's background: tinted red in Hell.

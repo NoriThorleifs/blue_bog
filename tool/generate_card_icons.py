@@ -46,6 +46,8 @@ REPAIR = (92, 224, 200)
 LANCE = (157, 240, 255)
 JAM = (255, 143, 128)
 RAIL = (220, 228, 240)
+FISSION = (255, 233, 168)
+BROADCAST = (255, 210, 122)
 
 
 def p(x, y):
@@ -686,6 +688,34 @@ def trophy_broken_seal():
            WHITE, 0.03)
     i.save('trophy_broken_seal')
 
+def trophy_fission():
+    """A fat warhead with the trefoil on it: a fission missile."""
+    i = Icon(FISSION)
+    poly(i, [(0.50, 0.10), (0.64, 0.26), (0.64, 0.70), (0.36, 0.70), (0.36, 0.26)])
+    for side in (-1, 1):
+        poly(i, [(0.5 + side * 0.14, 0.56), (0.5 + side * 0.24, 0.80),
+                 (0.5 + side * 0.14, 0.70)], f=0.7)
+    poly(i, [(0.44, 0.72), (0.50, 0.90), (0.56, 0.72)], (255, 160, 80), 0.9, 0.01)
+    ellipse(i, (0.465, 0.415, 0.535, 0.485), (40, 30, 10), 1.0, 0.005)
+    for k in range(3):
+        a = -90 + k * 120
+        i.d.pieslice(box(0.39, 0.34, 0.61, 0.56), a - 30, a + 30,
+                     fill=(40, 30, 10, 255))
+    ellipse(i, (0.475, 0.425, 0.525, 0.475), FISSION, 1.0, 0.004)
+    i.save('trophy_fission')
+
+
+def trophy_voice_below():
+    """A halo, and its broadcast spreading out in rings: Shining-head."""
+    i = Icon(BROADCAST)
+    ellipse(i, (0.40, 0.56, 0.60, 0.76), f=0.8)
+    ellipse(i, (0.33, 0.44, 0.67, 0.54), f=0, width=0.025)
+    for r, w in ((0.20, 0.03), (0.30, 0.025), (0.40, 0.02)):
+        arc(i, (0.5 - r, 0.66 - r, 0.5 + r, 0.66 + r), 215, 325, width=w)
+    stroke(i, [(0.5, 0.76), (0.5, 0.90)], width=0.03)
+    i.save('trophy_voice_below')
+
+
 ALL = [laser, missiles, teleporter, shield, fabricator, plating,
        ion, flak, repair, lance, rail, jammer,
        shield_capacitor, fire_control, capacitors, quick_fuzes,
@@ -696,7 +726,7 @@ ALL = [laser, missiles, teleporter, shield, fabricator, plating,
        mourner_unfallen_world, mourner_polite_request,
        mourner_grief_engine, hell_clock, trophy_last_vote,
        trophy_champions_bulwark, trophy_nanoforge, trophy_broken_seal,
-       nobody_boarding_teleporter]
+       trophy_fission, trophy_voice_below, nobody_boarding_teleporter]
 
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)

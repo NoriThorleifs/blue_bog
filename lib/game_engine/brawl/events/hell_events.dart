@@ -195,7 +195,10 @@ final brawlHellEvents = <BrawlEvent>[
     id: 'hell_herald',
     title: 'A herald',
     hell: true,
-    condition: (s) => s.hellTurns >= 3,
+    // A full build draws it, sooner and far more often. Killing it then
+    // brings its master.
+    condition: (s) => s.hellTurns >= (s.flags.contains(fullBuild) ? 1 : 3),
+    weight: (s) => s.flags.contains(fullBuild) ? 6 : 1,
     text:
         'A demon lord\'s herald crosses your bow, armoured in the hulls of '
         'ships it has eaten. Lesser things scatter from it. It is looking '
@@ -205,15 +208,12 @@ final brawlHellEvents = <BrawlEvent>[
         Outcome(
           'It accepts with something like delight. It will not let you '
           'go until one of you is scrap.',
-          effects: [Fight(demon: 3, tractorBeam: true, scrap: 2)],
+          effects: [_herald],
         ),
       ]),
       Choice('Go dark and hide in the brandy fog', [
         Outcome('It passes by. You breathe again.', weight: 2),
-        Outcome(
-          'It smells you.',
-          effects: [Fight(demon: 3, tractorBeam: true, scrap: 2)],
-        ),
+        Outcome('It smells you.', effects: [_herald]),
       ]),
     ],
   ),
@@ -292,3 +292,5 @@ final brawlHellEvents = <BrawlEvent>[
     ],
   ),
 ];
+
+const _herald = Fight(demon: heraldDemon, tractorBeam: true, scrap: 2);

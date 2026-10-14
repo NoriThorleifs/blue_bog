@@ -16,6 +16,8 @@ enum Sfx {
   teeth('teeth'),
   brandyMist('brandy_mist'),
   hellClock('hell_clock'),
+  fission('fission'),
+  broadcast('broadcast'),
   shieldBlock('shield_block'),
   shieldCharge('shield_charge'),
   droneBuilt('drone_built'),

@@ -48,6 +48,15 @@ enum CombatEventKind {
   laserAbsorbed,
   missileHit,
   missileIntercepted,
+
+  /// Value is the hull damage. Every enemy drone goes with it.
+  fissionHit,
+
+  /// Value is the hull damage that got through.
+  broadcastHit,
+
+  /// Value is the drones turned to the broadcaster's side.
+  dronesHijacked,
   teleportHit,
 
   /// Value is the damage dealt; the firing ship takes a quarter of it.
@@ -491,6 +500,16 @@ class _Side {
         } else {
           note(CombatEventKind.missileHit, enemy._hurt(hit));
         }
+      case FissionMissile(:final damage):
+        if (!_use(Ammo.missiles)) return note(CombatEventKind.outOfAmmo);
+        enemy.drones = 0;
+        note(CombatEventKind.fissionHit, enemy._hurt(_power(slot, damage)));
+      case Broadcast(:final damage, :final steal):
+        final turned = min(enemy.drones, steal);
+        enemy.drones -= turned;
+        drones += turned;
+        if (turned > 0) note(CombatEventKind.dronesHijacked, turned);
+        note(CombatEventKind.broadcastHit, enemy._hurt(_power(slot, damage)));
       case TeleportBomb(:final damage):
         if (!_use(Ammo.teleportCharges)) {
           return note(CombatEventKind.outOfAmmo);

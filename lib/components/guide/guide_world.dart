@@ -203,16 +203,36 @@ List<Widget> guideWorld() => [
         'From fight 9, Nobody may come for you, once. He is the one human '
         'trained to kill the species of the Republic. Forty seconds into the '
         'fight his teleporter boards your ship, and you are dead. Run for it, '
-        'or kill him first.',
+        'or kill him first. Put every last human off your ship and he comes '
+        'at once. A ship that cares for its humans, with a Human Hospital or '
+        'better, never hears from him otherwise.',
       ),
       GuideCardRow([('nobody_boarding_teleporter', 'Nobody\'s teleporter')]),
       GuideText(
-        'At fight 27, Satan himself comes for you, wherever you are, with a '
-        'tractor beam. Beat him and you win the brawl, and his Broken Seal '
-        'is yours. Then retire a winner, or keep going for score against '
-        'ships that get harder every fight, until one of them gets you.',
+        'A brawl ends when you beat one of three final bosses. Each comes '
+        'with a tractor beam, and each pays a trophy better than any Super '
+        'card. Then retire a winner, or keep going for score against ships '
+        'that get harder every fight, until one of them gets you.',
       ),
-      GuideCardRow([('trophy_broken_seal', 'The Broken Seal')]),
+      GuideBullets([
+        'At fight 27, if your humans aren\'t at least Content, the colony votes '
+            'to leave you for the House of the Elephant, and Lady Idun the '
+            'Giantess comes in her flagship to make sure you don\'t follow. '
+            'Her fission missiles go through drones and take them all out.',
+        'At fight 27, if they are Content or Devoted, the Uploaded come instead: '
+            'Shining-head\'s flagship, half wrecked from fighting through the '
+            'Republic, and still very hard. Its broadcast goes through '
+            'everything, and turns your drones against you.',
+        'Fill every slot of the triforce with Super cards (or the Hell '
+            'Clock) and the demon lord\'s herald comes looking for you in '
+            'Hell, far more often. Kill it, and Satan himself comes up out of '
+            'Hell for you, whenever that is. He is the hardest of the three.',
+      ]),
+      GuideCardRow([
+        ('trophy_fission', 'Lady Idun'),
+        ('trophy_voice_below', 'Shining-head'),
+        ('trophy_broken_seal', 'Satan'),
+      ]),
     ],
   ),
   const GuideSection(

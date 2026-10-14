@@ -106,6 +106,17 @@ void applyBrawlEffect(
     case StartDraft():
       s.flags.add(draftOn);
       s.counters[draftRoundKey] = s.round;
+    case Secede():
+      final leaving = s.humans.count;
+      s
+        ..humans = s.humans.copyWith(count: 0)
+        ..flags.add(colonySeceded)
+        ..flags.remove(colonyStrike);
+      s.loadout.colony.fillRange(0, s.loadout.colony.length, null);
+      lines.add(
+        '$leaving humans left with the House of the Elephant, and took their '
+        'homes with them.',
+      );
   }
 }
 

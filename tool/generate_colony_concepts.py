@@ -37,6 +37,8 @@ The scenes, from the events in lib/game_engine/brawl/events/:
   Elephant's mark, dropped toward an asteroid where someone is building.
 - gravity (petition_gravity): the colony's centrifuge habitat, spinning.
 - collection (gift_collection): the colony's collection for its captain.
+- secession (secession): the colony voting to leave at the end, drifting
+  away from the ship to Lady Idun's flagship.
 
 Humans are just humans (lore/How the species look.md): suits, helmets and
 kit, nothing alien. Needs numpy, scipy and Pillow.
@@ -677,9 +679,71 @@ def collection():
     finish(img, 'colony_collection', rng, grain=0.02)
 
 
+# 13. The vote ------------------------------------------------------------------------------
+# The colony's clamps have let go. The grid drifts away from your ship
+# toward The Matriarch, Lady Idun's flagship, the House of the Elephant's
+# mark on her flank and her tractor beam already on you.
+def secession():
+    rng = np.random.default_rng(1919)
+    img = space(rng, nebula=np.array([0.18, 0.12, 0.06]), stars=1400)
+    sun = np.exp(-(((XX - 160) ** 2 + (YY - 140) ** 2) / 30 ** 2))
+    img = add(img, sun * 3 + glow(sun > 0.2, 70, 4), HOT)
+    # The Matriarch: a heavy human hull, lit from the left.
+    M = Layer()
+    ship(M, 'heavy', 1150, 360, 760, math.radians(186))
+    for u in (-0.3, -0.05, 0.2):  # missile bays along her belly
+        x, y = 1150 - u * 760, 360 + 0.17 * 760
+        M.rect(x - 22, y - 10, x + 22, y + 6)
+    hull = M.array()
+    img = solid(img, hull, np.array([0.16, 0.13, 0.1]), (-0.8, -0.4), HOT, 0.9, shade=0.45)
+    mark = Layer()
+    elephant(mark, 1120, 330, 120)
+    img = add(img, mark.array() * hull * 0.5, GOLD)
+    words = Layer()
+    words.text(1180, 445, 'THE MATRIARCH', 26)
+    img = add(img, words.array() * hull * 0.35, np.array([0.9, 0.85, 0.75]))
+    for u in (-0.3, -0.05, 0.2):
+        img = dot(img, 1150 - u * 760, 360 + 0.17 * 760, 5, np.array([1.0, 0.9, 0.6]), gain=2, halo=14)
+    for v in (-0.12, 0.0, 0.12):
+        img = dot(img, 1150 + 0.5 * 760, 360 + v * 760, 7, AMBER, gain=2.5, halo=20)
+    # Her tractor beam, down onto your ship.
+    img = add(img, beam((900, 420), 0.09, 900, math.atan2(980 - 420, 160 - 900), 22) * 0.35,
+              np.array([0.6, 0.85, 1.0]))
+    # Your ship, the empty clamps where the colony was.
+    O = Layer()
+    O.ellipse(-100, 1360, 700, 560)
+    own = O.array()
+    img = silhouette(img, own, (0.3, -1), colour=DARK_STEEL, rim_colour=ICE, rim_gain=0.7)
+    clamps = Layer()
+    for k in range(3):
+        x = 260 + k * 90
+        y = 860 - k * 55
+        clamps.line([(x, y), (x + 20, y - 40), (x + 50, y - 46)], 8)
+    img = silhouette(img, clamps.array(), (0.3, -1), colour=DARK_STEEL * 1.5, rim_colour=HAZARD,
+                     rim_gain=0.7)
+    # The colony grid, drifting away, every window lit.
+    G = Layer()
+    windows = []
+    gx, gy, cell = 560, 520, 62
+    for row in range(3):
+        for col in range(3):
+            x = gx + col * (cell + 10) + row * 14
+            y = gy + row * (cell + 10) - col * 18
+            G.rect(x, y, x + cell, y + cell)
+            for _ in range(5):
+                windows.append((x + rng.uniform(8, cell - 8), y + rng.uniform(8, cell - 8)))
+    grid = G.array()
+    img = solid(img, grid, np.array([0.22, 0.18, 0.12]), (-0.8, -0.4), GOLD, 0.8, k=2, shade=0.3)
+    for x, y in windows:
+        img = dot(img, x, y, 1.6, GOLD, gain=1.8, halo=4)
+    for x, y in ((gx - 10, gy + 120), (gx + 210, gy + 40)):
+        img = dot(img, x, y, 4, ICE, gain=2, halo=16)  # its own little thrusters
+    finish(img, 'colony_secession', rng, grain=0.02)
+
+
 SCENES = {f.__name__: f for f in (
     volunteers, draft, veterans, helmet, strike, headcount, engineer, gor_news, tern_news, kepler,
-    elephant_crate, gravity, collection)}
+    elephant_crate, gravity, collection, secession)}
 
 if __name__ == '__main__':
     scene_main(SCENES, 'colony mockups')

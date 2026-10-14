@@ -15,8 +15,43 @@ const metMourner = 'mourner';
 /// found in the murk. There is only one per brawl.
 const hasHellClock = 'hell_clock';
 
-/// The flag set once the captain has beaten Satan and won the brawl.
+/// The flag set once the captain has beaten any of the final bosses and
+/// won the brawl. Each boss has its own flag too.
+const wonBrawl = 'won';
+
+/// The flags set for beating each final boss: Satan, Lady Idun and
+/// Shining-head.
 const beatSatan = 'beat_satan';
+const beatIdun = 'beat_idun';
+const beatShiningHead = 'beat_shining_head';
+
+/// The final bosses, by the flag for beating them, in the words the end
+/// screens use.
+const finalBossNames = {
+  beatSatan: 'Satan',
+  beatIdun: 'Lady Idun',
+  beatShiningHead: 'Shining-head',
+};
+
+/// The flag set the first time every triforce slot holds a Super card or
+/// the Hell Clock. It stays set, and draws the herald in Hell.
+const fullBuild = 'full_build';
+
+/// Which of [demons] is the demon lord's herald.
+const heraldDemon = 3;
+
+/// The flag set when a captain with a [fullBuild] kills the herald: Satan
+/// comes next.
+const satanSummoned = 'satan_summoned';
+
+/// The flag set when the colony has voted to leave the captain for the
+/// House of the Elephant.
+const colonySeceded = 'colony_seceded';
+
+/// At fight 27 a colony below this loyalty (Grumbling or worse) secedes,
+/// and Lady Idun comes for the ship. A captain whose colony isn't at least
+/// Content by then has decided against it, or never built it up.
+const secedeBelow = 60;
 
 /// The flag set when a captain who has won chooses to keep going.
 const wentEndless = 'endless';

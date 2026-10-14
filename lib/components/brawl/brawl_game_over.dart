@@ -12,6 +12,11 @@ class GameOver extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final text = Theme.of(context).textTheme;
+    final beaten = switch (brawl.bossesBeaten) {
+      [] => 'the brawl',
+      [final one] => one,
+      [...final most, final last] => '${most.join(', ')} and $last',
+    };
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -27,10 +32,10 @@ class GameOver extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   brawl.retired
-                      ? 'You beat Satan and retired on top, after '
+                      ? 'You beat $beaten and retired on top, after '
                             '${brawl.fightsWon} fights, with '
                             '${brawl.credits} credits.'
-                      : '${brawl.endless ? 'You beat Satan, then ' : 'You '}'
+                      : '${brawl.endless ? 'You beat $beaten, then ' : 'You '}'
                             'survived ${brawl.fightsWon} '
                             '${brawl.fightsWon == 1 ? 'fight' : 'fights'} and '
                             'died with ${brawl.credits} credits.',

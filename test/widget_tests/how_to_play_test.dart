@@ -29,5 +29,6 @@ void main() {
       await tester.pumpAndSettle();
     }
     expect(find.textContaining('Satan himself'), findsOneWidget);
+    expect(find.textContaining('Lady Idun the'), findsOneWidget);
   });
 }

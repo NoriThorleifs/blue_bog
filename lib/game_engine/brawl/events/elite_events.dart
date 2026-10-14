@@ -1,5 +1,6 @@
+import '../../combat/catalog.dart';
+import '../../combat/equipment.dart';
 import '../brawl.dart';
-import '../brawl_event_model.dart';
 import '../brawl_events.dart';
 
 /// The elites, each once per brawl and only during its stage, and Nobody,
@@ -140,7 +141,10 @@ final eliteEvents = <BrawlEvent>[
   BrawlEvent(
     id: _nobody,
     title: 'Nobody',
-    condition: (s) => !s.flags.contains(_nobody) && s.round >= 9,
+    // The humans don't send him after a ship that cares for its humans: a
+    // Human Hospital or a Hospital Deck in the colony keeps him away.
+    condition: (s) =>
+        !s.flags.contains(_nobody) && s.round >= 9 && !_caresForHumans(s),
     weight: (_) => 0.5,
     text:
         'A small human ship with no markings matches your course out of '
@@ -149,34 +153,28 @@ final eliteEvents = <BrawlEvent>[
         'Something about it makes you ask, half joking, whether the humans '
         'keep anyone specially trained to kill your kind.\n\n'
         '"Nobody," says the voice.\n\n'
-        'Your sensors find a drone swarm and a shield generator bigger '
-        'than anything a ship that size should carry, and one more thing, '
-        'charging slowly. A boarding teleporter, sized for one man.',
-    choices: const [
-      Choice('Run for it', [
-        Outcome(
-          'You burn for the nearest lane with everything you have. The '
-          'drones chew on your hull the whole way, but the teleporter never '
-          'finishes charging. Behind you, the little ship turns back. It '
-          'was only asking.',
-          effects: [
-            HullChange(-100, lethal: false),
-            NoFight(),
-            SetFlag(_nobody),
-          ],
-        ),
-      ]),
-      Choice('Kill him before it charges', [
-        Outcome(
-          'You have forty seconds. When the teleporter charges, Nobody '
-          'comes aboard, and that is the end of you.',
-          effects: [
-            Fight(special: SpecialEnemy.nobody, scrap: 2, winCredits: 300),
-            SetFlag(_nobody),
-          ],
-        ),
-      ]),
-    ],
+        '$_nobodyKit',
+    choices: _nobodyChoices,
+  ),
+  // A captain who puts every last human off their ship hears from him at
+  // once. The colony voting to leave doesn't count: that was its choice.
+  BrawlEvent(
+    id: 'nobody_abandoned',
+    title: 'Nobody',
+    always: true,
+    condition: (s) =>
+        !s.flags.contains(_nobody) &&
+        s.humans.count == 0 &&
+        !s.flags.contains(colonySeceded),
+    text:
+        'Word travels fast among humans, and the word is that you put every '
+        'last one of yours off your ship. A small human ship with no '
+        'markings matches your course out of the pipe and hails you. A '
+        'pleasant voice asks how many humans you have aboard now.\n\n'
+        'You ask who wants to know.\n\n'
+        '"Nobody," says the voice.\n\n'
+        '$_nobodyKit',
+    choices: _nobodyChoices,
   ),
 ];
 
@@ -187,6 +185,43 @@ const _duel = 'gor_duel';
 const _foundry = 'unmerged_foundry';
 
 const _nobody = 'nobody';
+
+/// A merged hospital in the colony grid: a Human Hospital or better.
+bool _caresForHumans(BrawlState s) => s.loadout.colony.any(
+  (id) =>
+      id != null &&
+      equipmentById(id).family == 'hospital' &&
+      equipmentById(id).tier != Tier.basic,
+);
+
+/// What the sensors find on Nobody's ship.
+const _nobodyKit =
+    'Your sensors find a drone swarm and a shield generator bigger than '
+    'anything a ship that size should carry, and one more thing, charging '
+    'slowly. A boarding teleporter, sized for one man.';
+
+/// Run, or kill him before he boards. Either way, he comes once a brawl.
+const _nobodyChoices = [
+  Choice('Run for it', [
+    Outcome(
+      'You burn for the nearest lane with everything you have. The '
+      'drones chew on your hull the whole way, but the teleporter never '
+      'finishes charging. Behind you, the little ship turns back. It '
+      'was only asking.',
+      effects: [HullChange(-100, lethal: false), NoFight(), SetFlag(_nobody)],
+    ),
+  ]),
+  Choice('Kill him before it charges', [
+    Outcome(
+      'You have forty seconds. When the teleporter charges, Nobody '
+      'comes aboard, and that is the end of you.',
+      effects: [
+        Fight(special: SpecialEnemy.nobody, scrap: 2, winCredits: 300),
+        SetFlag(_nobody),
+      ],
+    ),
+  ]),
+];
 
 /// Elite events come up once per brawl, and only between fights [from]
 /// and [to]. Miss the window and the elite is gone.
